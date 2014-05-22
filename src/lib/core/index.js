@@ -20,18 +20,18 @@
 
 var core = function() { /* loader below */ };
 
-// core.ipc = require(__dirname+'/src/ipc.js');
+core.ipc = require(__dirname+'/src/ipc.js');
 // core.logger = require(__dirname+'/src/logger.js');
 // core.blacklist = require(__dirname+'/src/blacklist.js');
-// core.npc = require(__dirname+'/src/npc.js');
+core.npc = require(__dirname+'/src/npc.js');
 
 // console.log(binding);
 
 core.loader = function(bs) {
-// 	core.ipc.loader(bs);
+	core.ipc.loader(bs);
 // 	core.logger.loader(bs);
 // 	core.blacklist.loader(bs);
-// 	core.npc.loader(bs);
+	core.npc.loader(bs);
 }
 
 core.fixCamelLike = function(str) { 
