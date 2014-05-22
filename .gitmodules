@@ -1,0 +1,3 @@
+[submodule "src/lib/mu2"]
+	path = src/lib/mu2
+	url = git://github.com/raycmorgan/Mu
