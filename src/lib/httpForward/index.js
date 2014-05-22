@@ -18,32 +18,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var core = function() { /* loader below */ };
+// var cluster = require('cluster');
+var net = require('net');
+// var events = require('events');
+// var eventEmitter = new events.EventEmitter();
 
-core.ipc = require(__dirname+'/src/ipc.js');
-core.logger = require(__dirname+'/src/logger.js');
-// core.blacklist = require(__dirname+'/src/blacklist.js');
-// core.npc = require(__dirname+'/src/npc.js');
+var httpForward = function() { /* loader below */ };
+
+// // var binding = require(__dirname+'/build/Release/httpForward.node');
+// try {
+// 	httpForward.httpTproxy = require(__dirname+'/js/httpTproxy');
+// } catch(e) {
+// 	console.log("! httpForward tproxy exeption\n", e);
+// }
+// httpForward.httpServer = require(__dirname+'/js/httpServer');
+// httpForward.acn = require(__dirname+'/js/acn.js');
 
 // console.log(binding);
 
-core.loader = function(bs) {
-	if(!bs.serverConfig.runDir) {
-		console.log('* No runDir defined, exiting');
-		process.exit(0);
-	}
-	
-	core.ipc.loader(bs);
-	core.logger.loader(bs);
-// // 	core.blacklist.loader(bs);
-// 	core.npc.loader(bs);
+httpForward.loader = function(bs) {
+// 	try {
+// 		httpForward.httpTproxy.loader(bs);
+// 		httpForward.httpServer.loader(bs);
+// 		httpForward.acn.loader(bs);
+// 	} catch(e) {
+// 		console.log("###################\n", e);
+// 	}
 }
 
-core.fixCamelLike = function(str) { 
-	return str.replace(/(^|-)([a-zA-Z])/g,
-		function (x, dash, chr) { 
-			return dash + chr.toUpperCase(); 
-	}); 
-}
-
-module.exports = core;
+module.exports = httpForward;

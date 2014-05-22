@@ -22,18 +22,19 @@ var cluster = require("cluster");
 var events = require('events');
 var eventEmitter = new events.EventEmitter();
 
-var ipc = function(bs) { /* loader below */ };
+var ipc = function(gjs) { /* loader below */ };
 
-ipc.spawnMaster = function(bs) {
+ipc.spawnMaster = function(gjs) {
+	
 	var net = require("net");
 	var fs = require("fs");
 	var readline = require('readline');
 	var util = require("util");
 
-	var socketFile = bs.serverConfig.dataDir+'/sockets/ipc';
+	var socketFile = gjs.serverConfig.runDir+'/ipc';
 	var users = {};
 	
-	bs.mkdirDeep(socketFile);
+	gjs.mkdirDeep(socketFile);
 	
 	/* remove socketFile */
 	try {
@@ -43,7 +44,7 @@ ipc.spawnMaster = function(bs) {
 	/*
 	 * Bind ipc server
 	 */
-	var service = net.Server().listen(socketFile);
+	var service = net.Server();
 	ipc.userCast = {};
 	
 	/* bind Events */
@@ -69,7 +70,7 @@ ipc.spawnMaster = function(bs) {
 	}
 	
 	process.on('SIGUSR2', function() {
-		ipc.emit("SIGUSR2", bs);
+		ipc.emit("SIGUSR2", gjs);
 		ipc.send('LFW', "SIGUSR2", false);
 	});
 
@@ -88,7 +89,7 @@ ipc.spawnMaster = function(bs) {
 			/* far forward */
 			if(jdata.type == 'FFW') {
 				/* remote forward */
-				bs.lib.bsCore.npc.send(jdata);
+				gjs.lib.gjsCore.npc.send(jdata);
 				
 				/* local forward */
 				ipc.broadcast(data, client.fd);
@@ -101,7 +102,7 @@ ipc.spawnMaster = function(bs) {
 
 			/* emit myself the event */
 			if(jdata.cmd)
-				ipc.emit(jdata.cmd, bs, jdata);
+				ipc.emit(jdata.cmd, gjs, jdata);
 		});
 		
 		client.on('end', function() {
@@ -110,13 +111,21 @@ ipc.spawnMaster = function(bs) {
 		
 	});
 
-
-	console.log("IPC system running on "+socketFile);
+	service.on('error', function(e) {
+		console.log('* IPC: error on '+socketFile+' '+e);
+	});
 	
+	service.on('listen', function() {
+		console.log("IPC system running on "+socketFile);
+	});
 	
+	service.listen(socketFile);
 }
 
-ipc.spawnSlave = function(bs) {
+ipc.spawnSlave = function(gjs) {
+	if(!gjs.serverConfig.runDir)
+		return;
+	
 	var net = require("net");
 	var readline = require('readline');
 
@@ -124,9 +133,9 @@ ipc.spawnSlave = function(bs) {
 	for(var a in eventEmitter)
 		ipc[a] = eventEmitter[a];
 	
-	var socketFile = bs.serverConfig.dataDir+'/sockets/ipc';
+	var socketFile = gjs.serverConfig.runDir+'/ipc';
 	
-	bs.mkdirDeep(socketFile);
+	gjs.mkdirDeep(socketFile);
 
 	var client = net.connect(socketFile);
 	
@@ -141,7 +150,7 @@ ipc.spawnSlave = function(bs) {
 		
 			/* emit myself the event */
 			if(jdata.cmd)
-				ipc.emit(jdata.cmd, bs, jdata);
+				ipc.emit(jdata.cmd, gjs, jdata);
 		});
 	});
 
@@ -151,7 +160,7 @@ ipc.spawnSlave = function(bs) {
 	// RFW = remote forward
 	ipc.send = function(type, cmd, msg) {
 		client.write(JSON.stringify({
-			from: bs.cluster.worker.process.pid,
+			from: gjs.cluster.worker.process.pid,
 			type: type,
 			cmd: cmd,
 			msg: msg
@@ -162,7 +171,7 @@ ipc.spawnSlave = function(bs) {
 // 	/* in order to graceful restart we need to close IPC connection to exit */
 // 	function gracefulReceiver() {
 // 		client.destroy();
-// 		bs.lib.bsCore.ipc.removeListener('system:graceful:process', gracefulReceiver);
+// 		gjs.lib.gjsCore.ipc.removeListener('system:graceful:process', gracefulReceiver);
 // 	}
 // 	
 // 	/* add graceful receiver */
@@ -170,11 +179,11 @@ ipc.spawnSlave = function(bs) {
 	
 }
 
-ipc.loader = function(bs) {
+ipc.loader = function(gjs) {
 	if(cluster.isMaster)
-		ipc.spawnMaster(bs);
+		ipc.spawnMaster(gjs);
 	else
-		ipc.spawnSlave(bs);
+		ipc.spawnSlave(gjs);
 	
 }
 
