@@ -1,3 +1,7 @@
 [submodule "src/lib/mu2"]
 	path = src/lib/mu2
 	url = git://github.com/raycmorgan/Mu
+[submodule "deps/nodejs"]
+	path = deps/nodejs
+	url = git://github.com/joyent/node
+	branch = v0.10
