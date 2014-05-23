@@ -18,28 +18,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var core = function() { /* loader below */ };
+var http = function() { /* loader below */ };
 
-core.ipc = require(__dirname+'/src/ipc.js');
-core.logger = require(__dirname+'/src/logger.js');
-core.pipeline = require(__dirname+'/src/pipeline.js');
+http.log = require(__dirname+'/js/log');
+http.forward = require(__dirname+'/js/forward');
 
-core.loader = function(gjs) {
-	if(!gjs.serverConfig.runDir) {
-		console.log('* No runDir defined, exiting');
-		process.exit(0);
+http.loader = function(bs) {
+	try {
+		http.log.loader(bs);
+		http.forward.loader(bs);
+	} catch(e) {
+		console.log("* HTTP exeption\n", e);
 	}
-	
-	core.ipc.loader(gjs);
-	core.logger.loader(gjs);
-	core.pipeline.loader(gjs);
 }
 
-core.fixCamelLike = function(str) { 
-	return str.replace(/(^|-)([a-zA-Z])/g,
-		function (x, dash, chr) { 
-			return dash + chr.toUpperCase(); 
-	}); 
-}
-
-module.exports = core;
+module.exports = http;
