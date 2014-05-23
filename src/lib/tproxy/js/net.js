@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2010-2014 BinarySEC SAS
- * Tproxy module sources header [http://www.binarysec.com]
+ * Tproxy net module patch code [http://www.binarysec.com]
  * 
  * This file is part of Gate.js.
  * 
@@ -18,23 +18,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _H_TPROXY_TPROXY
-#define _H_TPROXY_TPROXY
+var nodeNet = require('net');
 
-class Tproxy : public node::ObjectWrap {
-	public:
-		static void Init(v8::Handle<v8::Object> exports);
-		
-	private:
-		static v8::Handle<v8::Value> setTproxyFD(const v8::Arguments& args);
-		static v8::Handle<v8::Value> newTproxyFD(const v8::Arguments& args);
-		static v8::Handle<v8::Value> newTproxyClientFD(const v8::Arguments& args);
-		static v8::Handle<v8::Value> newTproxyServerFD(const v8::Arguments& args);
-		static v8::Handle<v8::Value> getTproxyRealDest(const v8::Arguments& args);
-		static v8::Handle<v8::Value> debugCheckFD(const v8::Arguments& args);
-		
-		static int getIpType(const char *ip);
-};
+var net = function() { /* loader below */ };
 
+// var binding = require(__dirname+'/build/Release/net.node');
+try {
+	net.httpTproxy = require(__dirname+'/js/httpTproxy');
+} catch(e) {
+	console.log("* net module exeption", e);
+}
+// net.httpServer = require(__dirname+'/js/httpServer');
+// net.acn = require(__dirname+'/js/acn.js');
 
-#endif
+net.loader = function(bs) {
+	try {
+
+	} catch(e) {
+
+	}
+}
+
+module.exports = net;
