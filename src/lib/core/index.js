@@ -20,6 +20,7 @@
 
 var core = function() { /* loader below */ };
 
+core.utils = require(__dirname+'/build/Release/core.node');
 core.ipc = require(__dirname+'/src/ipc.js');
 core.logger = require(__dirname+'/src/logger.js');
 core.pipeline = require(__dirname+'/src/pipeline.js');
@@ -41,5 +42,7 @@ core.fixCamelLike = function(str) {
 			return dash + chr.toUpperCase(); 
 	}); 
 }
+
+core.dateToStr = core.utils.dateToStr;
 
 module.exports = core;
