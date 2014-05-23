@@ -18,7 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var pipeline = function(gjs) { /* loader below */ };
+var fs = require('fs');
+var pipeline = function(gjs) { };
 
 pipeline.status = {
 	execute: 0,
@@ -26,9 +27,29 @@ pipeline.status = {
 	stop: 2
 };
 
-function pipeline(pipe, errorFunc) {
-	this.options = pipe;
-
+function pipelineObject(opcodes, line, errorFunc) {
+	this.opcodes = opcodes;
+	this.line = line;
+	this.pipe = [];
+	this.pipeIdx = 0;
+	
+	if(line.resolved != true) {
+		console.log(opcodes);
+		console.log(line);
+		
+		
+		for(var a in line) {
+			var l = line[a];
+			for(var b in line[a]) {
+				var op = line[a][b];
+				console.log(op);
+			}
+			
+		}
+		
+// 		console.log('resolved');
+		line.resolved = true;
+	}
 	this.stop = function() {
 		/* stop execution */
 		this.pipeStatus = pipeline.status.stop;
@@ -71,12 +92,58 @@ function pipeline(pipe, errorFunc) {
 }
 
 
-pipeline.create = function(pipe, errorFunc) {
-	return(new pipeline(pipe, errorFunc));
+pipeline.create = function(opcodes, line, errorFunc) {
+	return(new pipelineObject(opcodes, line, errorFunc));
 }
 
 
-pipeline.loader = function(gjs) { }
+var opcodes = {};
+var globalLines = {};
+
+pipeline.scanOpcodes = function(scanDir, name) {
+	/* get configuration pipeline */
+	if(!opcodes[name])
+		opcodes[name] = {};
+	try {
+		var d = fs.readdirSync(scanDir), a;
+		for(a in d) {
+			if(d[a].search(/\.js$/) > 0) {
+				var m = d[a].match(/(.*)\.js$/);
+				var f = scanDir + '/' + m[1];
+				opcodes[name][m[1]] = require(f);
+				opcodes[name][m[1]].ctor(pipeline.gjs);
+			}
+		}
+	} catch(e) {
+		this.gjs.lib.core.logger.error("Can not read directory "+e.path+" with error code #"+e.code);
+		return(false);
+	}
+	
+	return(opcodes[name]);
+}
+
+pipeline.getGlobalPipe = function(name) {
+	if(!pipeline.gjs.serverConfig.pipeline)
+		return(false);
+	
+	if(!pipeline.gjs.serverConfig.pipeline[name])
+		return(false);
+	
+	if(globalLines[name])
+		return(globalLines[name]);
+	
+	globalLines[name] = {
+		resolved: false,
+		items: pipeline.gjs.serverConfig.pipeline[name]
+	};
+
+	return(globalLines[name]);
+	
+}
+
+pipeline.loader = function(gjs) { 
+	pipeline.gjs = gjs;
+}
 
 module.exports = pipeline;
 

@@ -5,10 +5,27 @@ var serverConfig = function(bs) { return({
 	
 	runDir: "/tmp/gatejs",
 // 	libDir: __dirname,
-// 	logDir: "/home/bwsfg/logs",
+	logDir: "/var/log/gatejs",
 // 	configDir: __dirname+'/configs',
 	gracefulRam: 80,
 	gracefulRamForce: 90,
+	
+	http: {
+		testInterface: {
+			type: 'forward',
+			pipeline: 'pipetest'
+		},
+		testSSLInterface: {
+			type: 'forward',
+			ssl: true,
+		}
+	},
+	
+	pipeline: {
+		pipetest: [
+			['store', 'argtest1', 'argtest2']
+		],
+	}
 
 	
 })};

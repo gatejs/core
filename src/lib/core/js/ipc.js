@@ -157,10 +157,10 @@ ipc.spawnSlave = function(gjs) {
 	// type :
 	// FFW = far forward
 	// LFW = local forward
-	// RFW = remote forward
+	// RFW = root forward
 	ipc.send = function(type, cmd, msg) {
 		client.write(JSON.stringify({
-			from: gjs.cluster.worker.process.pid,
+			from: cluster.worker.process.pid,
 			type: type,
 			cmd: cmd,
 			msg: msg

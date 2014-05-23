@@ -21,9 +21,9 @@
 var core = function() { /* loader below */ };
 
 core.utils = require(__dirname+'/build/Release/core.node');
-core.ipc = require(__dirname+'/src/ipc.js');
-core.logger = require(__dirname+'/src/logger.js');
-core.pipeline = require(__dirname+'/src/pipeline.js');
+core.ipc = require(__dirname+'/js/ipc.js');
+core.logger = require(__dirname+'/js/logger.js');
+core.pipeline = require(__dirname+'/js/pipeline.js');
 
 core.loader = function(gjs) {
 	if(!gjs.serverConfig.runDir) {

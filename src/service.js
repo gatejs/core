@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2010-2014 BinarySEC SAS
- * Core engine [http://www.binarysec.com]
+ * Service [http://www.binarysec.com]
  * 
  * This file is part of Gate.js.
  * 
@@ -49,7 +49,16 @@ var gatejs = (function() {
 	});
 
 	if(cluster.isMaster) {
-		console.log("* GateJS v"+this.version);
+		console.log(
+			'*              _          _     '+"\n"+
+			'*   __ _  __ _| |_ ___   (_)___ '+"\n"+
+			'*  / _` |/ _` | __/ _ \\  | / __|'+"\n"+
+			'* | (_| | (_| | ||  __/_ | \\__ \\'+"\n"+
+			'*  \\__, |\\__,_|\\__\\___(_)/ |___/'+"\n"+
+			'*  |___/               |__/     '+"\n"+
+			"* \n"+
+			"* gate.js (c) 2007-2014 v"+this.version
+		);
 		console.log(
 			"*\n"+
 			"* NodeJS v"+process.versions.node+
@@ -57,7 +66,6 @@ var gatejs = (function() {
 			' - OpenSSL v'+process.versions.openssl+
 			' - libuv v'+process.versions.uv
 		);
-		
 	}
 	
 	var loadGeneric = function(dir, dst) {
@@ -166,111 +174,52 @@ var gatejs = (function() {
 	this.events.emit("clusterPreInit", this);
 	this.cluster = cluster;
 	if(cluster.isMaster) {
-
-// 		var localThis = this;
-// 		
-// 		localThis.spawned = 0;
-// 		
-// 		function processGraceful() {
-// 			if(localThis.spawned != localThis.serverConfig.serverProcess)
-// 				return(false);
-// 			
-// 			console.log('Receive graceful rotation');
-// 			
-// 			/* tel processes to stop accepting connection */
-// 			localThis.lib.bsCore.ipc.send('LFW', 'system:graceful:process', false);
-// 			
-// 			/* spawn processes */
-// 			for (var i = 0; i < localThis.serverConfig.serverProcess; i++) {
-// 				cluster.fork();
-// 				localThis.spawned++;
-// 			}
-// 			
-// 			return(true);
-// 		}
-// 		
-// 		this.lib.bsCore.ipc.on('system:graceful', processGraceful);
-// 		
-// 		function checkMachineMemory() {
-// 
-// 			var machine = {};
-// 			var matrix = {
-// 				MemTotal: true,
-// 				MemFree: true,
-// 				Buffers: true,
-// 				Cached: true,
-// 				
-// 			}
-// 			var rs = fs.createReadStream('/proc/meminfo');
-// 			var rd = readline.createInterface({
-// 				input: rs,
-// 				output: process.stdout,
-// 				terminal: false
-// 			});
-// 
-// 			rd.on('line', function(line) {
-// 				var p = line.indexOf(':');
-// 				var key = line.slice(0, p).trim();
-// 				var value = line.slice(p+1).trim();
-// 				value = value.slice(0, value.indexOf(' kB')).trim();
-// 				if(matrix[key])
-// 					machine[key] = value;
-// 			});
-// 			
-// 			rs.on('end', function(line) {
-// 				machine.realUsed = machine.MemTotal-machine.MemFree-machine.Buffers-machine.Cached;
-// 				machine.readUsedPercentil = machine.realUsed*100/machine.MemTotal;
-// 				
-// 				var cv = 6.6;
-// 				if(localThis.serverConfig.gracefulRam > 0)
-// 					cv = localThis.serverConfig.gracefulRam;
-// 				 
-// 				var mcv = 50;
-// 				if(localThis.serverConfig.gracefulRamForce > 0)
-// 					mcv = localThis.serverConfig.gracefulRamForce;
-// 				 
-// 				
-// 				/* check watermark */
-// 				if(machine.readUsedPercentil > cv) {
-// 					var ret = processGraceful();
-// 					if(ret == true)
-// 						console.log('Machine RAM usage high. Graceful order. p='+cv+' > '+machine.readUsedPercentil);
-// 				}
-// 				
-// 				/* check max watermark */
-// 				if(localThis.spawned > localThis.serverConfig.serverProcess && machine.readUsedPercentil > mcv) {
-// 					// send force to kill 
-// 					console.log('Master decides to shot childs');
-// 					localThis.lib.bsCore.ipc.send('LFW', 'system:graceful:force', true);
-// 				}
-// 				
-// 				rd.close();
-// 				rs.close();
-// 			});
-// 		}
-// 		setInterval(checkMachineMemory, 1000);
-
+		process.title = 'gate.js Master process';
+		var localThis = this;
+		
+		localThis.spawned = 0;
+		
+		function processGraceful() {
+			if(localThis.spawned != localThis.serverConfig.serverProcess)
+				return(false);
+			
+			localThis.lib.core.logger.system('Receive graceful rotation');
+			
+			/* tel processes to stop accepting connection */
+			localThis.lib.core.ipc.send('LFW', 'system:graceful:process', false);
+			
+			/* spawn processes */
+			for (var i = 0; i < localThis.serverConfig.serverProcess; i++) {
+				cluster.fork();
+				localThis.spawned++;
+			}
+			
+			return(true);
+		}
+		
+		this.lib.core.ipc.on('system:graceful', processGraceful);
+		this.lib.core.ipc.on('SIGUSR2', processGraceful);
+		
 		for (var i = 0; i < this.serverConfig.serverProcess; i++) {
 			cluster.fork();
-// 			localThis.spawned++;
+			localThis.spawned++;
 		}
 		
 		cluster.on('death', function(worker) {
 			this.events.emit("clusterDeath", this, worker);
-			console.log('worker ' + worker.pid + ' died');
-// 			localThis.spawned--;
+			localThis.spawned--;
 		});
 		
 		cluster.on('exit', function(worker) {
-// 			console.log('worker ' + worker.pid + ' exited');
-// 			localThis.spawned--;
+			localThis.spawned--;
 		});
 		
 		this.events.emit("clusterMasterInit", this);
 	} 
 	else {
+		process.title = 'gate.js Slave process';
 		/* receive IPC to for shuting down the process */
-// 		this.lib.bsCore.ipc.on('system:kill', function() {
+// 		this.lib.core.ipc.on('system:kill', function() {
 // 			process.exit(0);
 // 		});
 		this.events.emit("clusterSlaveInit", this);

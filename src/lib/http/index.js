@@ -21,12 +21,16 @@
 var http = function() { /* loader below */ };
 
 http.log = require(__dirname+'/js/log');
+http.littleFs = require(__dirname+'/js/littleFs');
+http.error = require(__dirname+'/js/error');
 http.forward = require(__dirname+'/js/forward');
 
-http.loader = function(bs) {
+http.loader = function(gjs) {
 	try {
-		http.log.loader(bs);
-		http.forward.loader(bs);
+		http.log.loader(gjs);
+		http.littleFs.loader(gjs);
+		http.error.loader(gjs);
+		http.forward.loader(gjs);
 	} catch(e) {
 		console.log("* HTTP exeption\n", e);
 	}
