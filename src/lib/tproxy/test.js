@@ -1,7 +1,8 @@
-var httproxy = require('./js/httproxy.js');
+var tproxy = require('./index.js');
+var http = require('http');
 
 //Client:
-var req = httproxy.request({
+/*var req = httproxy.request({
 	createConnection: httproxy.createTproxyConnection,
 	agent: false,
 	hostname: 'ifconfig.me',
@@ -17,7 +18,7 @@ var req = httproxy.request({
 	});
 });
 
-req.end();
+req.end();*/
 
 //Server:
 /*var s = httproxy.createServer(function(c) {
