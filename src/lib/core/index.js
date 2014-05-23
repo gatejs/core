@@ -44,5 +44,6 @@ core.fixCamelLike = function(str) {
 }
 
 core.dateToStr = core.utils.dateToStr;
+core.nreg = core.utils.nreg;
 
 module.exports = core;

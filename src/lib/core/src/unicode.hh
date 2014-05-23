@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2010-2014 BinarySEC SAS
- * Core base module [http://www.binarysec.com]
+ * CoreNreg unicode utilities [http://www.binarysec.com]
  * 
  * This file is part of Gate.js.
  * 
@@ -18,15 +18,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "utils.hh"
-#include "nreg_wrap.hh"
+#ifndef _NREG_UNICODE_H
+#define _NREG_UNICODE_H
 
-using namespace v8;
+#include <string>
 
-void InitAll(Handle<Object> exports, Handle<Object> module) {
-	CoreUtils::Init(exports);
-	CoreNregWrap::Init(exports);
-}
+enum CoreUnicodeIndex {
+	NREG_UNICODE_2,
+	NREG_UNICODE_3,
+	NREG_UNICODE_4,
+	NREG_UNICODE_LAST,
+};
 
-NODE_MODULE(core, InitAll)
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ * Décodeur Unicode
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+int CoreUtf8Verify(
+	const unsigned char *input, 
+	int input_len
+);
 
+inline char _tranform(char c1, char c2);
+
+inline int _is_valid_hexa(char c);
+
+unsigned int CoreUtf8Decoder(
+	std::string &input_s,
+	std::string &output_s
+);
+
+#endif
