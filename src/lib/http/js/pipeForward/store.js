@@ -5,7 +5,10 @@ var crypto = require('crypto');
 var cluster = require("cluster");
 var url = require('url');
 
-var store = function(gjs) {
+var store = function(gjs) { }
+
+store.request = function(gjs) {
+	console.log(gjs.request.url);
 	
 // 	/* no need to try parsing already validated by http server */
 // 	gjs.request.urlParseCacheStore = url.parse(gjs.request.url, true);

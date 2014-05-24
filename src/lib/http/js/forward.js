@@ -122,7 +122,6 @@ forward.loader = function(gjs) {
 				title:  "Pipeline terminated",
 				explain: "Pipeline did not execute a breaking opcode"
 			});
-			
 		});
 		
 		pipe.root = gjs;
@@ -159,17 +158,9 @@ forward.loader = function(gjs) {
 			return;
 		}
 
-		gjs.lib.http.error.renderArray({
-			pipe: pipe, 
-			code: 513, 
-			tpl: "5xx", 
-			log: false,
-			title:  "Pipeline terminated",
-			explain: "Pipeline did not execute a breaking opcode"
-		});
-
-		/* run pipeline */
-// 		var ret = pipevar.execute();
+		/* execute pipeline */
+		pipe.resume();
+		pipe.execute();
 	};
 	
 // 	var slowLoris = function(socket) {
@@ -177,8 +168,6 @@ forward.loader = function(gjs) {
 // 		clearInterval(socket.bwsFg.interval);
 // 		socket.destroy();
 // 	}
-	
-	
 	
 	var bindHttpServer = function(key, sc) {
 		/* sanatize */
@@ -300,8 +289,7 @@ forward.loader = function(gjs) {
 // 		console.log('Graceful agent controler has '+forward.sockets.length+' sockets in queue');
 		for(var a in forward.sockets) {
 			var s = forward.sockets[a];
-			
-			
+	
 			if(s.inUse == false)
 				s.destroy();
 // 			else

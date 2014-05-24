@@ -28,28 +28,32 @@ pipeline.status = {
 };
 
 function pipelineObject(opcodes, line, errorFunc) {
-	this.opcodes = opcodes;
-	this.line = line;
 	this.pipe = [];
 	this.pipeIdx = 0;
 	
 	if(line.resolved != true) {
-		console.log(opcodes);
-		console.log(line);
-		
-		
+		var lPipe = [];
 		for(var a in line) {
-			var l = line[a];
+			var insert = [];
 			for(var b in line[a]) {
 				var op = line[a][b];
-				console.log(op);
+				/* check opcode */
+				if(!opcodes[op[0]]) {
+					console.log('no opcode calls '+op[0]+' please check your configuration');
+					break;
+				}
+				insert[0] = opcodes[op[0]];
+				for(var c=1; c<op.length; c++)
+					insert.push(op[c]);
 			}
-			
+			if(insert.length > 0)
+				lPipe.push(insert);
 		}
-		
-// 		console.log('resolved');
+		line.solved = lPipe;
 		line.resolved = true;
 	}
+	this.pipe = line.solved;
+	
 	this.stop = function() {
 		/* stop execution */
 		this.pipeStatus = pipeline.status.stop;
@@ -68,16 +72,12 @@ function pipelineObject(opcodes, line, errorFunc) {
 	
 	this.execute = function() {
 		for(; this.pipeIdx < this.pipe.length;) {
-			var arg = this.pipe[this.pipeIdx];
-			var aloneArg = [];
-			aloneArg.push(this);
-			for(var a = 1; arg instanceof Array && a<arg.length; a++) 
-				aloneArg.push(arg[a]);
-
+			var func = this.pipe[this.pipeIdx];
+			var arg = [this];
+			for(var a; a<func.length; a++)
+				arg.push(func[a]);
 			this.pipeIdx++;
-			var func = arg[0];
-			func.apply(null, aloneArg);
-		
+			func[0].request.apply(null, arg);
 			if(this.pipeStatus == pipeline.status.stop)
 				return(true);
 			else if(this.pipeStatus == pipeline.status.waiting)
