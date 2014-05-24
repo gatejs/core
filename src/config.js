@@ -13,6 +13,7 @@ var serverConfig = function(bs) { return({
 	http: {
 		testInterface: {
 			type: 'forward',
+			port: 8080,
 			pipeline: 'pipetest'
 		},
 		testSSLInterface: {
@@ -24,7 +25,7 @@ var serverConfig = function(bs) { return({
 	pipeline: {
 		pipetest: [
 			['store', 'argtest1', 'argtest2'],
-			['proxyPass', 'host']
+			['proxyPass', { mode: 'host', timeout: 10 }]
 		],
 	}
 
