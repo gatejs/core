@@ -34,8 +34,8 @@ function pipelineObject(opcodes, line, errorFunc) {
 	if(line.resolved != true) {
 		var lPipe = [];
 		for(var a in line) {
-			var insert = [];
 			for(var b in line[a]) {
+				var insert = [];
 				var op = line[a][b];
 				/* check opcode */
 				if(!opcodes[op[0]]) {
@@ -45,9 +45,10 @@ function pipelineObject(opcodes, line, errorFunc) {
 				insert[0] = opcodes[op[0]];
 				for(var c=1; c<op.length; c++)
 					insert.push(op[c]);
+				
+				if(insert.length > 0)
+					lPipe.push(insert);
 			}
-			if(insert.length > 0)
-				lPipe.push(insert);
 		}
 		line.solved = lPipe;
 		line.resolved = true;
@@ -74,7 +75,7 @@ function pipelineObject(opcodes, line, errorFunc) {
 		for(; this.pipeIdx < this.pipe.length;) {
 			var func = this.pipe[this.pipeIdx];
 			var arg = [this];
-			for(var a; a<func.length; a++)
+			for(var a=1; a<func.length; a++)
 				arg.push(func[a]);
 			this.pipeIdx++;
 			func[0].request.apply(null, arg);
@@ -83,7 +84,6 @@ function pipelineObject(opcodes, line, errorFunc) {
 			else if(this.pipeStatus == pipeline.status.waiting)
 				return(true);
 		}
-	
 		if(errorFunc)
 			errorFunc.apply(null, this);
 		
