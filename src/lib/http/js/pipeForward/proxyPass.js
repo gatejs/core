@@ -18,7 +18,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 var util = require("util");
 var http = require("http");
 var https = require("https");
@@ -28,8 +27,23 @@ var dns = require('dns');
 var proxyPass = function() { /* loader below */ } 
 
 proxyPass.request = function(pipe, opts) {
+	/* select DNS from host */
+	var tmp = pipe.request.headers.host.indexOf(':');
+	var reqHost;
+	var reqPort;
+
+	if(tmp > 0) {
+		reqHost = pipe.request.headers.host.substr(0, tmp);
+		reqPort = pipe.request.headers.host.substr(tmp+1);
+	}
+	else {
+		reqHost = pipe.request.headers.host;
+		reqPort = 80;
+	}
 	
-	
+	if(reqPort <= 0 || reqPort >= 65535)
+		reqHost = 80;
+		
 	function emitDestinationRequest(ip, port, from) {
 		
 		pipe.response.on('error', function(err) {
@@ -40,7 +54,6 @@ proxyPass.request = function(pipe, opts) {
 			pipe.response.emit("fwProxyPassClientFinish"); 
 		});
 		
-		console.log(pipe.request.urlParse);
 		/*
 		* Prepare and emit the request
 		*/
@@ -53,21 +66,21 @@ proxyPass.request = function(pipe, opts) {
 			rejectUnauthorized: false,
 			//agent: new pipe.root.lib.bwsFg.httpTproxy.newAgent(),
 		};
-		
-		if(from) {
+	
+		if(from != undefined)
 			options.localAddress = from;
-		}
+		
 		pipe.response.connector = ip+":"+port;
 
-// 		for(var n in pipe.request.headers)
-// 			options.headers[pipe.root.lib.bsCore.fixCamelLike(n)] = pipe.request.headers[n];
+		for(var n in pipe.request.headers)
+			options.headers[pipe.root.lib.core.fixCamelLike(n)] = pipe.request.headers[n];
 
 // 		delete pipe.request.headers.connection;
 		var req = http.request(options);
 		
 		req.setSocketKeepAlive(false);
 		
-// 		pipe.root.lib.bsCore.ipc.send('LFW', 'bsStatus', {
+// 		pipe.root.lib.core.ipc.send('LFW', 'bsStatus', {
 // 			host: pipe.request.headers.host,
 // 			miss: true
 // 		});
@@ -94,7 +107,7 @@ proxyPass.request = function(pipe, opts) {
 			var counter = 0;
 			res.on('data', function(data) { counter += data.length; });
 // 			pipe.response.on('finish', function() {
-// 				pipe.root.lib.bsCore.ipc.send('LFW', 'bsStatus', {
+// 				pipe.root.lib.core.ipc.send('LFW', 'bsStatus', {
 // 					host: pipe.request.headers.host,
 // 					missBand: counter
 // 				});
@@ -106,11 +119,11 @@ proxyPass.request = function(pipe, opts) {
 // 				res.headers.connection = 'Close';
 			
 			/* fix headers */
-// 			var nHeaders = {};
-// 			for(var n in res.headers)
-// 				nHeaders[pipe.root.lib.bsCore.fixCamelLike(n)] = res.headers[n];
+			var nHeaders = {};
+			for(var n in res.headers)
+				nHeaders[pipe.root.lib.core.fixCamelLike(n)] = res.headers[n];
 	
-			pipe.response.writeHead(res.statusCode, res.headers);
+			pipe.response.writeHead(res.statusCode, nHeaders);
 			pipe.response.headerSent = true;
 // 			console.log(res.headers);
 // 			pipe.root.lib.bwsFg.httpServer.logpipe(pipe, res);
@@ -121,7 +134,7 @@ proxyPass.request = function(pipe, opts) {
 		req.on('error', function (error) {
 			pipe.response.emit("fwProxyPassSourceRequestError"); 
 
-// 			pipe.root.lib.bsCore.logger.siteInfo(
+// 			pipe.root.lib.core.logger.siteInfo(
 // 				pipe.request.selectedConfig.serverName[0], 
 // 				"Proxy pass error on "+
 // 				pipe.response.connector+" from "+
@@ -163,57 +176,51 @@ proxyPass.request = function(pipe, opts) {
 		req.on('socket', function (socket) {
 			socket.timeoutId = setTimeout(
 				socketErrorDetection, 
-				15000, 
+				pipe.server.config.timeout*1000, 
 				socket
 			);
-			
 			socket.on('connect', function() { 
 				clearTimeout(socket.timeoutId); 
 			});
-
-			
-			if(!socket.bgWatcher) {
-				socket.bgWatcher = setTimeout(
-					function() { 
-// 						console.log('bg timeout'); 
-// 						socket.destroy();
-					}, 
-					10000
-				);
-			}
-			
 		});
 
 		pipe.response.emit("fwProxyPassPassPrepare", req);
 		pipe.request.pipe(req);
 	}
 	
-	
-	/* 
-	 * tproxy source spoof + host DNS routing
-	 */
-	function modeTproxySrcHost() {
-		
-	}
-	
 	/* 
 	 * tproxy source destination routing
 	 */
-	function modeTproxySrcDst() {
+	function modeTproxy(spoof, woport) {
+		var realDst;
+		try {
+			realDst = pipe.root.lib.tproxy.node.getTproxyRealDest(pipe.request.client._handle.fd);
+		}
+		catch(e) {
+			pipe.root.lib.http.error.renderArray({
+				pipe: pipe, 
+				code: 500, 
+				tpl: "5xx", 
+				log: true,
+				title:  "Internal server error",
+				explain: "Could not get destination address using tproxy"
+			});
+
+			pipe.stop();
+			return(true);
+		}
+
+		pipe.pause();
+		spoof = spoof == true ? pipe.request.client._peername.address : undefined;
+		woport = woport == true ? reqPort : realDst.port;
 		
-	}
-	
-	/* 
-	 * tproxy destination routing
-	 */
-	function modeTproxyDst() {
-		
+		emitDestinationRequest(realDst.address, woport, spoof);
 	}
 	
 	/* 
 	 * HOST routing
 	 */
-	function modeHost() {
+	function modeHost(spoof) {
 		/* check host */
 		if(!pipe.request.headers.host) {
 			pipe.root.lib.http.error.renderArray({
@@ -228,23 +235,7 @@ proxyPass.request = function(pipe, opts) {
 			return(true);
 		}
 		
-		/* select DNS from host */
-		var tmp = pipe.request.headers.host.indexOf(':');
-		var reqHost;
-		var reqPort;
-	
-		if(tmp > 0) {
-			reqHost = pipe.request.headers.host.substr(0, tmp);
-			reqPort = pipe.request.headers.host.substr(tmp+1);
-		}
-		else {
-			reqHost = pipe.request.headers.host;
-			reqPort = 80;
-		}
-		
-		if(reqPort <= 0 || reqPort >= 65535)
-			reqHost = 80;
-		
+		/* launch DNS query */
 		pipe.pause();
 		dns.resolve4(reqHost, function (err, addresses) {
 			if(err) {
@@ -273,24 +264,28 @@ proxyPass.request = function(pipe, opts) {
 				return(true);
 			}
 			
-			emitDestinationRequest(addresses[0], reqPort);
+			spoof = spoof == true ? pipe.request.client._peername.address : undefined;
+			emitDestinationRequest(addresses[0], reqPort, spoof);
 		});
-
 	}
 
+	
 	/* switch options */
 	switch(opts.mode) {
 		case 'tproxy-src-host':
-			modeTproxySrcHost();
+			modeHost(true);
 			break;
 		case 'tproxy-src-dst':
-			modeTproxySrcDst();
+			modeTproxy(true);
 			break;
 		case 'tproxy-dst':
-			modeTproxyDst();
+			modeTproxy(false);
+			break;
+		case 'tproxy-dst-woport':
+			modeTproxy(false, true);
 			break;
 		default:
-			modeHost();
+			modeHost(false);
 			break;
 	}
 	

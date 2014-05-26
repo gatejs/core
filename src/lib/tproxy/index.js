@@ -22,6 +22,7 @@ var net = require('net');
 
 var tproxy = function() { /* loader below */ };
 
+tproxy.node = require('./build/Release/obj.target/tproxy.node');
 tproxy.net = require(__dirname+'/js/net');
 tproxy.httpAgent = require(__dirname+'/js/httpAgent');
 

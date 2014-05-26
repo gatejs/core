@@ -178,6 +178,8 @@ forward.loader = function(gjs) {
 		if(!sc.address) sc.address = '0.0.0.0';
 		if(!sc.port)
 			sc.port = sc.ssl == true ? 443 : 80;
+		if(!sc.timeout)
+			sc.timeout = 30;
 		
 		/* create network interface */
 		var iface;

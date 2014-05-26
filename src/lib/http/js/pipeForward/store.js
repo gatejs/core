@@ -8,11 +8,11 @@ var url = require('url');
 var store = function(gjs) { }
 
 store.request = function(gjs) {
-	console.log(gjs.request.url);
+// 	console.log(gjs.request.url);
 	
 // 	/* no need to try parsing already validated by http server */
 // 	gjs.request.urlParseCacheStore = url.parse(gjs.request.url, true);
-// 	gjs.request.urlParseCacheStore.protocol = 'http:';
+// // 	gjs.request.urlParseCacheStore.protocol = 'http:';
 // 	
 // 	delete gjs.request.urlParseCacheStore.hostname;
 // 	
@@ -39,7 +39,7 @@ store.request = function(gjs) {
 }
 
 store.ctor = function(gjs) {
-	console.log('store ctor');
+// 	console.log('store ctor');
 // 	if(cluster.isMaster)
 // 		return;
 // 	
