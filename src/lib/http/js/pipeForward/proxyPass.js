@@ -16,6 +16,8 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * Origin: Michael VERGOZ
  */
 
 var util = require("util");
@@ -115,8 +117,8 @@ proxyPass.request = function(pipe, opts) {
 		
 // 			delete res.headers.connection;
 // 			delete res.headers['keep-alive'];
-// 			if(pipe.server.isClosing == true)
-// 				res.headers.connection = 'Close';
+			if(pipe.server.isClosing == true)
+				res.headers.connection = 'Close';
 			
 			/* fix headers */
 			var nHeaders = {};
@@ -174,12 +176,19 @@ proxyPass.request = function(pipe, opts) {
 		}
 		
 		req.on('socket', function (socket) {
+			if(!socket.connected) 
+				socket.connected = false;
+			
+			if(socket.connected == true)
+				return;
+			
 			socket.timeoutId = setTimeout(
 				socketErrorDetection, 
 				pipe.server.config.timeout*1000, 
 				socket
 			);
-			socket.on('connect', function() { 
+			socket.on('connect', function() {
+				socket.connected = true;
 				clearTimeout(socket.timeoutId); 
 			});
 		});

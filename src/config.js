@@ -4,7 +4,7 @@ var serverConfig = function(bs) { return({
 	hostname: "testServer0",
 	
 	runDir: "/tmp/gatejs",
-// 	libDir: __dirname,
+	dataDir: "/home/bwsfg",
 	logDir: "/var/log/gatejs",
 // 	configDir: __dirname+'/configs',
 	gracefulRam: 80,
@@ -25,6 +25,7 @@ var serverConfig = function(bs) { return({
 	pipeline: {
 		pipetest: [
 			['store', 'argtest1', 'argtest2'],
+			['cache', { }],
 			['proxyPass', { mode: 'host', timeout: 10 }]
 		],
 	}

@@ -35,6 +35,8 @@ var ballTable = {};
 var acn = function(bs) { /* loader below */ };
 
 acn.loader = function(bs) {
+	acn.cacheDir = bs.serverConfig.dataDir+"/cache/";
+	
 	/* bind Events */
 	for(var a in eventEmitter)
 		acn[a] = eventEmitter[a];
@@ -43,9 +45,7 @@ acn.loader = function(bs) {
 		return;
 	
 	var a = bs.serverConfig.acn;
-	
-	acn.cacheDir = bs.serverConfig.dataDir+"/cache/";
-	
+
 	a.listen = a.listen ? a.listen : '0.0.0.0';
 	a.port = a.port ? a.port : 9043;
 	
@@ -55,11 +55,9 @@ acn.loader = function(bs) {
 	}
 	
 	if(bs.serverConfig.acn instanceof Object) {
-		
 		if(a.mode == 'multicast') {
 			
 			a.address = a.address ? a.address : '224.0.0.174';
-			
 			a.deadInterval = a.deadInterval ? a.deadInterval : 2000;
 			a.pingInterval = a.pingInterval ? a.pingInterval : 200;
 			a.deadRequest = a.deadRequest ? a.deadRequest : 50;
@@ -454,10 +452,13 @@ function loadMulticastACN(bs) {
 }
 
 
-acn.divideHash = function(bs, hash) {
+acn.divideHash = function(d, hash) {
 	var fileHash = acn.cacheDir;
+	if(!d || d <= 0 || d >= 10)
+		d = 8;
+	
 	var dig = hash;
-	var div = (dig.length-1) / bs.serverConfig.cache.dirDiviser + 1;
+	var div = (dig.length-1) / d + 1;
 	div = div|0;
 	fileHash = fileHash + '/' + dig.substr(0, 1) + '/' + dig.substr(1, div - 1);
 	for(var a=div; a<dig.length; a+=div)
@@ -469,10 +470,10 @@ acn.divideHash = function(bs, hash) {
 	});
 }
 
-acn.generateInHash = function(bs, input) {
+acn.generateInHash = function(division, input) {
 	var hash = crypto.createHash('md5');
 	hash.update(input, 'ascii')
-	return(acn.divideHash(bs, hash.digest('hex')));
+	return(acn.divideHash(division, hash.digest('hex')));
 }
 
 acn.loadHeaderFile = function(file) {
