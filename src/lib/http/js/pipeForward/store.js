@@ -10,19 +10,19 @@ var store = function(gjs) { }
 store.request = function(gjs) {
 // 	console.log(gjs.request.url);
 	
-// 	/* no need to try parsing already validated by http server */
-// 	gjs.request.urlParseCacheStore = url.parse(gjs.request.url, true);
-// // 	gjs.request.urlParseCacheStore.protocol = 'http:';
-// 	
-// 	delete gjs.request.urlParseCacheStore.hostname;
-// 	
-// 	gjs.request.urlParseCacheStore.host = 'store.'+gjs.request.headers.host;
-// 	
-// // 	console.log(gjs.request.urlParseCacheStore, gjs.request.urlParse);
-// 	
-// 	/* extends urlParse options */
-// 	gjs.request.urlParseCacheStore.pathSplit = gjs.request.urlParse.pathname.split('/');
-// 
+	/* no need to try parsing already validated by http server */
+	gjs.request.urlParseCacheStore = url.parse(gjs.request.url, true);
+// 	gjs.request.urlParseCacheStore.protocol = 'http:';
+	
+	delete gjs.request.urlParseCacheStore.hostname;
+	
+	gjs.request.urlParseCacheStore.host = 'store.'+gjs.request.headers.host;
+	
+// 	console.log(gjs.request.urlParseCacheStore, gjs.request.urlParse);
+	
+	/* extends urlParse options */
+	gjs.request.urlParseCacheStore.pathSplit = gjs.request.urlParse.pathname.split('/');
+
 // 	/* basic scan */
 // 	for(var a in store.scripts) {
 // 		var script = store.scripts[a];

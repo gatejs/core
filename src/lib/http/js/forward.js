@@ -181,6 +181,8 @@ forward.loader = function(gjs) {
 		if(!sc.timeout)
 			sc.timeout = 30;
 		
+		/** \todo ssl needs file lookup */
+		
 		/* create network interface */
 		var iface;
 		if(sc.ssl == true) {

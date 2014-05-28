@@ -24,6 +24,7 @@ http.log = require(__dirname+'/js/log');
 http.littleFs = require(__dirname+'/js/littleFs');
 http.error = require(__dirname+'/js/error');
 http.forward = require(__dirname+'/js/forward');
+http.reverse = require(__dirname+'/js/reverse');
 
 http.loader = function(gjs) {
 	try {
@@ -31,6 +32,7 @@ http.loader = function(gjs) {
 		http.littleFs.loader(gjs);
 		http.error.loader(gjs);
 		http.forward.loader(gjs);
+		http.reverse.loader(gjs);
 	} catch(e) {
 		console.log("* HTTP exeption\n", e);
 	}
