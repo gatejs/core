@@ -31,7 +31,7 @@ function pipelineObject(opcodes, line, errorFunc) {
 	this.pipe = [];
 	this.pipeIdx = 0;
 	
-	if(line.resolved != true) {
+	if(line && opcodes && line.resolved != true) {
 		var lPipe = [];
 		for(var a in line) {
 			for(var b in line[a]) {
@@ -53,7 +53,36 @@ function pipelineObject(opcodes, line, errorFunc) {
 		line.solved = lPipe;
 		line.resolved = true;
 	}
-	this.pipe = line.solved;
+
+	if(line && line.solved)
+		this.pipe = line.solved;
+	
+	this.update = function(opcodes, line) {
+		if(!line || !opcodes)
+			return(false);
+		
+		var lPipe = [];
+		for(var a in line) {
+			for(var b in line[a]) {
+				var insert = [];
+				var op = line[a][b];
+				/* check opcode */
+				if(!opcodes[op[0]]) {
+					console.log('no opcode calls '+op[0]+' please check your configuration');
+					break;
+				}
+				insert[0] = opcodes[op[0]];
+				for(var c=1; c<op.length; c++)
+					insert.push(op[c]);
+				
+				if(insert.length > 0)
+					lPipe.push(insert);
+			}
+		}
+		line.solved = lPipe;
+		line.resolved = true;
+		this.pipe = line.solved;
+	}
 	
 	this.stop = function() {
 		/* stop execution */
@@ -72,17 +101,19 @@ function pipelineObject(opcodes, line, errorFunc) {
 	}
 	
 	this.execute = function() {
-		for(; this.pipeIdx < this.pipe.length;) {
-			var func = this.pipe[this.pipeIdx];
-			var arg = [this];
-			for(var a=1; a<func.length; a++)
-				arg.push(func[a]);
-			this.pipeIdx++;
-			func[0].request.apply(null, arg);
-			if(this.pipeStatus == pipeline.status.stop)
-				return(true);
-			else if(this.pipeStatus == pipeline.status.waiting)
-				return(true);
+		if(this.pipe) {
+			for(; this.pipeIdx < this.pipe.length;) {
+				var func = this.pipe[this.pipeIdx];
+				var arg = [this];
+				for(var a=1; a<func.length; a++)
+					arg.push(func[a]);
+				this.pipeIdx++;
+				func[0].request.apply(null, arg);
+				if(this.pipeStatus == pipeline.status.stop)
+					return(true);
+				else if(this.pipeStatus == pipeline.status.waiting)
+					return(true);
+			}
 		}
 		if(errorFunc)
 			errorFunc.apply(null, this);

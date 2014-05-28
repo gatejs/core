@@ -43,6 +43,28 @@ core.fixCamelLike = function(str) {
 	}); 
 }
 
+core.lookupSSLFile = function(options) {
+	/* ca and crl as possible array */
+	var root = gjs.serverConfig.libDir+'/ssl';
+	var keyLookup = ['cert', 'ca', 'pfx', 'key'];
+	for(var a in keyLookup) {
+		var z = keyLookup[a];
+		if(options[z]) {
+			var file = root+'/'+options[z];
+			try {
+				var fss = fs.statSync(file);
+				options[z] = fs.readFileSync(file);
+				
+			} catch(e) {
+				console.log('Can not open '+file+' '+e);
+				return(false);
+			}
+		}
+	}
+	return(true);
+}
+	
+	
 core.dateToStr = core.utils.dateToStr;
 core.nreg = core.utils.nreg;
 

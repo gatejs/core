@@ -21,37 +21,87 @@ reverse.attachSite = function(key, config) {
 }
 
   	 
-reverse.loader = function(bs) {
+reverse.loader = function(gjs) {
 	if (cluster.isMaster)
 		return;
 
-	function lookupServername(sites, host) {
-		for(var a in sites) {
-			var sConf = sites[a];
-			for(var b in sConf.serverName) {
-				var z = sConf.serverName[b];
-				if(z == host)
-					return(sConf);
-			}
-		}
-		return(false);
-	}
+// 	function lookupServername(sites, host) {
+// 		for(var a in sites) {
+// 			var sConf = sites[a];
+// 			for(var b in sConf.serverName) {
+// 				var z = sConf.serverName[b];
+// 				if(z == host)
+// 					return(sConf);
+// 			}
+// 		}
+// 		return(false);
+// 	}
 	
 
 	var processRequest = function(server, request, response) {
-
+		var pipe = gjs.lib.core.pipeline.create(null, null, function() {
+			gjs.lib.http.error.renderArray({
+				pipe: pipe, 
+				code: 513, 
+				tpl: "5xx", 
+				log: false,
+				title:  "Pipeline terminated",
+				explain: "Pipeline did not execute a breaking opcode"
+			});
+		});
+		
+		pipe.root = gjs;
+		pipe.request = request;
+		pipe.response = response;
+		pipe.server = server;
+		
+		/* parse the URL */
+		try {
+			pipe.request.urlParse = url.parse(request.url, true);
+		} catch(e) {
+			gjs.lib.core.logger.error('URL Parse error on from '+request.remoteAddress);
+			request.connection.destroy();
+			return;
+		}
+		
+		/* lookup little FS */
+		var lfs = gjs.lib.http.littleFs.process(request, response);
+		if(lfs == true)
+			return;
+		
+		/* get iface */
+		var iface = reverse.list[server.gjsKey];
+		if(!iface) {
+			gjs.lib.http.error.renderArray({
+				pipe: pipe, 
+				code: 500, 
+				tpl: "5xx", 
+				log: false,
+				title:  "Internal server error",
+				explain: "no iface found, fatal error"
+			});
+			gjs.lib.core.logger.error('No interface found for key '+server.gjsKey+' from '+request.remoteAddress);
+			return;
+		}
+		pipe.iface = iface;
+		
+		/* lookup website */
+		
+		/* execute pipeline */
+		pipe.resume();
+		pipe.execute();
 	};
 	
 	var slowLoris = function(socket) {
 		console.log("Probable SlowLoris attack from "+socket.remoteAddress+", closing.");
-		clearInterval(socket.bwsRg.interval);
+		clearInterval(socket.gjs.interval);
 		socket.destroy();
 	}
 	
 	var bindHttpServer = function(key, sc) {
 		console.log("Binding HTTP server on "+sc.address+":"+sc.port);
 		var iface = http.createServer(function(request, response) {
-// 			clearInterval(request.socket.bwsRg.interval);
+// 			clearInterval(request.socket.gjs.interval);
 // 			if(!currentServer.requestCount)
 // 				currentServer.requestCount = 0;
 			
@@ -62,40 +112,19 @@ reverse.loader = function(bs) {
 		
 // 		iface.on('connection', (function(socket) {
 // 			var date = new Date;
-// 			socket.bwsRg = {
+// 			socket.gjs = {
 // 				timer: date.getTime(),
 // 				interval: setInterval(slowLoris, 5000, socket)
 // 			};
 // 			
 // 			console.log("connection");
 // 		}));
-		iface.bwsRgKey = key;
+		iface.gjsKey = key;
 		iface.listen(sc.port, sc.address);
 		
 		return(iface);
 	}
 	
-	var lookupSSLFile = function(options) {
-		/* ca and crl as possible array */
-		var root = bs.serverConfig.libDir+'/ssl';
-		var keyLookup = ['cert', 'ca', 'pfx', 'key'];
-		for(var a in keyLookup) {
-			var z = keyLookup[a];
-			if(options[z]) {
-				var file = root+'/'+options[z];
-				try {
-					var fss = fs.statSync(file);
-					options[z] = fs.readFileSync(file);
-					
-				} catch(e) {
-					console.log('Can not open '+file+' '+e);
-					return(false);
-				}
-			}
-		}
-		return(true);
-		
-	}
 	
 	var bindHttpsServer = function(key, sc) {
 		if(!lookupSSLFile(sc)) {
@@ -115,7 +144,7 @@ reverse.loader = function(bs) {
 				if(site.sslSNI.resolv)
 					return(site.sslSNI.crypto.context);
 				
-				/* ok website has SNI certificate check files */
+				/* ok wegjsite has SNI certificate check files */
 				if(!lookupSSLFile(site.sslSNI)) {
 					site.sslSNI.usable = false;
 					site.sslSNI.resolv = true;
@@ -132,7 +161,7 @@ reverse.loader = function(bs) {
 		
 		console.log("Binding HTTPS server on "+sc.address+":"+sc.port);
 		var iface = https.createServer(sc, function(request, response) {
-// 			clearInterval(request.socket.bwsRg.interval);
+// 			clearInterval(request.socket.gjs.interval);
 // 			if(!currentServer.requestCount)
 // 				currentServer.requestCount = 0;
 			
@@ -143,41 +172,67 @@ reverse.loader = function(bs) {
 		
 // 		iface.on('connection', (function(socket) {
 // 			var date = new Date;
-// 			socket.bwsRg = {
+// 			socket.gjs = {
 // 				timer: date.getTime(),
 // 				interval: setInterval(slowLoris, 5000, socket)
 // 			};
 // 			
 // 			console.log("connection");
 // 		}));
-		iface.bwsRgKey = key;
+		iface.gjsKey = key;
 		iface.listen(sc.port, sc.address);
 		
 		return(iface);
 	}
+
+	/*
+	 * Associate interface and configuration
+	 */
+	function processConfiguration(key, o) {
+		if(o.type == 'reverse') {
+			if(!reverse.list[key]) {
+				reverse.list[key] = {
+					sites: [],
+					ifaces: []
+				};
+			}
+			/* defaulting */
+			if(!o.address) o.address = '0.0.0.0';
+			if(!o.port)
+				o.port = o.ssl == true ? 443 : 80;
+			if(o.ssl == true)
+				reverse.list[key].ifaces.push(bindHttpsServer(key, o));
+			else 
+				reverse.list[key].ifaces.push(bindHttpServer(key, o));
+		}
+	}
 	
-// 	/*
-// 	 * Associate interface and configuration
-// 	 */
-// 	function processConfiguration(key, o) {
-// 		
-// 		if(!reverse.list[key]) {
-// 			reverse.list[key] = {
-// 				sites: [],
-// 				ifaces: []
-// 			};
-// 		}
-// 		if(o.type == 'http')
-// 			reverse.list[key].ifaces.push(bindHttpServer(key, o));
-// 		else if(o.type == 'https')
-// 			reverse.list[key].ifaces.push(bindHttpsServer(key, o));
-// 	}
-// 	
+	/* Load opcode context */
+	reverse.opcodes = gjs.lib.core.pipeline.scanOpcodes(
+		__dirname+'/pipeReverse',
+		'reversing'
+	);
+	if(!reverse.opcodes)
+		return(false);
+	
+	/* 
+	 * Follow configuration
+	 */
+	for(var a in gjs.serverConfig.http) {
+		var sc = gjs.serverConfig.http[a];
+		if(sc instanceof Array) {
+			for(var b in sc)
+				processConfiguration(a, sc[b]);
+		}
+		else if(sc instanceof Object)
+			processConfiguration(a, sc);
+	}
+	
 // 	/* 
 // 	 * Follow configuration
 // 	 */
-// 	for(var a in bs.serverConfig.reverse) {
-// 		var sc = bs.serverConfig.reverse[a];
+// 	for(var a in gjs.serverConfig.reverse) {
+// 		var sc = gjs.serverConfig.reverse[a];
 // 		if(sc instanceof Array) {
 // 			for(var b in sc)
 // 				processConfiguration(a, sc[b]);
@@ -189,14 +244,14 @@ reverse.loader = function(bs) {
 // 	function doReload() {
 // 		var ret;
 // 		
-// 		/* clean website pointers */
+// 		/* clean wegjsite pointers */
 // 		for(var key in reverse.list)
 // 			reverse.list[key].sites = [];
 // 	}
 // 	
 // 	/* handle reload */
-// 	bs.lib.bsCore.ipc.on('SIGUSR2', doReload);
-// 	bs.lib.bsCore.ipc.on('bwsRg:reload', doReload);
+// 	gjs.lib.gjsCore.ipc.on('SIGUSR2', doReload);
+// 	gjs.lib.gjsCore.ipc.on('gjs:reload', doReload);
 	
 	return(false);
 	
