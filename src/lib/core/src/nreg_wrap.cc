@@ -75,7 +75,6 @@ Handle<Value> CoreNregWrap::New(const Arguments& args) {
 	Local<Object> mainobj;
 	Local<Value> value;
 	bool is_insensitive;
-	bool is_encoded;
 	std::string expr;
 	
 	if (args.Length() != 1) {
@@ -118,22 +117,14 @@ Handle<Value> CoreNregWrap::New(const Arguments& args) {
 	
 	Local<Array> fields = Array::Cast(*value);
 	for (unsigned int i = 0, limiti = fields->Length(); i < limiti; i++) {
-		if(!fields->Get(i)->IsObject())
+		if(!fields->Get(i)->IsString())
 			continue;
-		Local<Object> argobj = fields->Get(i)->ToObject();
-		value = argobj->Get(String::New("expr"));
-		if(!value->IsString())
-			continue;
-		String::AsciiValue tmp(value->ToString());
-		value = argobj->Get(String::New("is_encoded"));
-		if(!value->IsBoolean())
-			is_encoded = false;
-		else
-			is_encoded = value->ToBoolean()->Value();
+		Local<String> argstr = fields->Get(i)->ToString();
+		String::AsciiValue tmp(argstr->ToString());
 		expr = std::string(*tmp, tmp.length());
 		if(obj->is_insensitive)
 			std::transform(expr.begin(), expr.end(), expr.begin(), ::tolower);
-		obj->obj_add(expr.c_str(), expr.length(), is_encoded);
+		obj->obj_add(expr.c_str(), expr.length());
 	}
 	
 	obj->obj_reload();
@@ -148,7 +139,6 @@ Handle<Value> CoreNregWrap::set(const Arguments& args) {
 	Local<Object> mainobj;
 	Local<Value> value;
 	bool is_insensitive;
-	bool is_encoded;
 	std::string expr;
 	
 	if (args.Length() != 1) {
@@ -181,22 +171,14 @@ Handle<Value> CoreNregWrap::set(const Arguments& args) {
 	
 	Local<Array> fields = Array::Cast(*value);
 	for (unsigned int i = 0, limiti = fields->Length(); i < limiti; i++) {
-		if(!fields->Get(i)->IsObject())
+		if(!fields->Get(i)->IsString())
 			continue;
-		Local<Object> argobj = fields->Get(i)->ToObject();
-		value = argobj->Get(String::New("expr"));
-		if(!value->IsString())
-			continue;
-		String::AsciiValue tmp(value->ToString());
-		value = argobj->Get(String::New("is_encoded"));
-		if(!value->IsBoolean())
-			is_encoded = false;
-		else
-			is_encoded = value->ToBoolean()->Value();
+		Local<String> argstr = fields->Get(i)->ToString();
+		String::AsciiValue tmp(argstr->ToString());
 		expr = std::string(*tmp, tmp.length());
 		if(obj->is_insensitive)
 			std::transform(expr.begin(), expr.end(), expr.begin(), ::tolower);
-		obj->obj_add(expr.c_str(), expr.length(), is_encoded);
+		obj->obj_add(expr.c_str(), expr.length());
 	}
 	
 	delete obj->nreg;
@@ -211,7 +193,6 @@ Handle<Value> CoreNregWrap::set(const Arguments& args) {
 Handle<Value> CoreNregWrap::add(const Arguments& args) {
 	HandleScope scope;
 	CoreNregWrap* obj = ObjectWrap::Unwrap<CoreNregWrap>(args.This());
-	bool is_encoded;
 	std::string expr;
 	
 	if (args.Length() < 1) {
@@ -219,25 +200,18 @@ Handle<Value> CoreNregWrap::add(const Arguments& args) {
 		return scope.Close(Undefined());
 	}
 	
-	if(!args[0]->IsString()) {
-		ThrowException(Exception::TypeError(String::New("Wrong argument type (argument 1)")));
-		return scope.Close(Undefined());
-	}
-	
-	is_encoded = false;
-	if(args.Length() >= 2) {
-		if(!args[1]->IsBoolean()) {
-			ThrowException(Exception::TypeError(String::New("Wrong argument type (argument 1)")));
+	for(int i = 0 ; i < args.Length() ; i++) {
+		if(!args[i]->IsString()) {
+			ThrowException(Exception::TypeError(String::New("Wrong argument type")));
 			return scope.Close(Undefined());
 		}
-		is_encoded = args[1]->ToBoolean()->Value();
+		
+		String::AsciiValue tmp(args[i]->ToString());
+		expr = std::string(*tmp, tmp.length());
+		if(obj->is_insensitive)
+			std::transform(expr.begin(), expr.end(), expr.begin(), ::tolower);
+		obj->obj_add(expr.c_str(), expr.length());
 	}
-	
-	String::AsciiValue tmp(args[0]->ToString());
-	expr = std::string(*tmp, tmp.length());
-	if(obj->is_insensitive)
-		std::transform(expr.begin(), expr.end(), expr.begin(), ::tolower);
-	obj->obj_add(expr.c_str(), expr.length(), is_encoded);
 	
 	return(args.This());
 }
@@ -245,31 +219,23 @@ Handle<Value> CoreNregWrap::add(const Arguments& args) {
 Handle<Value> CoreNregWrap::del(const Arguments& args) {
 	HandleScope scope;
 	CoreNregWrap* obj = ObjectWrap::Unwrap<CoreNregWrap>(args.This());
-	bool is_encoded;
 	
 	if (args.Length() < 1) {
 		ThrowException(Exception::TypeError(String::New("Wrong number of arguments")));
 		return scope.Close(Undefined());
 	}
 	
-	if(!args[0]->IsString()) {
-		ThrowException(Exception::TypeError(String::New("Wrong argument type (argument 1)")));
-		return scope.Close(Undefined());
-	}
-	
-	is_encoded = false;
-	if(args.Length() >= 2) {
-		if(!args[1]->IsBoolean()) {
-			ThrowException(Exception::TypeError(String::New("Wrong argument type (argument 1)")));
+	for(int i = 0 ; i < args.Length() ; i++) {
+		if(!args[i]->IsString()) {
+			ThrowException(Exception::TypeError(String::New("Wrong argument type")));
 			return scope.Close(Undefined());
 		}
-		is_encoded = args[1]->ToBoolean()->Value();
+		
+		String::AsciiValue tmp(args[i]->ToString());
+		CoreNregWrapExpr nwe(*tmp, tmp.length());
+		
+		obj->exprs.erase(nwe);
 	}
-	
-	String::AsciiValue tmp(args[0]->ToString());
-	CoreNregWrapExpr nwe(*tmp, tmp.length(), is_encoded);
-	
-	obj->exprs.erase(nwe);
 	
 	return(args.This());
 }
@@ -289,10 +255,7 @@ Handle<Value> CoreNregWrap::getObj(const Arguments& args) {
 	
 	for(unsigned long i = 0; itr != obj->exprs.end(); itr++, i++) {
 		CoreNregWrapExpr expr = (*itr);
-		ins_obj = Object::New();
-		ins_obj->Set(String::New("expr"), String::New(expr.expr.c_str()));
-		ins_obj->Set(String::New("is_encoded"), Boolean::New(expr.is_encoded));
-		ret_arr->Set(i, ins_obj);
+		ret_arr->Set(i, String::New(expr.expr.c_str(), expr.expr.size()));
 	}
 	
 	ret->Set(String::New("expressions"), ret_arr);
@@ -316,7 +279,6 @@ Handle<Value> CoreNregWrap::match(const Arguments& args) {
 	std::string encoded;
 	CoreNregWrapExpr expr;
 	bool ret;
-	Local<Object> ret_obj = Object::New();
 	
 	if (args.Length() != 1) {
 		ThrowException(Exception::TypeError(String::New("Wrong number of arguments")));
@@ -329,17 +291,7 @@ Handle<Value> CoreNregWrap::match(const Arguments& args) {
 	ret = obj->obj_match(encoded.c_str(), encoded.length(), &expr);
 	
 	if(ret) {
-		ret_obj->Set(
-			String::New("expr"),
-			String::New(expr.expr.c_str())
-		);
-		
-		ret_obj->Set(
-			String::New("is_encoded"),
-			Boolean::New(expr.is_encoded)
-		);
-		
-		return(scope.Close(ret_obj));
+		return(scope.Close(String::New(expr.expr.c_str(), expr.expr.size())));
 	}
 	
 	return(scope.Close(Boolean::New(false)));
@@ -369,10 +321,7 @@ Handle<Value> CoreNregWrap::matchAll(const Arguments& args) {
 		
 		for(unsigned long i = 0; itr != exprs.end(); itr++, i++) {
 			CoreNregWrapExpr expr = (*itr);
-			Local<Object> ins_obj = Object::New();
-			ins_obj->Set(String::New("expr"), String::New(expr.expr.c_str()));
-			ins_obj->Set(String::New("is_encoded"), Boolean::New(expr.is_encoded));
-			ret_arr->Set(i, ins_obj);
+			ret_arr->Set(i, String::New(expr.expr.c_str(), expr.expr.size()));
 		}
 	}
 	
@@ -382,7 +331,6 @@ Handle<Value> CoreNregWrap::matchAll(const Arguments& args) {
 bool CoreNregWrap::match_cb(CoreNregNode *node, void *usr) {
 	CoreNregWrapExpr *expr = static_cast<CoreNregWrapExpr*>(usr);
 	expr->expr = node->rule;
-	expr->is_encoded = node->is_encoded;
 	return(false);
 }
 
@@ -390,15 +338,14 @@ bool CoreNregWrap::match_all_cb(CoreNregNode *node, void *usr) {
 	std::set<CoreNregWrapExpr> *match_set = static_cast<std::set<CoreNregWrapExpr>*>(usr);
 	CoreNregWrapExpr expr;
 	expr.expr = node->rule;
-	expr.is_encoded = node->is_encoded;
 	
 	match_set->insert(expr);
 	
 	return(true);
 }
 
-void CoreNregWrap::obj_add(const char *str, int size, bool is_encoded) {
-	CoreNregWrapExpr expr(str, size, is_encoded);
+void CoreNregWrap::obj_add(const char *str, int size) {
+	CoreNregWrapExpr expr(str, size);
 	
 	this->exprs.insert(expr);
 }
@@ -412,7 +359,7 @@ void CoreNregWrap::obj_reload() {
 	
 	for(itr = this->exprs.begin() ; itr != this->exprs.end(); itr++) {
 		expr = *itr;
-		prelearn.pre_learn(expr.expr, expr.is_encoded);
+		prelearn.pre_learn(expr.expr);
 	}
 	
 	if(this->nreg)
@@ -421,7 +368,7 @@ void CoreNregWrap::obj_reload() {
 	
 	for(itr = this->exprs.begin() ; itr != this->exprs.end(); itr++) {
 		expr = *itr;
-		this->nreg->insert(expr.expr, expr.is_encoded);
+		this->nreg->insert(expr.expr);
 	}
 }
 

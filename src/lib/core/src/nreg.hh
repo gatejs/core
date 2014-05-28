@@ -70,7 +70,7 @@ class CoreNregPrelearn {
 				this->is_insensitive = isens;
 		}
 		
-		void pre_learn(std::string &expr_in, bool is_encoded);
+		void pre_learn(std::string &expr_in);
 		
 		/** \brief Translate The learned informations into a transtab
 		 * \param transtab The transtab to fill
@@ -114,9 +114,6 @@ struct CoreNregNode {
 	/** \brief Pattern on this node (non null only if it matched) */
 	std::string rule;
 	
-	/** \brief Is the rule encoded? */
-	bool is_encoded;
-	
 	/** \brief Has the node been matched? */
 	bool is_matched;
 	
@@ -133,10 +130,7 @@ class CoreNreg {
 		~CoreNreg();
 		
 		/** @return false on error (already in the list) or true else. */
-		bool insert(
-			std::string &expr_in,
-			bool expr_is_encoded
-		);
+		bool insert(std::string &expr_in);
 		
 		/** @return The count of match, or -1 for an error */
 		int match(

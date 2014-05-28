@@ -141,22 +141,15 @@ static void _nreg_search_destroy(CoreDlb *base) {
 	}
 }
 
-void CoreNregPrelearn::pre_learn(std::string &expr_in, bool is_encoded) {
+void CoreNregPrelearn::pre_learn(std::string &expr_in) {
 	bool is_escape = false;
 	int id;
 	std::string expr;
 	const unsigned char *str;
 	int size;
 	
-	if(is_encoded == true) {
-		CoreUtf8Decoder(expr_in, expr);
-		str = reinterpret_cast<const unsigned char*>(expr.c_str());
-		size = expr.size();
-	}
-	else {
-		str = reinterpret_cast<const unsigned char*>(expr_in.c_str());
-		size = expr_in.size();
-	}
+	str = reinterpret_cast<const unsigned char*>(expr_in.c_str());
+	size = expr_in.size();
 	
 	this->learn_count += (size > 0 ? 1 : 0);
 	
@@ -249,10 +242,7 @@ CoreNreg::~CoreNreg() {
 	delete this->first;
 }
 
-bool CoreNreg::insert(
-		std::string &expr_in,
-		bool expr_is_encoded
-	) {
+bool CoreNreg::insert(std::string &expr_in) {
 	CoreNregNode *node = this->first;
 	CoreNregNode *nnew = NULL;
 	bool is_escape = false;
@@ -262,15 +252,8 @@ bool CoreNreg::insert(
 	size_t expr_size;
 	unsigned int id;
 	
-	if(expr_is_encoded == true) {
-		CoreUtf8Decoder(expr_in, expr);
-		expr_data = reinterpret_cast<const unsigned char*>(expr.c_str());
-		expr_size = expr.size();
-	}
-	else {
-		expr_data = reinterpret_cast<const unsigned char*>(expr_in.c_str());
-		expr_size = expr_in.size();
-	}
+	expr_data = reinterpret_cast<const unsigned char*>(expr_in.c_str());
+	expr_size = expr_in.size();
 	
 	for(i = 0 ; i < expr_size ; i++) {
 		if(nnew == NULL) {
@@ -326,7 +309,6 @@ bool CoreNreg::insert(
 	}
 	
 	node->rule = expr_in;
-	node->is_encoded = expr_is_encoded;
 	if(node->is_final == false) {
 		node->is_final = true;
 		return(true);

@@ -29,16 +29,14 @@
 
 struct CoreNregWrapExpr {
 	CoreNregWrapExpr() {}
-	CoreNregWrapExpr(const char *str, int size, bool is_enc) :
-		expr(str, size), is_encoded(is_enc) {};
+	CoreNregWrapExpr(const char *str, int size) :
+		expr(str, size) {};
 	
 	std::string expr;
 	
 	bool is_encoded;
 	
 	inline bool operator<(const CoreNregWrapExpr &expr2) const {
-		if(this->is_encoded != expr2.is_encoded)
-			return(this->is_encoded < expr2.is_encoded);
 		return(this->expr < expr2.expr);
 	}
 };
@@ -50,7 +48,7 @@ class CoreNregWrap : public node::ObjectWrap {
 		
 		bool obj_match(const char *str, int size, CoreNregWrapExpr *expr);
 		int obj_match_all(const char *str, int size, std::set<CoreNregWrapExpr> *exprs);
-		void obj_add(const char *str, int size, bool is_encoded = false);
+		void obj_add(const char *str, int size);
 		void obj_reload();
 	
 	private:
