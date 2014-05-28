@@ -16,12 +16,13 @@ function loadGeneric(bs, dir, dst) {
 					var data = fs.readFileSync(f+'.js');
 					var estr = '(function() { return('+data.toString()+'); })();';
 					var obj = eval(estr);
-
-					obj.confName = m[1];
 					
-// 					console.log(obj);
-// 					for(var b in obj.serverName)
-// 						dst.rules.set(obj.serverName[b]);
+					obj.confName = m[1];
+					for(var b in obj.serverName) {
+						var key = bs.lib.core.utils.cstrrev(obj.serverName[b]);
+						dst.rules.add(key);
+						dst.sites[key] = obj;
+					}
 					
 // 					/* push site configuration */
 // 					if(p.interfaces) {
@@ -32,12 +33,12 @@ function loadGeneric(bs, dir, dst) {
 // 					}
 				}
 				catch (err) {
-					console.log("error read "+f+' '+err);
+					gjs.lib.core.logger.error("Error loading file "+f+'.js : '+err);
 				}
 			}
 		}
 	} catch(e) {
-		console.log("Can not read directory "+e.path+" with error code #"+e.code);
+		gjs.lib.core.logger.error("Can not read directory "+e.path+" with error code #"+e.code);
 		return(false);
 	}
 	return(true);
@@ -50,7 +51,6 @@ site.loader = function(bs) {
 	
 	/* create nreg context */
 	site.rules = new bs.lib.core.nreg();
-	
 	
 // 	site.getSiteByConf = function(confname) {
 // 		if(site.sites[confname])
@@ -65,8 +65,7 @@ site.loader = function(bs) {
 		);
 		return(false);
 	}
-	
-	
+
 	site.rules.reload();
 
 	
