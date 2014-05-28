@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2010-2014 BinarySEC SAS
- * HTTP serving [http://www.binarysec.com]
+ * Forward proxy [http://www.binarysec.com]
  * 
  * This file is part of Gate.js.
  * 
@@ -89,18 +89,6 @@ forward.logpipe = function(gjs, src) {
 	
 }
 
-
-forward.attachSite = function(key, config) {
-	if(!forward.list[key]) {
-// 		console.log("Unknown http configuration "+key);
-		return(false);
-	}
-
-	forward.list[key].sites.push(config);
-	return(true);
-}
-
-
 forward.loader = function(gjs) {
 	if (cluster.isMaster)
 		return;
@@ -181,6 +169,8 @@ forward.loader = function(gjs) {
 		if(!sc.timeout)
 			sc.timeout = 30;
 		
+		/** \todo ssl needs file lookup */
+		
 		/* create network interface */
 		var iface;
 		if(sc.ssl == true) {
@@ -250,11 +240,10 @@ forward.loader = function(gjs) {
 	 * Associate interface and configuration
 	 */
 	function processConfiguration(key, o) {
-	
-		if(!forward.list[key]) {
-			forward.list[key] = [];
-		}
 		if(o.type == 'forward') {
+			if(!forward.list[key])
+				forward.list[key] = [];
+		
 			var r = bindHttpServer(key, o);
 			if(r != false)
 				forward.list[key].push(r);

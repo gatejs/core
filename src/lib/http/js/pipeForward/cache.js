@@ -75,7 +75,7 @@ cache.request = function(pipe, opts) {
 				});
 				
 				pipe.response.cache = 'hit';
-		                console.log('HIT 304: '+pipe.request.url);
+// 		                console.log('HIT 304: '+pipe.request.url);
 		//                 pipe.root.lib.bwsRg.httpServer.log(pipe);
 
 				if(pipe.server.isClosing == true)
@@ -114,7 +114,7 @@ cache.request = function(pipe, opts) {
 // 			});
 				
 			pipe.response.cache = 'hit';
-			console.log('HIT 200', pipe.request.url);
+// 			console.log('HIT 200', pipe.request.url);
 			
 // 			var counter = 0;
 // 			st.on('data', function(data) { counter += data.length; });
@@ -336,7 +336,7 @@ cache.request = function(pipe, opts) {
 			
 			response.pipe(st);
 
-			console.log('MISS: '+pipe.request.url);
+// 			console.log('MISS: '+pipe.request.url);
 		}
 		/* store partial data at lookup time remove cache headers */
 		else if(response.statusCode == 304 && opts.feeding == true) {
@@ -351,8 +351,8 @@ cache.request = function(pipe, opts) {
 			});
 
 		}
-		else
-			console.log('MISS '+response.statusCode, pipe.request.url);
+// 		else
+// 			console.log('MISS '+response.statusCode, pipe.request.url);
 	});
 
 

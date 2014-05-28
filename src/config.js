@@ -11,14 +11,13 @@ var serverConfig = function(bs) { return({
 	gracefulRamForce: 90,
 	
 	http: {
-		testInterface: {
+		forwardInterface: {
 			type: 'forward',
 			port: 8080,
 			pipeline: 'pipetest'
 		},
-		testSSLInterface: {
-			type: 'forward',
-			ssl: true,
+		reverseInterface: {
+			type: 'reverse',
 		}
 	},
 	
