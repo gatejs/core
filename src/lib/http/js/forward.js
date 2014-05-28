@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2010-2014 BinarySEC SAS
- * HTTP serving [http://www.binarysec.com]
+ * Forward proxy [http://www.binarysec.com]
  * 
  * This file is part of Gate.js.
  * 

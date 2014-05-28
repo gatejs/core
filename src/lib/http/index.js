@@ -23,6 +23,7 @@ var http = function() { /* loader below */ };
 http.log = require(__dirname+'/js/log');
 http.littleFs = require(__dirname+'/js/littleFs');
 http.error = require(__dirname+'/js/error');
+http.site = require(__dirname+'/js/site');
 http.forward = require(__dirname+'/js/forward');
 http.reverse = require(__dirname+'/js/reverse');
 
@@ -31,6 +32,7 @@ http.loader = function(gjs) {
 		http.log.loader(gjs);
 		http.littleFs.loader(gjs);
 		http.error.loader(gjs);
+		http.site.loader(gjs);
 		http.forward.loader(gjs);
 		http.reverse.loader(gjs);
 	} catch(e) {
