@@ -129,15 +129,24 @@ reverse.loader = function(gjs) {
 			
 		});
 		
-// 		iface.on('connection', (function(socket) {
-// 			var date = new Date;
-// 			socket.gjs = {
-// 				timer: date.getTime(),
-// 				interval: setInterval(slowLoris, 5000, socket)
-// 			};
-// 			
-// 			console.log("connection");
-// 		}));
+		iface.on('connection', (function(socket) {
+			reverse.sockets.push(socket);
+			socket.setTimeout(60000);
+			socket.inUse = false;
+			socket.on('close', function () {
+				socket.inUse = false;
+				reverse.sockets.splice(reverse.sockets.indexOf(socket), 1);
+			});
+		}));
+		
+		iface.on('listening', function() {
+			gjs.lib.core.logger.system("Binding HTTP reverse proxy on "+sc.address+":"+sc.port);
+		});
+		
+		iface.on('error', function(e) {
+			gjs.lib.core.logger.error('HTTP reverse error for instance '+key+': '+e);
+		});
+		
 		iface.gjsKey = key;
 		iface.allowHalfOpen = false;
 		iface.listen(sc.port, sc.address);
@@ -190,15 +199,24 @@ reverse.loader = function(gjs) {
 			
 		});
 		
-// 		iface.on('connection', (function(socket) {
-// 			var date = new Date;
-// 			socket.gjs = {
-// 				timer: date.getTime(),
-// 				interval: setInterval(slowLoris, 5000, socket)
-// 			};
-// 			
-// 			console.log("connection");
-// 		}));
+		iface.on('connection', (function(socket) {
+			reverse.sockets.push(socket);
+			socket.setTimeout(60000);
+			socket.inUse = false;
+			socket.on('close', function () {
+				socket.inUse = false;
+				reverse.sockets.splice(reverse.sockets.indexOf(socket), 1);
+			});
+		}));
+		
+		iface.on('listening', function() {
+			gjs.lib.core.logger.system("Binding HTTP reverse proxy on "+sc.address+":"+sc.port);
+		});
+		
+		iface.on('error', function(e) {
+			gjs.lib.core.logger.error('HTTP reverse error for instance '+key+': '+e);
+		});
+		
 		iface.gjsKey = key;
 		iface.allowHalfOpen = false;
 		iface.listen(sc.port, sc.address);
@@ -249,30 +267,45 @@ reverse.loader = function(gjs) {
 			processConfiguration(a, sc);
 	}
 	
-// 	/* 
-// 	 * Follow configuration
-// 	 */
-// 	for(var a in gjs.serverConfig.reverse) {
-// 		var sc = gjs.serverConfig.reverse[a];
-// 		if(sc instanceof Array) {
-// 			for(var b in sc)
-// 				processConfiguration(a, sc[b]);
-// 		}
-// 		else if(sc instanceof Object)
-// 			processConfiguration(a, sc);
-// 	}
-// 	
-// 	function doReload() {
-// 		var ret;
-// 		
-// 		/* clean wegjsite pointers */
-// 		for(var key in reverse.list)
-// 			reverse.list[key].sites = [];
-// 	}
-// 	
-// 	/* handle reload */
-// 	gjs.lib.gjsCore.ipc.on('SIGUSR2', doReload);
-// 	gjs.lib.gjsCore.ipc.on('gjs:reload', doReload);
+	function gracefulAgentControler() {
+		if(reverse.sockets.length == 0) {
+			console.log('Process #'+process.pid+' graceful completed');
+			process.exit(0);
+		}
+		
+		console.log('Graceful agent controler has '+reverse.sockets.length+' sockets in queue');
+		for(var a in reverse.sockets) {
+			var s = reverse.sockets[a];
+	
+			if(s.inUse == false)
+				s.destroy();
+			else
+				console.log(
+					'Waiting for connection to be destroyed '+
+					s._peername.address+':'+s._peername.port+
+					' in process '+process.pid);
+		}
+	}
+	
+	function gracefulReceiver() {
+	
+		for(var a in reverse.list) {
+			var config = reverse.list[a];
+		
+			/* close all server accept */
+			for(var b in config.ifaces) {
+				var server = config.ifaces[b];
+				server.isClosing = true;
+				server.close(function() { });
+			}
+		}
+		setInterval(gracefulAgentControler, 5000);
+		
+		gjs.lib.core.ipc.removeListener('system:graceful:process', gracefulReceiver);
+	}
+	
+	/* add graceful receiver */
+// 	gjs.lib.core.ipc.on('system:graceful:process', gracefulReceiver);
 	
 	return(false);
 	

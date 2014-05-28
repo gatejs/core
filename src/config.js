@@ -6,7 +6,7 @@ var serverConfig = function(bs) { return({
 	runDir: "/tmp/gatejs",
 	dataDir: "/home/bwsfg",
 	logDir: "/var/log/gatejs",
-// 	configDir: __dirname+'/configs',
+	confDir: '/home/mykii/Documents/share',
 	gracefulRam: 80,
 	gracefulRamForce: 90,
 	

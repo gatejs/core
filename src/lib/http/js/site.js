@@ -15,31 +15,25 @@ function loadGeneric(bs, dir, dst) {
 				try {
 					var data = fs.readFileSync(f+'.js');
 					var estr = '(function() { return('+data.toString()+'); })();';
-					dst[m[1]] = eval(estr);
-					var p = dst[m[1]];
-					p.confName = m[1];
+					var obj = eval(estr);
+
+					obj.confName = m[1];
 					
-					/* push site configuration */
-					if(p.interfaces) {
-						if(p.interfaces instanceof Array) {
-							for(var z in p.interfaces)
-								bs.lib.bwsRg.httpServer.attachSite(p.interfaces[z], p);
-						}
-					}
+// 					console.log(obj);
+// 					for(var b in obj.serverName)
+// 						dst.rules.set(obj.serverName[b]);
 					
-					/* generate virtual directory */
-					var cp = crypto.createHash('sha256');
-					cp.update(JSON.stringify(p));
-					p.virtualDirectory = '/'+cp.digest('hex');
-					
-					/* create random version */
-					p.version = Math.round(Math.random()*999999999999999999);
+// 					/* push site configuration */
+// 					if(p.interfaces) {
+// // 						if(p.interfaces instanceof Array) {
+// // 							for(var z in p.interfaces)
+// // 								bs.lib.bwsRg.httpServer.attachSite(p.interfaces[z], p);
+// // 						}
+// 					}
 				}
 				catch (err) {
-					console.log("error read "+f);
+					console.log("error read "+f+' '+err);
 				}
-
-				
 			}
 		}
 	} catch(e) {
@@ -54,21 +48,26 @@ site.loader = function(bs) {
 
 	site.sites = {};
 	
+	/* create nreg context */
+	site.rules = new bs.lib.core.nreg();
+	
 	
 // 	site.getSiteByConf = function(confname) {
 // 		if(site.sites[confname])
 // 			return(site.sites[confname]);
 // 		return(false);
 // 	}
-// 	
-// 	ret = loadGeneric(bs, bs.serverConfig.configDir, site.sites);
-// 	if(ret != true) {
-// 		console.log(
-// 			"Unable to read configuration"
-// 		);
-// 		return(false);
-// 	}
 	
+	ret = loadGeneric(bs, bs.serverConfig.confDir+'/reverseSites', site);
+	if(ret != true) {
+		console.log(
+			"Unable to read configuration"
+		);
+		return(false);
+	}
+	
+	
+	site.rules.reload();
 
 	
 }

@@ -200,7 +200,6 @@ forward.loader = function(gjs) {
 				socket.inUse = false;
 				forward.sockets.splice(forward.sockets.indexOf(socket), 1);
 			});
-			
 		});
 
 		iface.on('request', function(request, response) {
@@ -220,7 +219,7 @@ forward.loader = function(gjs) {
 		});
 		
 		iface.on('error', function(e) {
-			gjs.lib.core.logger.error('* HTTP forward error for instance '+key+': '+e);
+			gjs.lib.core.logger.error('HTTP forward error for instance '+key+': '+e);
 		});
 		
 		iface.gjsKey = key;
