@@ -66,6 +66,7 @@ core.lookupSSLFile = function(options) {
 	
 	
 core.dateToStr = core.utils.dateToStr;
+core.cstrrev = core.utils.cstrrev;
 core.nreg = core.utils.nreg;
 
 module.exports = core;
