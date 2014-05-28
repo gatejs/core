@@ -29,6 +29,8 @@ using namespace v8;
 void CoreUtils::Init(Handle<Object> exports) {
 	exports->Set(String::NewSymbol("dateToStr"),
       FunctionTemplate::New(dateToStr)->GetFunction());
+	exports->Set(String::NewSymbol("cstrrev"),
+      FunctionTemplate::New(cstrrev)->GetFunction());
 }
 
 v8::Handle<v8::Value> CoreUtils::dateToStr(const v8::Arguments& args) {
@@ -71,4 +73,28 @@ v8::Handle<v8::Value> CoreUtils::dateToStr(const v8::Arguments& args) {
 	}
 	
 	return(scope.Close(String::New(buffer)));
+}
+
+v8::Handle<v8::Value> CoreUtils::cstrrev(const v8::Arguments& args) {
+	HandleScope scope;
+	Local<String> input;
+	char *input_c;
+	char *buffer;
+	
+	input = args[0]->ToString();
+	String::AsciiValue tmp(input);
+	
+	if(tmp.length() == 0)
+		return(scope.Close(String::New("")));
+	
+	input_c = *tmp;
+	buffer = new char[tmp.length() + 1];
+	for(int i = 0, l = tmp.length() ; i < l ; i++)
+		buffer[l - i - 1] = input_c[i];
+	
+	buffer[tmp.length()] = '\0';
+	input = String::New(buffer, tmp.length());
+	delete[] buffer;
+	
+	return(scope.Close(input));
 }
