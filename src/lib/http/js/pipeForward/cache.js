@@ -78,8 +78,10 @@ cache.request = function(pipe, opts) {
 // 		                console.log('HIT 304: '+pipe.request.url);
 		//                 pipe.root.lib.bwsRg.httpServer.log(pipe);
 
-				if(pipe.server.isClosing == true)
+				if(pipe.server.isClosing == true) {
 					headers.headers.connection = 'Close';
+					delete headers.headers['keep-alive'];
+				}
 				
 				/* fix headers */
 				var nHeaders = {};
@@ -116,6 +118,11 @@ cache.request = function(pipe, opts) {
 			pipe.response.cache = 'hit';
 // 			console.log('HIT 200', pipe.request.url);
 			
+			if(pipe.server.isClosing == true) {
+				headers.headers.connection = 'Close';
+				delete headers.headers['keep-alive'];
+			}
+				
 // 			var counter = 0;
 // 			st.on('data', function(data) { counter += data.length; });
 // 			pipe.response.on('finish', function() {

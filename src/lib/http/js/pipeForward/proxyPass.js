@@ -115,10 +115,10 @@ proxyPass.request = function(pipe, opts) {
 // 				});
 // 			});
 		
-// 			delete res.headers.connection;
-// 			delete res.headers['keep-alive'];
-			if(pipe.server.isClosing == true)
+			if(pipe.server.isClosing == true) {
 				res.headers.connection = 'Close';
+				delete res.headers['keep-alive'];
+			}
 			
 			/* fix headers */
 			var nHeaders = {};

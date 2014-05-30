@@ -193,29 +193,30 @@ forward.loader = function(gjs) {
 		iface.config = sc;
 		
 		iface.on('connection', function (socket) {
-			forward.sockets.push(socket);
+			gjs.lib.core.graceful.push(socket);
+			
 			socket.setTimeout(60000);
-			socket.inUse = false;
 			socket.on('close', function () {
+				gjs.lib.core.graceful.release(socket);
 				socket.inUse = false;
-				forward.sockets.splice(forward.sockets.indexOf(socket), 1);
 			});
 		});
 
 		iface.on('request', function(request, response) {
 			request.connection.inUse = true;
-			
+
 // 			clearInterval(request.socket.bwsFg.interval);
 
 			response.on('finish', function() {
-				request.connection.inUse = false;
+				if(request.connection._handle)
+					request.connection.inUse = false;
 			});
 // 			
 			processRequest(this, request, response);
 		});
 		
 		iface.on('listening', function() {
-			gjs.lib.core.logger.system("Binding HTTP server on "+sc.address+":"+sc.port);
+			gjs.lib.core.logger.system("Binding forward HTTP proxy on "+sc.address+":"+sc.port);
 		});
 		
 		iface.on('error', function(e) {
@@ -240,12 +241,9 @@ forward.loader = function(gjs) {
 	 */
 	function processConfiguration(key, o) {
 		if(o.type == 'forward') {
-			if(!forward.list[key])
-				forward.list[key] = [];
-		
 			var r = bindHttpServer(key, o);
 			if(r != false)
-				forward.list[key].push(r);
+				forward.list[key] = r;
 		}
 	}
 	
@@ -270,38 +268,12 @@ forward.loader = function(gjs) {
 			processConfiguration(a, sc);
 	}
 	
-	function gracefulAgentControler() {
-		if(forward.sockets.length == 0) {
-// 			console.log('Process #'+process.pid+' graceful completed');
-			process.exit(0);
-		}
-		
-// 		console.log('Graceful agent controler has '+forward.sockets.length+' sockets in queue');
-		for(var a in forward.sockets) {
-			var s = forward.sockets[a];
-	
-			if(s.inUse == false)
-				s.destroy();
-// 			else
-// 				console.log(
-// 					'Waiting for connection to be destroyed '+
-// 					s._peername.address+':'+s._peername.port+
-// 					' in process '+process.pid);
-		}
-	}
-	
 	function gracefulReceiver() {
 		for(var a in forward.list) {
-			var config = forward.list[a];
-		
-			/* close all server accept */
-			for(var b in config.ifaces) {
-				var server = config.ifaces[b];
-				server.isClosing = true;
-				server.close(function() { });
-			}
+			var server = forward.list[a];
+			server.isClosing = true;
+			server.close(function() { });
 		}
-		setInterval(gracefulAgentControler, 5000);
 		
 		gjs.lib.core.ipc.removeListener('system:graceful:process', gracefulReceiver);
 	}
