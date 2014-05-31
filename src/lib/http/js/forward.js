@@ -197,15 +197,13 @@ forward.loader = function(gjs) {
 			
 			socket.setTimeout(60000);
 			socket.on('close', function () {
-				gjs.lib.core.graceful.release(socket);
 				socket.inUse = false;
+				gjs.lib.core.graceful.release(socket);
 			});
 		});
 
 		iface.on('request', function(request, response) {
 			request.connection.inUse = true;
-
-// 			clearInterval(request.socket.bwsFg.interval);
 
 			response.on('finish', function() {
 				if(request.connection._handle)

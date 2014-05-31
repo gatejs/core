@@ -16,21 +16,38 @@ function loadGeneric(bs, dir, dst) {
 					var data = fs.readFileSync(f+'.js');
 					var estr = '(function() { return('+data.toString()+'); })();';
 					var obj = eval(estr);
-					
 					obj.confName = m[1];
-					for(var b in obj.serverName) {
-						var key = bs.lib.core.utils.cstrrev(obj.serverName[b]);
-						dst.rules.add(key);
-						dst.sites[key] = obj;
-					}
 					
-// 					/* push site configuration */
-// 					if(p.interfaces) {
-// // 						if(p.interfaces instanceof Array) {
-// // 							for(var z in p.interfaces)
-// // 								bs.lib.bwsRg.httpServer.attachSite(p.interfaces[z], p);
-// // 						}
-// 					}
+					/* inject nreg server name rules */
+					if(obj.serverName) {
+						if(obj.interfaces instanceof Array) {
+							for(var b in obj.serverName) {
+								var key = bs.lib.core.utils.cstrrev(obj.serverName[b]);
+								dst.rules.add(key);
+								dst.sites[key] = obj;
+							}
+						}
+						else if(obj.interfaces instanceof String) {
+							var key = bs.lib.core.utils.cstrrev(obj.serverName);
+							dst.rules.add(key);
+							dst.sites[key] = obj;
+						}
+						else
+							throw('Invalid argument for serverName in '+obj.confName);
+					}
+					else
+						throw('No serverName defined in '+obj.confName);
+					
+					/* format interface */
+					if(obj.interfaces) {
+						obj.solvedInterfaces = {};
+						if(obj.interfaces instanceof Array) {
+							for(var b in obj.interfaces)
+								obj.solvedInterfaces[obj.interfaces[b]] = true;
+						}
+						else if(obj.interfaces instanceof String)
+							obj.solvedInterfaces[obj.interfaces] = true;
+					}
 				}
 				catch (err) {
 					gjs.lib.core.logger.error("Error loading file "+f+'.js : '+err);
@@ -43,21 +60,37 @@ function loadGeneric(bs, dir, dst) {
 	}
 	return(true);
 }
+
+site.search = function(name) {
+	if(!name)
+		return(false);
+	var pos = site.rules.match(site.gjs.lib.core.utils.cstrrev(name));
+	if(pos)
+		return(site.sites[pos]);
+	return(false);
 	
+}
+
 site.loader = function(bs) {
 	var ret;
 
+	site.gjs = bs;
 	site.sites = {};
 	
 	/* create nreg context */
 	site.rules = new bs.lib.core.nreg();
 	
-// 	site.getSiteByConf = function(confname) {
-// 		if(site.sites[confname])
-// 			return(site.sites[confname]);
-// 		return(false);
-// 	}
+	/* Load opcode context */
+	site.opcodes = bs.lib.core.pipeline.scanOpcodes(
+		__dirname+'/pipeReverse',
+		'reversing'
+	);
+	if(!site.opcodes) {
+		gjs.lib.core.logger.error('No opcodes found for reverse proxy');
+		return(false);
+	}
 	
+	/* load configuration files */
 	ret = loadGeneric(bs, bs.serverConfig.confDir+'/reverseSites', site);
 	if(ret != true) {
 		console.log(
@@ -67,8 +100,6 @@ site.loader = function(bs) {
 	}
 
 	site.rules.reload();
-
-	
 }
 
 module.exports = site;

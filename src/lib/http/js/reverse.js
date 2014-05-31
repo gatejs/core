@@ -28,34 +28,10 @@ var crypto = require("crypto");
 var reverse = function() { /* loader below */ };
 
 reverse.list = {};
-reverse.sockets = [];
 
-reverse.attachSite = function(key, config) {
-	if(!reverse.list[key]) {
-// 		console.log("Unknown http configuration "+key);
-		return(false);
-	}
-
-	reverse.list[key].sites.push(config);
-	return(true);
-}
-
-  	 
 reverse.loader = function(gjs) {
 	if (cluster.isMaster)
 		return;
-
-// 	function lookupServername(sites, host) {
-// 		for(var a in sites) {
-// 			var sConf = sites[a];
-// 			for(var b in sConf.serverName) {
-// 				var z = sConf.serverName[b];
-// 				if(z == host)
-// 					return(sConf);
-// 			}
-// 		}
-// 		return(false);
-// 	}
 	
 	var processRequest = function(server, request, response) {
 		var pipe = gjs.lib.core.pipeline.create(null, null, function() {
@@ -105,6 +81,58 @@ reverse.loader = function(gjs) {
 		pipe.iface = iface;
 		
 		/* lookup website */
+		pipe.site = gjs.lib.http.site.search(request.headers.host);
+		if(!pipe.site) {
+			pipe.site = gjs.lib.http.site.search('_');
+			if(!pipe.site) {
+				gjs.lib.http.error.renderArray({
+					pipe: pipe, 
+					code: 404, 
+					tpl: "4xx", 
+					log: false,
+					title:  "Not found",
+					explain: "No default website"
+				});
+				return;
+			}
+		}
+	
+		/* scan regex */
+		pipe.location = false;
+		if(pipe.site.locations) {
+			for(var a in pipe.site.locations) {
+				var s = pipe.site.locations[a];
+				if(!s.regex)
+					s.regex = /.*/;
+				if(s.regex.test(request.url)) {
+					pipe.location = s;
+					break;
+				}
+			}
+		}
+		if(pipe.location == false) {
+			gjs.lib.http.error.renderArray({
+				pipe: pipe, 
+				code: 500, 
+				tpl: "5xx", 
+				log: false,
+				title:  "Internal server error",
+				explain: "No locations found for this website"
+			});
+			return;
+		}
+		if(!pipe.location.pipeline instanceof Array) {
+			gjs.lib.http.error.renderArray({
+				pipe: pipe, 
+				code: 500, 
+				tpl: "5xx", 
+				log: false,
+				title:  "Internal server error",
+				explain: "Invalid pipeline format for this website"
+			});
+			return;
+		}
+		pipe.update(gjs.lib.http.site.opcodes, pipe.location.pipeline);
 		
 		/* execute pipeline */
 		pipe.resume();
@@ -118,24 +146,26 @@ reverse.loader = function(gjs) {
 	}
 	
 	var bindHttpServer = function(key, sc) {
-		console.log("Binding HTTP server on "+sc.address+":"+sc.port);
 		var iface = http.createServer(function(request, response) {
-// 			clearInterval(request.socket.gjs.interval);
-// 			if(!currentServer.requestCount)
-// 				currentServer.requestCount = 0;
+			request.connection.inUse = true;
+
+			response.on('finish', function() {
+				if(request.connection._handle)
+					request.connection.inUse = false;
+			});
 			
-// 			currentServer.requestCount++;
 			processRequest(this, request, response);
 			
 		});
 		
 		iface.on('connection', (function(socket) {
-			reverse.sockets.push(socket);
+			gjs.lib.core.graceful.push(socket);
+			
 			socket.setTimeout(60000);
-			socket.inUse = false;
+			
 			socket.on('close', function () {
 				socket.inUse = false;
-				reverse.sockets.splice(reverse.sockets.indexOf(socket), 1);
+				gjs.lib.core.graceful.release(socket);
 			});
 		}));
 		
@@ -188,33 +218,35 @@ reverse.loader = function(gjs) {
 			}
 		}
 		
-		console.log("Binding HTTPS server on "+sc.address+":"+sc.port);
 		var iface = https.createServer(sc, function(request, response) {
-// 			clearInterval(request.socket.gjs.interval);
-// 			if(!currentServer.requestCount)
-// 				currentServer.requestCount = 0;
+			request.connection.inUse = true;
+
+			response.on('finish', function() {
+				if(request.connection._handle)
+					request.connection.inUse = false;
+			});
 			
-// 			currentServer.requestCount++;
 			processRequest(this, request, response);
 			
 		});
 		
 		iface.on('connection', (function(socket) {
-			reverse.sockets.push(socket);
+			gjs.lib.core.graceful.push(socket);
+			
 			socket.setTimeout(60000);
-			socket.inUse = false;
+			
 			socket.on('close', function () {
 				socket.inUse = false;
-				reverse.sockets.splice(reverse.sockets.indexOf(socket), 1);
+				gjs.lib.core.graceful.release(socket);
 			});
 		}));
 		
 		iface.on('listening', function() {
-			gjs.lib.core.logger.system("Binding HTTP reverse proxy on "+sc.address+":"+sc.port);
+			gjs.lib.core.logger.system("Binding HTTPS reverse proxy on "+sc.address+":"+sc.port);
 		});
 		
 		iface.on('error', function(e) {
-			gjs.lib.core.logger.error('HTTP reverse error for instance '+key+': '+e);
+			gjs.lib.core.logger.error('HTTPS reverse error for instance '+key+': '+e);
 		});
 		
 		iface.gjsKey = key;
@@ -246,14 +278,6 @@ reverse.loader = function(gjs) {
 		}
 	}
 	
-	/* Load opcode context */
-	reverse.opcodes = gjs.lib.core.pipeline.scanOpcodes(
-		__dirname+'/pipeReverse',
-		'reversing'
-	);
-	if(!reverse.opcodes)
-		return(false);
-	
 	/* 
 	 * Follow configuration
 	 */
@@ -267,25 +291,6 @@ reverse.loader = function(gjs) {
 			processConfiguration(a, sc);
 	}
 	
-	function gracefulAgentControler() {
-		if(reverse.sockets.length == 0) {
-			console.log('Process #'+process.pid+' graceful completed');
-			process.exit(0);
-		}
-		
-		console.log('Graceful agent controler has '+reverse.sockets.length+' sockets in queue');
-		for(var a in reverse.sockets) {
-			var s = reverse.sockets[a];
-	
-			if(s.inUse == false)
-				s.destroy();
-			else
-				console.log(
-					'Waiting for connection to be destroyed '+
-					s._peername.address+':'+s._peername.port+
-					' in process '+process.pid);
-		}
-	}
 	
 	function gracefulReceiver() {
 	
@@ -299,13 +304,12 @@ reverse.loader = function(gjs) {
 				server.close(function() { });
 			}
 		}
-		setInterval(gracefulAgentControler, 5000);
 		
 		gjs.lib.core.ipc.removeListener('system:graceful:process', gracefulReceiver);
 	}
 	
 	/* add graceful receiver */
-// 	gjs.lib.core.ipc.on('system:graceful:process', gracefulReceiver);
+	gjs.lib.core.ipc.on('system:graceful:process', gracefulReceiver);
 	
 	return(false);
 	
