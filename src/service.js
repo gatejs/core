@@ -35,7 +35,7 @@ var events = require('events');
 var eventEmitter = new events.EventEmitter();
 
 var gatejs = (function() {
-	this.version = "1.0.0";
+	this.version = "1.0.1-DEV";
 	this.config = new Object;
 	this.pipeline = new Object;
 
