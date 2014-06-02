@@ -132,7 +132,9 @@ reverse.loader = function(gjs) {
 			});
 			return;
 		}
+
 		pipe.update(gjs.lib.http.site.opcodes, pipe.location.pipeline);
+		
 		
 		/* execute pipeline */
 		pipe.resume();
@@ -179,6 +181,7 @@ reverse.loader = function(gjs) {
 		
 		iface.gjsKey = key;
 		iface.allowHalfOpen = false;
+		iface.config = sc;
 		iface.listen(sc.port, sc.address);
 		
 		return(iface);

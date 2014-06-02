@@ -60,24 +60,25 @@ function pipelineObject(opcodes, line, errorFunc) {
 	this.update = function(opcodes, line) {
 		if(!line || !opcodes)
 			return(false);
-		
+		if(line.resolved == true) {
+			this.pipe = line.solved;
+			return(false);
+		}
 		var lPipe = [];
 		for(var a in line) {
-			for(var b in line[a]) {
-				var insert = [];
-				var op = line[a][b];
-				/* check opcode */
-				if(!opcodes[op[0]]) {
-					console.log('no opcode calls '+op[0]+' please check your configuration');
-					break;
-				}
-				insert[0] = opcodes[op[0]];
-				for(var c=1; c<op.length; c++)
-					insert.push(op[c]);
-				
-				if(insert.length > 0)
-					lPipe.push(insert);
+			var insert = [];
+			var op = line[a];
+			/* check opcode */
+			if(!opcodes[op[0]]) {
+				console.log('no opcode calls '+op[0]+' please check your configuration');
+				break;
 			}
+			insert[0] = opcodes[op[0]];
+			for(var c=1; c<op.length; c++)
+				insert.push(op[c]);
+			
+			if(insert.length > 0)
+				lPipe.push(insert);
 		}
 		line.solved = lPipe;
 		line.resolved = true;
