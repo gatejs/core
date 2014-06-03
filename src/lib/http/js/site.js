@@ -90,14 +90,23 @@ site.loader = function(bs) {
 		return(false);
 	}
 	
-	/* load configuration files */
-	ret = loadGeneric(bs, bs.serverConfig.confDir+'/reverseSites', site);
-	if(ret != true) {
-		console.log(
-			"Unable to read configuration"
-		);
-		return(false);
+	try {
+		var fss = fs.statSync(bs.serverConfig.confDir+'/reverseSites');
+		
+		/* load configuration files */
+		ret = loadGeneric(bs, bs.serverConfig.confDir+'/reverseSites', site);
+		if(ret != true) {
+			console.log(
+				"Unable to read configuration"
+			);
+			return(false);
+		}
+	
+	} catch(e) {
+		/* file doesn't exist / do nothing */
 	}
+		
+
 
 	site.rules.reload();
 }
