@@ -18,6 +18,56 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+var httpPlug = require('http');
+
+function fixHeaders(field, value) {
+	if(!this.orgHeaders)
+		this.orgHeaders = {};
+	var c = field.toLowerCase();
+	this.orgHeaders[c] = field;
+}
+
+function setHeader(name, value) {
+	if(!this.orgHeaders)
+		this.orgHeaders = {};
+	var k = name.toLowerCase();
+	this.headers[k] = value;
+	this.orgHeaders[k] = name;
+}
+
+function removeHeader(name) {
+	var k = name.toLowerCase();
+	delete this.headers[k];
+	delete this.orgHeaders[k];
+}
+
+/* patch to accept sensitve headers by hooking node.js header addition */
+httpPlug.IncomingMessage.prototype._addHeaderLineOld = httpPlug.IncomingMessage.prototype._addHeaderLine;
+httpPlug.IncomingMessage.prototype._addHeaderLine = function(field, value) {
+	fixHeaders.apply(this, arguments);
+	return(this._addHeaderLineOld(field, value));
+}
+httpPlug.IncomingMessage.prototype.gjsSetHeader = function(name, value) {
+	return(setHeader.apply(this, arguments));
+}
+httpPlug.IncomingMessage.prototype.gjsRemoveHeader = function(name) {
+	return(removeHeader.apply(this, arguments));
+}
+
+/* do the same on response */
+httpPlug.OutgoingMessage.prototype._storeHeaderOld = httpPlug.OutgoingMessage.prototype._storeHeader;
+httpPlug.OutgoingMessage.prototype._storeHeader = function(firstline, headers) {
+	for(var a in headers)
+		fixHeaders.apply(this, [a, headers[a]]);
+	return(this._storeHeaderOld(firstline, headers));
+}
+httpPlug.OutgoingMessage.prototype.gjsSetHeader = function(name, value) {
+	return(setHeader.apply(this, arguments));
+}
+httpPlug.OutgoingMessage.prototype.gjsRemoveHeader = function(name) {
+	return(removeHeader.apply(this, arguments));
+}
+
 var http = function() { /* loader below */ };
 
 http.log = require(__dirname+'/js/log');

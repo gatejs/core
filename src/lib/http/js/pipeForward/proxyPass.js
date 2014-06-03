@@ -75,8 +75,8 @@ proxyPass.request = function(pipe, opts) {
 		pipe.response.connector = ip+":"+port;
 
 		for(var n in pipe.request.headers)
-			options.headers[pipe.root.lib.core.fixCamelLike(n)] = pipe.request.headers[n];
-
+			options.headers[pipe.request.orgHeaders[n]] = pipe.request.headers[n];
+		
 // 		delete pipe.request.headers.connection;
 		var req = http.request(options);
 		
@@ -116,15 +116,15 @@ proxyPass.request = function(pipe, opts) {
 // 			});
 		
 			if(pipe.server.isClosing == true) {
-				res.headers.connection = 'Close';
+				res.gjsSetHeader('Connection', 'Close');
 				delete res.headers['keep-alive'];
 			}
 			
 			/* fix headers */
 			var nHeaders = {};
 			for(var n in res.headers)
-				nHeaders[pipe.root.lib.core.fixCamelLike(n)] = res.headers[n];
-	
+				nHeaders[res.orgHeaders[n]] = res.headers[n];
+			
 			pipe.response.writeHead(res.statusCode, nHeaders);
 			pipe.response.headerSent = true;
 // 			console.log(res.headers);

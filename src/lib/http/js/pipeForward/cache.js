@@ -104,7 +104,8 @@ cache.request = function(pipe, opts) {
 			var nHeaders = {};
 			for(var n in headers.headers)
 				nHeaders[pipe.root.lib.core.fixCamelLike(n)] = headers.headers[n];
-				
+			
+			
 			pipe.response.writeHead(200, nHeaders);
 			var st = fs.createReadStream(hash.file, {
 				start: headers.headerSerialPos
@@ -248,7 +249,7 @@ cache.request = function(pipe, opts) {
 			headers: {}
 		};
 		for(var a in response.headers)
-			header.headers[a] = response.headers[a];
+			header.headers[response.orgHeaders[a]] = response.headers[a];
 		
 		/* file management: if it exists then remove it */
 		try {
