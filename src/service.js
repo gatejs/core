@@ -170,10 +170,23 @@ var gatejs = (function() {
 			b.ctor(this);
 	}
 	
+	if(!this.serverConfig.runDir) {
+		console.log('Please define a runDir');
+		process.exit(0);
+	}
+		
 	/* running cluster */
 	this.events.emit("clusterPreInit", this);
 	this.cluster = cluster;
-	if(cluster.isMaster) {
+	if(cluster.isMaster) {	
+		var pidFile = this.serverConfig.runDir+'/master.pid';
+		fs.writeFile(pidFile, process.pid+"\n", function (err) {
+			if (err) {
+				console.log("Could not save "+pidFile+" with error code "+err.code);
+				process.exit(0);
+			}
+		});
+	
 		process.title = 'gate.js Master process';
 		var localThis = this;
 		
