@@ -46,24 +46,16 @@ SED_CMD="s~%PREFIX_SHARE%~$PREFIX_SHARE_SED~g; s~%PREFIX_CONF%~$PREFIX_CONF_SED~
 
 cat <<EOF > Makefile
 all:
-	+make node
-	sudo make node-install
-	+make libs
-	sudo make install
-
-node:
 	cd ./deps/nodejs && ./configure --prefix="$PREFIX_SHARE/node"
 	+make -C ./deps/nodejs
 	
-node-install:
+install:
 	+make -C ./deps/nodejs install
 	$PREFIX_SHARE/node/bin/npm install -g node-gyp
 	
-libs:
 	+make -C src/lib/core/ rebuild NODE_GYP="$PREFIX_SHARE/node/bin/node-gyp"
 	+make -C src/lib/tproxy/ rebuild NODE_GYP="$PREFIX_SHARE/node/bin/node-gyp"
 	
-install:
 	mkdir -p "$PREFIX_SHARE/gatejs"
 	mkdir -p "$PREFIX_CONF/gatejs"
 	cp -r src/* "$PREFIX_SHARE/gatejs"
