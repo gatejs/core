@@ -1,18 +1,20 @@
+NODE_GYP=node-gyp
+
 all: build
 
 build: build/Release/bhutils.node
 
 build/Release/bhutils.node: src/*.cc src/*.hh
-	node-gyp build
+	$(NODE_GYP) build
 
 config: configure
 
 configure:
-	node-gyp configure
+	$(NODE_GYP) configure
 
 clean:
-	node-gyp clean
+	$(NODE_GYP) clean
 
 rebuild:
-	node-gyp clean configure build
+	$(NODE_GYP) clean configure build
 

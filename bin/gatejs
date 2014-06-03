@@ -1,0 +1,3 @@
+#!/bin/sh
+
+%PREFIX_SHARE%/node/bin/node %PREFIX_SHARE%/gatejs/service.js %PREFIX_CONF%/gatejs/config.js "$@"
