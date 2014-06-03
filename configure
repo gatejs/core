@@ -1,0 +1,62 @@
+#!/bin/sh
+
+PREFIX_SHARE=/usr/local/share
+PREFIX_CONF=/etc
+PREFIX_BIN=/usr/local/bin
+
+echo "Please, note that the executables and init.d files are still missing, "
+echo "so this will not fully work."
+
+while test "$#" -gt 0; do
+	case "$1" in
+		'--help'|'-h'|'-help')
+			echo "Available options :"
+			echo "--help"
+			echo "--prefix-share ($PREFIX_SHARE)"
+			echo "--prefix-conf ($PREFIX_CONF)"
+			echo "--prefix-bin  ($PREFIX_BIN)"
+			exit 0
+			;;
+		'--prefix-share')
+			PREFIX_SHARE="$2"
+			shift
+			;;
+		'--prefix-share='*)
+			PREFIX_SHARE="`echo "$1" | cut -d= -f2-`"
+			;;
+		'--prefix-conf')
+			PREFIX_CONF="$2"
+			shift
+			;;
+		'--prefix-conf='*)
+			PREFIX_CONF="`echo "$1" | cut -d= -f2-`"
+			;;
+		'--prefix-bin')
+			PREFIX_BIN="$2"
+			shift
+			;;
+		'--prefix-bin='*)
+			PREFIX_BIN="`echo "$1" | cut -d= -f2-`"
+			;;
+	esac
+	shift
+done
+
+cat <<EOF > Makefile
+all: node libs
+	
+
+node:
+	cd ./deps/nodejs && ./configure --prefix="$PREFIX_SHARE/node"
+	+make -C ./deps/nodejs
+
+libs:
+	+make -C src/lib/core/ rebuild
+	+make -C src/lib/tproxy/ rebuild
+
+install:
+	mkdir -p "$PREFIX_SHARE/gate"
+	make -C ./deps/nodejs install
+	cp -r src/* "$PREFIX_SHARE/gate"
+
+EOF
