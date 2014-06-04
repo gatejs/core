@@ -4,9 +4,9 @@ Installation
 TLDR
 ----
 To build and install gatejs, run the following commands :
-    $ ./configure
-    $ make
-    # sudo make install
+	$ ./configure
+	$ make
+	# sudo make install
 
 Available options
 -----------------
