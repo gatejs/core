@@ -33,8 +33,29 @@ var readline = require("readline");
 var util = require("util");
 var events = require('events');
 var eventEmitter = new events.EventEmitter();
+var child_process = require('child_process');
+
+function runDaemon(opt) {
+	if (process.env.__daemonized)
+		return(false);
+	console.log('* Running in background mode');
+	var args = process.argv.slice(1);
+	var prog = process.argv[0];
+	process.env.__daemonized = true;
+	var options = {
+		stdio: ['ignore', 'ignore', 'ignore'],
+		env: process.env,
+		cwd: process.cwd,
+		detached: true
+	};
+	var child = child_process.spawn(prog, args, options);
+	child.unref();
+	process.exit();
+}
 
 var gatejs = (function() {
+
+		
 	this.version = "1.0.1-DEV";
 	this.config = new Object;
 	this.pipeline = new Object;
@@ -48,6 +69,31 @@ var gatejs = (function() {
 		return(ret);
 	});
 
+	/* get options */
+	this.options = {};
+	for(var a=2; a<process.argv.length; a++) {
+		var el = process.argv[a];
+		var iOf = el.indexOf('=');
+		if(iOf > -1)
+			this.options[el.substr(0, iOf)] = el.substr(iOf+1);
+		else
+			this.options[el] = true;
+	}
+	
+	/* check version */
+	if(this.options['--version']) {
+		console.log(
+			"* gate.js version "+this.version+"\n"+
+			"*\n"+
+			'* V8 v'+process.versions.v8+"\n"+
+			"* nodejs v"+process.versions.node+"\n"+
+			'* openssl v'+process.versions.openssl+"\n"+
+			'* libuv v'+process.versions.uv
+		);
+		process.exit(0);
+	}
+	
+	/* Print print */
 	if(cluster.isMaster) {
 		console.log(
 			'*              _          _     '+"\n"+
@@ -59,14 +105,16 @@ var gatejs = (function() {
 			"* \n"+
 			"* gate.js (c) 2007-2014 v"+this.version
 		);
-		console.log(
-			"*\n"+
-			"* NodeJS v"+process.versions.node+
-			' - V8 v'+process.versions.v8+
-			' - OpenSSL v'+process.versions.openssl+
-			' - libuv v'+process.versions.uv
-		);
 	}
+	
+	/* check configuration options */
+	var confFile = "./config.js";
+	if(this.options['--config'])
+		confFile = this.options['--config'];
+
+	/* enable daemon mode */
+	if(this.options['--daemon'])
+		runDaemon();
 	
 	var loadGeneric = function(dir, dst) {
 		try {
@@ -85,16 +133,7 @@ var gatejs = (function() {
 		return(true);
 	}
 	
-	/* */
-// 	loadGeneric(__dirname+'/pipeline', this.pipeline);
-	
-
 	/* Load server configuration */
-	var confFile;
-	if(process.argv[2])
-		confFile = process.argv[2];
-	else
-		confFile = "./config.js";
 	try {
 		var fss = fs.statSync(confFile);
 		var req = require(confFile);
@@ -228,6 +267,9 @@ var gatejs = (function() {
 		});
 		
 		this.events.emit("clusterMasterInit", this);
+		
+
+	
 	} 
 	else {
 		process.title = 'gate.js Slave process';
