@@ -20,7 +20,7 @@ DESC="Gatejs startup script"
 NAME=gatejs
 DAEMON="%PREFIX_SHARE%/node/bin/node"
 DAEMON_ARGS="%PREFIX_SHARE%/gatejs/service.js %PREFIX_CONF%/gatejs/config.js"
-PIDFILE=/var/run/$NAME.pid
+PIDFILE=/tmp/$NAME/master.pid
 SCRIPTNAME=/etc/init.d/$NAME
 
 # Exit if the package is not installed

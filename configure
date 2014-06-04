@@ -70,3 +70,13 @@ install:
 	@echo "Gatejs is installed."
 
 EOF
+
+printVar() {
+	val=`eval echo '$'$1`
+	printf "%-15s = %s\n" "$1" "$val"
+}
+
+echo "Variables :"
+printVar PREFIX_SHARE
+printVar PREFIX_CONF
+printVar PREFIX_BIN
