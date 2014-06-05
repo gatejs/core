@@ -17,15 +17,20 @@ To build and install gatejs, run the following commands :
 ### Installation from git ###
 To install this project from git, you will have to run the following command :
 
-	$ git clone https://github.com/binarysec/gate.git gate
+	$ git clone --recurse-submodules https://github.com/binarysec/gate.git gate
 
-However, since it depends from other projects, you will also have to 
-retrieve their sources, with :
+If you forgot the `--recurse-submodules`, the submodules will be downloaded
+automatically by the make step. Optionally, you can also use :
 
 	$ cd gate
-	$ git submodule init
-	$ git submodule sync
-	$ git submodule update
+	$ git submodule update --init --recursive
+
+or :
+
+	$ make git-submodules-up
+
+If you downloaded the zip from github, you will have to fetch the submodules 
+yourself.
 
 ### Available options ###
 The `configure` script have the following options :
