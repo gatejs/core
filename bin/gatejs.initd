@@ -19,7 +19,7 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin:%PREFIX_BIN%
 DESC="Gatejs startup script"
 NAME=gatejs
 DAEMON="%PREFIX_SHARE%/node/bin/node"
-DAEMON_ARGS="%PREFIX_SHARE%/gatejs/service.js %PREFIX_CONF%/gatejs/config.js"
+DAEMON_ARGS="%PREFIX_SHARE%/gatejs/service.js --config=%PREFIX_CONF%/gatejs/config.js --daemon"
 PIDFILE=/tmp/$NAME/master.pid
 SCRIPTNAME=/etc/init.d/$NAME
 
