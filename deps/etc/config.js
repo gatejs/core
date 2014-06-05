@@ -1,10 +1,10 @@
 var serverConfig = function(bs) { return({
 	serverProcess: 4,
 	hostname: "testServer0",
-	runDir: "/tmp/gatejs",
-	dataDir: "/home/bwsfg",
-	logDir: "/var/log/gatejs",
-	confDir: '/home/mykii/Documents/share',
+	runDir: "%PREFIX_VAR%/run/gatejs",
+	dataDir: "%PREFIX_DATA%",
+	logDir: "%PREFIX_VAR%/log/gatejs",
+	confDir: '%PREFIX_CONF%/gatejs',
 	
 	http: {
 		forwardInterface: {
@@ -23,7 +23,6 @@ var serverConfig = function(bs) { return({
 			['proxyPass', { mode: 'host', timeout: 10 }]
 		],
 	}
-
 	
 })};
 

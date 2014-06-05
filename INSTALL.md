@@ -18,4 +18,8 @@ The `configure` script have the following options :
   Defaults to `/etc`.
 * `--prefix-bin` : The path where the gatejs program will be installed. Defaults
   to `/usr/local/sbin`.
+* `--prefix-var` : The path where the temporary files will be written (PID file,
+  sockets, ...). Defaults to `/var`.
+* `--prefix-data` : The path where the persistent data will be written (Cache
+  files). Defaults to `/home/gatejs-data`.
 * `--help` : Show a short help text.
