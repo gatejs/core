@@ -54,8 +54,6 @@ function runDaemon(opt) {
 }
 
 var gatejs = (function() {
-
-		
 	this.version = "1.0.1-DEV";
 	this.config = new Object;
 	this.pipeline = new Object;
@@ -149,9 +147,16 @@ var gatejs = (function() {
 		for(var a = 1; a<tab.length-1; a++) {
 			stage += '/'+tab[a];
 			try  {
-				fs.mkdirSync(stage);
+				try {
+					var fss = fs.statSync(file);
+				} catch(a) {
+					fs.mkdirSync(stage);
+				}
 			}
-			catch(e) { return(false); }
+			catch(e) {
+				console.log('* Error: can not create '+dir);
+				process.exit(0);
+			}
 		}
 		return(true);
 	}
