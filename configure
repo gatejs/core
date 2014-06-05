@@ -66,6 +66,7 @@ SED_CMD="s~%PREFIX_SHARE%~$PREFIX_SHARE_SED~g; s~%PREFIX_CONF%~$PREFIX_CONF_SED~
 
 cat <<EOF > Makefile
 all:
+	if test \`ls ./deps/nodejs | wc -l\` -eq 0; then make git-submodules-up; fi
 	cd ./deps/nodejs && ./configure --prefix="$PREFIX_SHARE/node"
 	+make -C ./deps/nodejs
 	
@@ -90,6 +91,9 @@ install:
 	chmod +x "$PREFIX_CONF/init.d/gatejs"
 	
 	@echo "Gatejs is installed."
+
+git-submodules-up:
+	git submodule update --init --recursive
 
 EOF
 
