@@ -148,7 +148,7 @@ var gatejs = (function() {
 			stage += '/'+tab[a];
 			try  {
 				try {
-					var fss = fs.statSync(file);
+					var fss = fs.statSync(stage);
 				} catch(a) {
 					fs.mkdirSync(stage);
 				}
@@ -156,6 +156,7 @@ var gatejs = (function() {
 			catch(e) {
 				console.log('* Error: can not create '+dir);
 				process.exit(0);
+
 			}
 		}
 		return(true);
