@@ -1,8 +1,8 @@
 gate
 ====
 
-GateJS is a performant &amp; scalable forward &amp; reverse HTTP proxy based on
-node.js + V8.
+GateJS is a javascript based reverse &amp; forward proxy with high 
+performance &amp; capability.
 
 Installation
 ------------
