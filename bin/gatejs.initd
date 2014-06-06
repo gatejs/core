@@ -21,6 +21,7 @@ NAME=gatejs
 DAEMON="%PREFIX_SHARE%/node/bin/node"
 DAEMON_ARGS="%PREFIX_SHARE%/gatejs/service.js --config=%PREFIX_CONF%/gatejs/config.js --daemon"
 PIDFILE=%PREFIX_VAR%/run/$NAME/master.pid
+IPCFILE=%PREFIX_VAR%/run/$NAME/ipc
 SCRIPTNAME=/etc/init.d/$NAME
 
 # Exit if the package is not installed
@@ -38,8 +39,12 @@ SCRIPTNAME=/etc/init.d/$NAME
 . /lib/lsb/init-functions
 
 is_up() {
-	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --test > /dev/null
-	return $?
+	if test -e $PIDFILE; then
+		pid=`cat $PIDFILE`
+		kill -0 $pid
+		return $?
+	fi
+	return 1
 }
 
 #
@@ -96,8 +101,12 @@ do_reload() {
 	# restarting (for example, when it is sent a SIGHUP),
 	# then implement that here.
 	#
-	start-stop-daemon --stop --signal 1 --quiet --pidfile $PIDFILE --name $NAME
-	return 0
+	if is_up; then
+		$DAEMON %PREFIX_SHARE%/gatejs/controler.js --socket="$IPCFILE" send LFW system:graceful > /dev/null
+		return $?
+	else
+		return 1
+	fi
 }
 
 #
@@ -105,7 +114,8 @@ do_reload() {
 #
 do_logrotate() {
 	if is_up; then
-		$DAEMON %PREFIX_SHARE%/gatejs/controler.js send LFW logrotate
+		$DAEMON %PREFIX_SHARE%/gatejs/controler.js --socket="$IPCFILE" send LFW SIGUSR2 > /dev/null
+		return $?
 	else
 		return 1
 	fi
