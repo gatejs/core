@@ -37,7 +37,7 @@ logger.spawnMaster = function(gjs) {
 	} catch(e) { /* do nothing */ }
 
 	
-	var selectFile = function(site, type) {
+	logger.selectFile = function(site, type) {
 		if(!gjs.serverConfig.logDir)
 			return(false);
 		
@@ -88,7 +88,7 @@ logger.spawnMaster = function(gjs) {
 		;
 		
 		/* write log */
-		var f = selectFile(null, 'system');
+		var f = logger.selectFile(null, 'system');
 		if(f) 
 			f.stream.write(inline+'\n');
 		else
@@ -105,7 +105,7 @@ logger.spawnMaster = function(gjs) {
 		;
 		
 		/* write log */
-		var f = selectFile(null, 'error');
+		var f = logger.selectFile(null, 'error');
 		if(f) 
 			f.stream.write(inline+'\n');
 		else
@@ -122,7 +122,7 @@ logger.spawnMaster = function(gjs) {
 		if(fct)
 			fct(req);
 		else
-			console.log("* Uncatchable log type "+line);
+			console.log("* Uncatchable log type "+fct);
 	}
 	
 	/*
@@ -146,7 +146,7 @@ logger.spawnSlave = function(gjs) {
 	var net = require("net");
 	var readline = require('readline');
 
-	function commonLogger(cmd, data) {
+	logger.commonLogger = function(cmd, data) {
 		var msg = {
 			type: cmd,
 			msg: data
@@ -155,11 +155,11 @@ logger.spawnSlave = function(gjs) {
 	}
 	
 	logger.system = function(data) {
-		commonLogger('SYS', data);
+		logger.commonLogger('SYS', data);
 	}
 	
 	logger.error = function(data) {
-		commonLogger('ERR', data);
+		logger.commonLogger('ERR', data);
 	}
 	
 
