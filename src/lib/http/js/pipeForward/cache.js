@@ -53,13 +53,13 @@ cache.request = function(pipe, opts) {
 			var isF = pipe.root.lib.acn.isFresh(headers);
 			if(isF == false)
 				return(false);
-		
+
 			/*
 			 * Manage the 304 not stupuflux
 			 */
 			if(
 				(pipe.request.headers['if-modified-since'] &&
-				headers.headers['last-modified'] == pipe.request.headers['if-modified-since']) ||
+				headers.headers['Last-Modified'] == pipe.request.headers['if-modified-since']) ||
 				(pipe.request.headers['if-none-match'] &&
 				headers.headers.etag == pipe.request.headers['if-none-match'])
 				) {
@@ -74,9 +74,7 @@ cache.request = function(pipe, opts) {
 					hits: true
 				});
 				
-				pipe.response.cache = 'hit';
-// 		                console.log('HIT 304: '+pipe.request.url);
-		//                 pipe.root.lib.bwsRg.httpServer.log(pipe);
+				pipe.response.gjsCache = 'hit_rms';
 
 				if(pipe.server.isClosing == true) {
 					headers.headers.connection = 'Close';
@@ -88,6 +86,7 @@ cache.request = function(pipe, opts) {
 				for(var n in headers.headers)
 					nHeaders[pipe.root.lib.core.fixCamelLike(n)] = headers.headers[n];
 				
+				pipe.root.lib.http.forward.log(pipe, 304);
 				pipe.response.writeHead(304, nHeaders);
 				pipe.response.end();
 				
@@ -116,7 +115,7 @@ cache.request = function(pipe, opts) {
 // 				hits: true
 // 			});
 				
-			pipe.response.cache = 'hit';
+			pipe.response.gjsCache = 'hit';
 // 			console.log('HIT 200', pipe.request.url);
 			
 			if(pipe.server.isClosing == true) {
@@ -132,10 +131,9 @@ cache.request = function(pipe, opts) {
 // 					hitsBand: counter
 // 				});
 // 			});
-				
-// 			pipe.root.lib.bwsFg.httpServer.logpipe(pipe, st);
-		            st.pipe(pipe.response);
-
+			
+			pipe.root.lib.http.forward.logpipe(pipe, st);
+			
 			/* check */
 			return(true);
 		}
@@ -190,12 +188,11 @@ cache.request = function(pipe, opts) {
 		return(true);
 	}
 
-
 	var pipeProxyPassRequest = (function(pipe, request, response) {
 		/*
 		 * check Pragma
 		 */
-		if(pipe.pipeStoreHit != true && opts.exclusive == true)
+		if(opts.exclusive == true && pipe.pipeStoreHit != true)
 			return;
 		if(pipe.request.forceCache != true && response.headers.pragma == "no-cache")
 			return;
@@ -205,7 +202,7 @@ cache.request = function(pipe, opts) {
 			pipe.stop();
 			return;
 		}
-	
+
 		/*
 		 * Manage cache control
 		 */

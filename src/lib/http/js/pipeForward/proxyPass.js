@@ -91,12 +91,15 @@ proxyPass.request = function(pipe, opts) {
 		pipe.response.emit("fwProxyPassPassConnection", options, req);
 		
 		/* detect whether source server is disconnected abnormaly */
-		pipe.response.on('close', (function() {
+		var reqAbort = function() {
 			req.abort();
-		}));
+		}
+		pipe.request.on('close', reqAbort);
 		
 		req.on('response', function(res) {
+			pipe.request.removeListener('close', reqAbort);
 			
+				
 // 			console.log(res.headers);
 			/* abort connexion because someone is using it for a post response*/
 			if(pipe.response.headerSent == true) {
@@ -125,11 +128,16 @@ proxyPass.request = function(pipe, opts) {
 			for(var n in res.headers)
 				nHeaders[res.orgHeaders[n]] = res.headers[n];
 			
+			/* check for client close */
+			pipe.request.on('close', function() {
+				res.destroy();
+			});
+			
 			pipe.response.writeHead(res.statusCode, nHeaders);
 			pipe.response.headerSent = true;
 // 			console.log(res.headers);
-// 			pipe.root.lib.bwsFg.httpServer.logpipe(pipe, res);
-			res.pipe(pipe.response);
+			pipe.root.lib.http.forward.logpipe(pipe, res);
+// 			res.pipe(pipe.response);
 			
 		});
 	

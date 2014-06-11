@@ -102,7 +102,7 @@ var gatejs = (function() {
 			'*  \\__, |\\__,_|\\__\\___(_)/ |___/'+"\n"+
 			'*  |___/               |__/     '+"\n"+
 			"* \n"+
-			"* gate.js (c) 2007-2014 v"+this.version
+			"* gate.js (c) 2007-2014 v"+this.version+" on "+os.type()+'/'+os.arch()
 		);
 	}
 	

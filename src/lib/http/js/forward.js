@@ -30,69 +30,78 @@ var forward = function() { /* loader below */ };
 forward.list = {};
 forward.sockets = [];
 
-/* 
- * Watch input stream to calculate log
- */
-forward.log = function(gjs) {
-// 	gjs.root.lib.core.logger.siteAccess({
-// 		version: gjs.request.httpVersion,
-// 		site: gjs.request.selectedConfig.serverName[0],
-// 		ip: gjs.request.remoteAddress,
-// 		code: gjs.response.statusCode,
-// 		method: gjs.request.method,
-// 		url: gjs.request.url,
-// 		outBytes: gjs.request.gjsWriteBytes ? gjs.request.gjsWriteBytes : '0',
-// 		userAgent: gjs.request.headers['user-agent'] ? gjs.request.headers['user-agent'] : '-',
-// 		referer: gjs.request.headers.referer ? gjs.request.headers.referer : '-',
-// 		cache: gjs.response.gjsCache ? gjs.response.gjsCache : 'miss'
-// 	});
+forward.log = function(gjs, connClose) {
+	if(!connClose)
+		connClose = gjs.response.statusCode;
+	
+	gjs.root.lib.core.logger.commonLogger(
+		'FWLOG',
+		{
+			version: gjs.request.httpVersion,
+			site: gjs.request.headers.host,
+			ip: gjs.request.remoteAddress,
+			code: connClose,
+			method: gjs.request.method,
+			url: gjs.request.url,
+			outBytes: gjs.request.gjsWriteBytes ? gjs.request.gjsWriteBytes : '0',
+			userAgent: gjs.request.headers['user-agent'] ? gjs.request.headers['user-agent'] : '-',
+			referer: gjs.request.headers.referer ? gjs.request.headers.referer : '-',
+			cache: gjs.response.gjsCache ? gjs.response.gjsCache : 'miss'
+		}
+	);
 }
 
 forward.logpipe = function(gjs, src) {
 	if(!gjs.request.gjsWriteBytes)
 		gjs.request.gjsWriteBytes = 0;
 	
+	/* accumulate counter */
 	src.on('data', function(data) {
 		gjs.request.gjsWriteBytes += data.length;
-		
 	});
-	src.on('end', function() {
-// 		console.log('src > end');
-// 		gjs.request = null;
-// 		gjs.response = null;
-		
+
+	/* on client close connection */
+	gjs.request.on('close', function() {
+		forward.log(gjs, 499);
 	});
-	src.on('error', function(err) {
-// 		console.log('src > error');
-// 		console.log("write error logpipe");
-// 		gjs.response.destroy();
-// 		gjs.request = null;
-// 		gjs.response = null;
-		
-	});
-	gjs.response.on('error', function() {
-// 		console.log('res > error');
-// 		gjs.request = null;
-// 		gjs.response = null;
-		src.destroy();
-	});
+	
+	/* on response sent to client */
 	gjs.response.on('finish', function() {
-// 		console.log('res > finish');
-		
-// 		gjs.request = null;
-// 		gjs.response = null;
-		src.destroy();
-		
+		forward.log(gjs);
 	});
 	src.pipe(gjs.response);
-	
-	
 }
 
 forward.loader = function(gjs) {
-	if (cluster.isMaster)
-		return;
+	if (cluster.isMaster) {
+		var logger = gjs.lib.core.logger;
+		
+		/* create logging receiver */
+		var processLog = function(req) {
+			var dateStr = gjs.lib.core.dateToStr(req.msg.time);
 
+			var inline = 
+				dateStr+' - '+
+				req.msg.site+' - '+
+				req.msg.ip+' '+
+				req.msg.cache.toUpperCase()+' '+
+				req.msg.method+' '+
+				req.msg.code+' '+
+				req.msg.url+' '+
+				'"'+req.msg.userAgent+'" '+
+				req.msg.outBytes+' '+
+				req.msg.referer+' '
+			;
+			
+			/* write log */
+			var f = logger.selectFile(null, 'forward-access');
+			if(f) 
+				f.stream.write(inline+'\n');
+		}
+		
+		logger.typeTab['FWLOG'] = processLog;
+		return;
+	}
 	
 // 	/* read configuration and bind servers */	
 // 	http.globalAgent.maxSockets = 1000;
