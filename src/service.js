@@ -34,6 +34,7 @@ var util = require("util");
 var events = require('events');
 var eventEmitter = new events.EventEmitter();
 var child_process = require('child_process');
+var os = require('os');
 
 function runDaemon(opt) {
 	if (process.env.__daemonized)
@@ -219,7 +220,12 @@ var gatejs = (function() {
 		console.log('Please define a runDir');
 		process.exit(0);
 	}
-		
+	
+	/* defaulting server processes */
+	this.serverConfig.serverProcess = parseInt(this.serverConfig.serverProcess);
+	if(!this.serverConfig.serverProcess)
+		this.serverConfig.serverProcess = os.cpus().length;
+	
 	/* running cluster */
 	this.events.emit("clusterPreInit", this);
 	this.cluster = cluster;

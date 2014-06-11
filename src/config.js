@@ -1,6 +1,6 @@
 
 var serverConfig = function(bs) { return({
-	serverProcess: 4,
+// 	serverProcess: 4,
 	hostname: "testServer0",
 	
 	runDir: "/tmp/gatejs",
