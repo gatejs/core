@@ -325,7 +325,7 @@ cache.request = function(pipe, opts) {
 				
 			}));
 			
-			pipe.response.on('close', (function() {
+			pipe.request.on('close', (function() {
 				if(st)
 					st.close();
 				try {

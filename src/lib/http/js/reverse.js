@@ -29,11 +29,112 @@ var reverse = function() { /* loader below */ };
 
 reverse.list = {};
 
+reverse.log = function(gjs, connClose) {
+	if(!connClose)
+		connClose = gjs.response.statusCode;
+	
+	gjs.root.lib.core.logger.commonLogger(
+		'RVLOG',
+		{
+			version: gjs.request.httpVersion,
+			site: gjs.site.name ? gjs.site.name : 'default',
+			ip: gjs.request.remoteAddress,
+			code: connClose,
+			method: gjs.request.method,
+			url: gjs.request.url,
+			outBytes: gjs.request.gjsWriteBytes ? gjs.request.gjsWriteBytes : '0',
+			userAgent: gjs.request.headers['user-agent'] ? gjs.request.headers['user-agent'] : '-',
+			referer: gjs.request.headers.referer ? gjs.request.headers.referer : '-',
+			cache: gjs.response.gjsCache ? gjs.response.gjsCache : 'miss'
+		}
+	);
+}
+
+reverse.error = function(gjs, error) {
+	gjs.root.lib.core.logger.commonLogger(
+		'RVERR',
+		{
+			version: gjs.request.httpVersion,
+			site: gjs.site.name ? gjs.site.name : 'default',
+			ip: gjs.request.remoteAddress,
+			method: gjs.request.method,
+			url: gjs.request.url,
+			userAgent: gjs.request.headers['user-agent'] ? gjs.request.headers['user-agent'] : '-',
+			referer: gjs.request.headers.referer ? gjs.request.headers.referer : '-',
+			message: error
+		}
+	);
+}
+
+reverse.logpipe = function(gjs, src) {
+	if(!gjs.request.gjsWriteBytes)
+		gjs.request.gjsWriteBytes = 0;
+	
+	/* accumulate counter */
+	src.on('data', function(data) {
+		gjs.request.gjsWriteBytes += data.length;
+	});
+
+	/* on client close connection */
+	gjs.request.on('close', function() {
+		reverse.log(gjs, 499);
+	});
+	
+	/* on response sent to client */
+	gjs.response.on('finish', function() {
+		reverse.log(gjs);
+	});
+	src.pipe(gjs.response);
+}
+
 reverse.loader = function(gjs) {
-	if (cluster.isMaster)
+	if (cluster.isMaster) {
+		var logger = gjs.lib.core.logger;
+		
+		/* create logging receiver */
+		var processLog = function(req) {
+			var dateStr = gjs.lib.core.dateToStr(req.msg.time);
+			
+			var inline = 
+				dateStr+' - '+
+				req.msg.site+' - '+
+				req.msg.ip+' '+
+				req.msg.cache.toUpperCase()+' '+
+				req.msg.method+' '+
+				req.msg.code+' '+
+				req.msg.url+' '+
+				'"'+req.msg.userAgent+'" '+
+				req.msg.outBytes+' '+
+				req.msg.referer+' '
+			;
+			
+			/* write log */
+			var f = logger.selectFile(req.msg.site, 'access');
+			if(f) 
+				f.stream.write(inline+'\n');
+		}
+		var processError = function(req) {
+			var dateStr = gjs.lib.core.dateToStr(req.msg.time);
+			
+			var inline = 
+				dateStr+' - '+
+				req.msg.message
+			;
+			
+			/* write log */
+			var f = logger.selectFile(req.msg.site, 'error');
+			if(f) 
+				f.stream.write(inline+'\n');
+		}
+		
+		logger.typeTab['RVLOG'] = processLog;
+		logger.typeTab['RVERR'] = processError;
 		return;
+	}
 	
 	var processRequest = function(server, request, response) {
+		request.remoteAddress = request.connection.remoteAddress;
+		
 		var pipe = gjs.lib.core.pipeline.create(null, null, function() {
 			gjs.lib.http.error.renderArray({
 				pipe: pipe, 

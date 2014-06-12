@@ -1,10 +1,11 @@
 var fs = require("fs");
 var cluster = require("cluster");
 var crypto = require("crypto");
+var http = require('http');
 
 var site = function() { /* loader below */ };
 
-function loadGeneric(bs, dir, dst) {
+function loadGeneric(gjs, dir, dst) {
 	try {
 		var d = fs.readdirSync(dir), a;
 		for(a in d) {
@@ -22,13 +23,13 @@ function loadGeneric(bs, dir, dst) {
 					if(obj.serverName) {
 						if(obj.interfaces instanceof Array) {
 							for(var b in obj.serverName) {
-								var key = bs.lib.core.utils.cstrrev(obj.serverName[b]);
+								var key = gjs.lib.core.utils.cstrrev(obj.serverName[b]);
 								dst.rules.add(key);
 								dst.sites[key] = obj;
 							}
 						}
 						else if(obj.interfaces instanceof String) {
-							var key = bs.lib.core.utils.cstrrev(obj.serverName);
+							var key = gjs.lib.core.utils.cstrrev(obj.serverName);
 							dst.rules.add(key);
 							dst.sites[key] = obj;
 						}
@@ -47,6 +48,26 @@ function loadGeneric(bs, dir, dst) {
 						}
 						else if(obj.interfaces instanceof String)
 							obj.solvedInterfaces[obj.interfaces] = true;
+					}
+					
+					/* format proxy stream */
+					if(obj.proxyStream) {
+						for(var a in obj.proxyStream) {
+							var nodes = obj.proxyStream[a];
+							function formatProxy(key) {
+								if(!nodes[key])
+									return;
+								var servers = nodes[key];
+								for(var b in servers) {
+									var node = servers[b];
+									node._name = a;
+									node._key = key;
+									node._index = b;
+								}
+							}
+							formatProxy('primary');
+							formatProxy('secondary');
+						}
 					}
 				}
 				catch (err) {
@@ -71,17 +92,18 @@ site.search = function(name) {
 	
 }
 
-site.loader = function(bs) {
+site.loader = function(gjs) {
+	
 	var ret;
 
-	site.gjs = bs;
+	site.gjs = gjs;
 	site.sites = {};
 	
 	/* create nreg context */
-	site.rules = new bs.lib.core.nreg();
+	site.rules = new gjs.lib.core.nreg();
 	
 	/* Load opcode context */
-	site.opcodes = bs.lib.core.pipeline.scanOpcodes(
+	site.opcodes = gjs.lib.core.pipeline.scanOpcodes(
 		__dirname+'/pipeReverse',
 		'reversing'
 	);
@@ -91,10 +113,10 @@ site.loader = function(bs) {
 	}
 	
 	try {
-		var fss = fs.statSync(bs.serverConfig.confDir+'/reverseSites');
+		var fss = fs.statSync(gjs.serverConfig.confDir+'/reverseSites');
 		
 		/* load configuration files */
-		ret = loadGeneric(bs, bs.serverConfig.confDir+'/reverseSites', site);
+		ret = loadGeneric(gjs, gjs.serverConfig.confDir+'/reverseSites', site);
 		if(ret != true) {
 			console.log(
 				"Unable to read configuration"
@@ -105,10 +127,115 @@ site.loader = function(bs) {
 	} catch(e) {
 		/* file doesn't exist / do nothing */
 	}
-		
-
 
 	site.rules.reload();
+	
+	/* faulty checker */
+	if(cluster.isMaster) {
+		site.faulty = {};
+		
+		function backgroundChecker(input) {
+			var node = input.msg.node;
+			var options = {
+				host: node.host,
+				port: node.port,
+				path: '/',
+				method: 'GET',
+				headers: {
+					Host: input.msg.site,
+					"User-Agent": "gatejs monitor"
+				},
+				rejectUnauthorized: false,
+				servername: input.msg.site,
+				agent: false
+			};
+			
+			var flowSelect = http;
+			if(node.https == true)
+				flowSelect = https;
+			
+			var context = site.faulty[input.hash];
+			var subHash = input.site.confName+node._name+node._key+node._index;
+			var siteHash = context[subHash];
+
+			var req = flowSelect.request(options, function(res) {
+				
+				for(var a in context) {
+					var b = context[a];
+					if(a.substr(0, 1) != '_') {
+						gjs.lib.core.ipc.send('LFW', 'proxyPassWork', {
+							site: b._site,
+							node: b
+						});
+					}
+				}
+				
+				delete site.faulty[input.hash];
+			});
+			
+			req.on('error', function (error) {
+			});
+
+			function socketErrorDetection(socket) {
+				req.abort();
+				socket.destroy();
+				clearTimeout(socket.timeoutId); 
+				context._timer = setTimeout(
+					backgroundChecker,
+					1000,
+					input
+				);
+			}
+			
+			req.on('socket', function (socket) {
+				if(!socket.connected) 
+					socket.connected = false;
+
+				socket.timeoutId = setTimeout(
+					socketErrorDetection, 
+					10000, 
+					socket
+				);
+				socket.on('connect', function() {
+					socket.connected = true;
+					clearTimeout(socket.timeoutId); 
+				});
+			});
+			req.end();
+		
+		}
+		
+		gjs.lib.core.ipc.on('proxyPassFaulty', function(gjs, data) {
+			var d = data.msg.node;
+			var s = site.search(data.msg.site);
+			if(!s)
+				return;
+			
+			/* group by ip and port */
+			var hash = d.host+':'+d.port;
+			if(!site.faulty[hash]) {
+				site.faulty[hash] = {
+					_host: d.host,
+					_port: d.port,
+					_timer: setTimeout(
+						backgroundChecker,
+						2000,
+						{hash: hash, msg: data.msg, site: s }
+					)
+				};
+			}
+			var context = site.faulty[hash];
+			var subHash = s.confName+d._name+d._key+d._index;
+			if(context[subHash])
+				return;
+			var siteHash = context[subHash] = d;
+			
+			siteHash._site = data.msg.site;
+		});
+	}
+	
+	
+	
 }
 
 module.exports = site;

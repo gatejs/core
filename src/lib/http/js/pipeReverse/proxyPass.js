@@ -22,11 +22,13 @@ var util = require("util");
 var http = require("http");
 var https = require("https");
 var events = require('events');
+var cluster = require("cluster");
 
 var proxyPass = function() {} 
 
 proxyPass.request = function(pipe, proxyname) {
-
+	var reverse = pipe.root.lib.http.reverse;
+	
 	/* lookup proxy stream */
 	if(!pipe.site.proxyStream && !pipe.site.proxyStream[proxyname]) {
 		gjs.lib.http.error.renderArray({
@@ -154,28 +156,27 @@ proxyPass.request = function(pipe, proxyname) {
 		};
 		pipe.response.connector = nodePtr.host+":"+nodePtr.port;
 		pipe.request.gjsOptions = options;
-	
+
 		for(var n in pipe.request.headers)
-			options.headers[pipe.root.lib.core.fixCamelLike(n)] = pipe.request.headers[n];
+			options.headers[pipe.request.orgHeaders[n]] = pipe.request.headers[n];
 		
 		/* emit the preProxyPass */
 		pipe.response.emit("proxyPassConnection", pipe, options);
 		
 		/* select flow control */
 		var flowSelect = http;
-		if(proxyStream.hybrid == true) {
+		if(nodePtr.https == true)
+			flowSelect = https;
+		else if(proxyStream.hybrid == true) {
 			if(pipe.server.https == true)
 				flowSelect = https;
 			options.port = pipe.server.port;
 		}
-		else  {
-			if(nodePtr.https == true)
-				flowSelect = https;
-		}
 		
 		var req = flowSelect.request(options, function(res) {
-
-			/* abort connexion because someone is using it for a post response*/
+			nodePtr._retry = 0;
+			
+			/* abort connexion because someone is using it for a post response */
 			if(pipe.response.headerSent == true) {
 				req.abort();
 				return;
@@ -183,105 +184,123 @@ proxyPass.request = function(pipe, proxyname) {
 
 			pipe.response.emit("proxyPassRequest", pipe, res);
 			
-// 			res.headers['x-binarysec-via']
-// 			if(gjs.serverConfig.hostname)
-// 				res.headers['x-binarysec-via'] = gjs.serverConfig.hostname;
-// 			res.headers.server = 'BinarySEC';
-
-			pipe.response.writeHead(res.statusCode, res.headers);
-			pipe.response.headerSent = true;
-// 			pipe.root.lib.bwsRg.httpServer.logpipe(gjs, res);
-			res.pipe(pipe.response);
+			res.gjsSetHeader('Server', 'gatejs');
+			if(pipe.server.isClosing == true) {
+				res.gjsSetHeader('Connection', 'Close');
+				delete res.headers['keep-alive'];
+			}
 			
+			/* fix headers */
+			var nHeaders = {};
+			for(var n in res.headers)
+				nHeaders[res.orgHeaders[n]] = res.headers[n];
+			
+			/* check for client close */
+			pipe.request.on('close', function() {
+				res.destroy();
+			});
+			
+			pipe.response.writeHead(res.statusCode, nHeaders);
+			pipe.response.headerSent = true;
+			pipe.root.lib.http.reverse.logpipe(pipe, res);
 		});
 		
-		req.on('error', function (error) {
-// 			gjs.root.lib.gjsCore.logger.siteInfo(
-// 				gjs.request.selectedConfig.serverName[0], 
-// 				"Proxy pass error on "+
-// 				gjs.response.connector+" from "+
-// 				gjs.request.connection.remoteAddress+
-// 				":"+gjs.request.connection.remotePort+
-// 				" with error code #"+error.code
-// 			);
-// 			
-// 			/* for sure we can't deliver page */
-// 			pipe.root.lib.http.error.renderArray({
-// 				pipe: gjs, 
-// 				code: 504, 
-// 				tpl: "5xx", 
-// 				log: true,
-// 				title:  "Bad gateway",
-// 				explain: "Unable to establish connection to the backend server "+error.code
-// 			});
-			console.log('tes');
+		function computeRetry() {
+			/* retry computing */
+			if(!nodePtr._retry)
+				nodePtr._retry = 0;
+			nodePtr._retry++;
 			
+			if(nodePtr._retry >= nodePtr.retry) {
+				reverse.error(pipe, "Proxy stream "+
+					nodePtr.host+":"+nodePtr.port+" is DOWN");
+		
+				pipe.root.lib.core.ipc.send('LFW', 'proxyPassFaulty', {
+					site: pipe.request.headers.host,
+					node: nodePtr
+				});
+				
+				nodePtr.isFaulty = true;
+			}
+			else {
+				emitDestinationRequest(nodePtr);
+				return;
+			}
+			
+			req.abort();
+			/* check another server */
+			var subNodePtr = selectDestination('primary');
+			if(subNodePtr == false) {
+				subNodePtr = selectDestination('secondary');
+				if(subNodePtr == false) {
+					
+					pipe.root.lib.http.error.renderArray({
+						pipe: pipe, 
+						code: 504, 
+						tpl: "5xx", 
+						log: true,
+						title:  "Bad gateway",
+						explain: "Unable to establish connection to the backend server"
+					});
+					return;
+				}
+			}
+			emitDestinationRequest(subNodePtr);
+		}
+		
+		req.on('error', function (error) {
+			if(pipe.response.headerSent == true) {
+				// log error source closing connectio
+				reverse.error(pipe, "Proxy read error on "+
+					pipe.response.connector+" for "+
+					pipe.request.remoteAddress+
+					":"+pipe.request.connection.remotePort);
+			
+				pipe.response.destroy();
+				pipe.stop();
+				return;
+			}
+
+// 			computeRetry();
 		});
 
 		function socketErrorDetection(socket) {
-
-			gjs.root.lib.gjsCore.logger.siteInfo(
-				gjs.request.selectedConfig.serverName[0], 
-				"Proxy pass timeout on "+
-				gjs.response.connector+" from "+
-				gjs.request.connection.remoteAddress+
-				":"+gjs.request.connection.remotePort
-			);
-			
-			/* create background checker */
-			if(!nodePtr.bgTimeoutId) {
-				nodePtr.isFaulty = true;
-				
-				/* send IPC message to tell proxy doesn't work */
-				gjs.root.lib.gjsCore.ipc.send('LFW', 'proxyPassTimeout', {
-					proxyStreamName: gjs.request.selectedConfig.proxyStreamName,
-					proxyname: proxyname,
-					host: gjs.request.gjsOptions.hostname,
-					port: gjs.request.gjsOptions.port,
-					action: 'deferred'
-				});
-			
-				if(!nodePtr.timeout)
-					nodePtr.timeout = 30000;
-			
-				nodePtr.bgTimeoutId = setTimeout(
-					backgroundChecker,
-					2000,
-					nodePtr,
-					gjs.request.selectedConfig,
-					proxyname
-				);
-			}
-// 			else
-// 				console.log('here is the bug');
-			
-			req.abort();
-			
-			/* can select another one ? */
-			if(gjs.response.headerSent != true) {
-				var a = selectDestination(proxyStream);
-				if(a != false)
-					emitDestinationRequest(a);
-			}
+			reverse.error(pipe, "Proxy pass timeout on "+
+				pipe.response.connector+" from "+
+				pipe.request.remoteAddress+
+				":"+pipe.request.connection.remotePort);
+			socket.destroy();
+			computeRetry();
 		}
 		
 		req.on('socket', function (socket) {
-// 			if(!nodePtr.timeout)
-// 				nodePtr.timeout = 30000;
-// 			socket.setTimeout(nodePtr.timeout, function() {
-// 				socketErrorDetection(socket);
-// 			});
-// 			socket.on('connect', function() {
-// 				socket.setTimeout(0);
-// 			});
+			if(!socket.connected) 
+				socket.connected = false;
+			
+			if(socket.connected == true)
+				return;
+			
+			if(!nodePtr.timeout)
+				nodePtr.timeout = 3;
+			
+			if(!nodePtr.retry)
+				nodePtr.retry = 3;
+			
+			socket.timeoutId = setTimeout(
+				socketErrorDetection, 
+				nodePtr.timeout*1000, 
+				socket
+			);
+			socket.on('connect', function() {
+				socket.connected = true;
+				clearTimeout(socket.timeoutId); 
+			});
 		});
 
 		pipe.response.emit("proxyPassPrepare", req);
 		pipe.pause();
 		pipe.request.pipe(req);
-		
 	}
-
 
 	/* select a destination */
 	var nodePtr = selectDestination('primary');
@@ -306,130 +325,30 @@ proxyPass.request = function(pipe, proxyname) {
 	
 	/* emit connection */
 	var ret = emitDestinationRequest(nodePtr);
-	
-// 	console.log(nodePtr, ret);
-
-// 	/* add real IP tracking */
-// 	if(gjs.serverConfig.proxy && gjs.serverConfig.proxy.realIp == true) {
-// 		gjs.request.headers[gjs.serverConfig.proxy.realIpHeader] =
-// 			gjs.request.connection.remoteAddress;
-// 	}
-// 
-// 	function backgroundChecker(nodePtr, siteConfig, proxyname) {
-// 	
-// 		/* site reload cancel the test */
-// 		if(nodePtr._version != siteConfig.version)
-// 			return;
-// 		
-// 		var hdr = {
-// 			host: siteConfig.serverName[0]
-// 		};
-// 		
-// 		var options = {
-// 			host: nodePtr.host,
-// 			port: nodePtr.port,
-// 			path: '/',
-// 			method: 'GET',
-// 			headers: hdr,
-// 			rejectUnauthorized: false,
-// 			servername: hdr.host,
-// 			agent: false
-// 		};
-// 		
-// 		/* select flow control */
-// 		var flowSelect = http;
-// 		if(nodePtr.https == true)
-// 			flowSelect = https;
-// 		
-// 		var req = flowSelect.request(options, function(res) {
-// 			gjs.root.lib.gjsCore.logger.siteInfo(
-// 				siteConfig.serverName[0], 
-// 				"Proxy UP status for node "+nodePtr.host
-// 			);
-// 			
-// 			clearTimeout(nodePtr.bgTimeoutId);
-// 			delete nodePtr.bgTimeoutId;
-// 			
-// 			nodePtr.isFaulty = false;
-// 
-// 			/* send IPC message to tell that the host is up */
-// 			gjs.root.lib.gjsCore.ipc.send('LFW', 'proxyPassTimeout', {
-// 				proxyStreamName: siteConfig.proxyStreamName,
-// 				proxyname: proxyname,
-// 				host: nodePtr.host,
-// 				port: nodePtr.port,
-// 				action: 'working'
-// 			});
-// 
-// 			res.on('data', function(data) {});
-// 		});
-// 		req.on('error', function (error) {});
-// 		
-// 		function socketErrorDetection(socket) {
-// 
-// 			gjs.root.lib.gjsCore.logger.siteInfo(
-// 				siteConfig.serverName[0], 
-// 				"Proxy pass "+
-// 				gjs.response.connector+" still DOWN"
-// 			);
-// 			
-// 			nodePtr.bgTimeoutId = setTimeout(
-// 				backgroundChecker, 
-// 				2000,
-// 				nodePtr,
-// 				siteConfig,
-// 				proxyname
-// 			);
-// 				
-// 			req.abort();
-// 		}
-// 		
-// 		req.on('socket', function (socket) {
-// 			nodePtr.timeout = 30000;
-// 			socket.setTimeout(nodePtr.timeout, function() {
-// 				socketErrorDetection(socket);
-// 			});
-// 		});
-// 
-// 		req.on('data', function() { /* no nothing */ });
-// 		req.end();
-// 	}
-// 
-// 	
-
-// 	
-// 	console.log(request.url);
-// 	emitDestinationRequest(nodePtr);
-// 	
-// 	gjs.stop();
-// 	return(true);
-	
 }
 
 proxyPass.ctor = function(gjs) {
-// 	gjs.lib.gjsCore.ipc.on('proxyPassTimeout', function(gjs, data) {
-// 		var proxyStream = gjs.lib.bwsRg.siteConfig.getSiteByConf(data.msg.proxyStreamName);
-// 		if(!proxyStream)
-// 			return;
-// 		
-// 		var stream = proxyStream.proxyStream[data.msg.proxyname];
-// 		if(!stream)
-// 			return;
-// 		
-// 		var ipBlock = false;
-// 		for(var a in stream.reverse) {
-// 			var b = stream.reverse[a];
-// 			if(b.host == data.msg.host && b.port == data.msg.port)
-// 				ipBlock = b;
-// 		}
-// 		if(!ipBlock)
-// 			return;
-// 		
-// 		if(data.msg.action == 'deferred')
-// 			ipBlock.isFaulty = true;
-// 		else 
-// 			ipBlock.isFaulty = false;
-// 	});
+	
+	/* receive mutual faulty */
+	gjs.lib.core.ipc.on('proxyPassFaulty', function(gjs, data) {
+		var d = data.msg.node;
+		var site = gjs.lib.http.site.search(data.msg.site);
+		if(!site)
+			return;
+		site.proxyStream[d._name][d._key][d._index].isFaulty = true;
+	});
+	
+	/* receive mutual solution */
+	gjs.lib.core.ipc.on('proxyPassWork', function(gjs, data) {
+		var d = data.msg.node;
+		var site = gjs.lib.http.site.search(data.msg.site);
+		if(!site)
+			return;
+		var node = site.proxyStream[d._name][d._key][d._index];
+		node.isFaulty = false;
+		node._retry = 0;
+	});
+
 }
 
 module.exports = proxyPass;
