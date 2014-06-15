@@ -85,9 +85,11 @@ install:
 	
 	sed -i -e "$SED_CMD" "$PREFIX_CONF/gatejs/config.js"
 	
+	mkdir -p "$PREFIX_BIN"
 	sed -e "$SED_CMD" "./bin/gatejs" > "$PREFIX_BIN/gatejs"
 	chmod +x "$PREFIX_BIN/gatejs"
 	
+	mkdir -p "$PREFIX_CONF/init.d"
 	sed -e "$SED_CMD" "./bin/$INIT_FILE" > "$PREFIX_CONF/init.d/gatejs"
 	chmod +x "$PREFIX_CONF/init.d/gatejs"
 	
