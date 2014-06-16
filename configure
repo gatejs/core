@@ -63,6 +63,7 @@ PREFIX_BIN_SED=`echo "$PREFIX_BIN" | sed -e 's/~/\\~/g'`
 PREFIX_VAR_SED=`echo "$PREFIX_VAR" | sed -e 's/~/\\~/g'`
 PREFIX_DATA_SED=`echo "$PREFIX_DATA" | sed -e 's/~/\\~/g'`
 SED_CMD="s~%PREFIX_SHARE%~$PREFIX_SHARE_SED~g; s~%PREFIX_CONF%~$PREFIX_CONF_SED~g; s~%PREFIX_BIN%~$PREFIX_BIN_SED~g; s~%PREFIX_VAR%~$PREFIX_VAR_SED~g; s~%PREFIX_DATA%~$PREFIX_DATA_SED~g"
+[ -r /etc/redhat-release ] && INIT_FILE=gatejs.initd.redhat || INIT_FILE=gatejs.initd
 
 cat <<EOF > Makefile
 all:
@@ -84,10 +85,12 @@ install:
 	
 	sed -i -e "$SED_CMD" "$PREFIX_CONF/gatejs/config.js"
 	
+	mkdir -p "$PREFIX_BIN"
 	sed -e "$SED_CMD" "./bin/gatejs" > "$PREFIX_BIN/gatejs"
 	chmod +x "$PREFIX_BIN/gatejs"
 	
-	sed -e "$SED_CMD" "./bin/gatejs.initd" > "$PREFIX_CONF/init.d/gatejs"
+	mkdir -p "$PREFIX_CONF/init.d"
+	sed -e "$SED_CMD" "./bin/$INIT_FILE" > "$PREFIX_CONF/init.d/gatejs"
 	chmod +x "$PREFIX_CONF/init.d/gatejs"
 	
 	@echo "Gatejs is installed."
