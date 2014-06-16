@@ -53,7 +53,7 @@ static CoreNregSearch *_nreg_search_new(
 	bool is_star = false
 );
 
-static int _nreg_match_ending_stars(
+static bool _nreg_match_ending_stars(
 	CoreNregTranslation *specials,
 	CoreNregSearch *itm,
 	int *match_count,
@@ -386,7 +386,6 @@ int CoreNreg::match(
 		
 		if(
 				itm->node_id < this->specials[NREG_SPEC_BEGIN] &&
-				this->specials[NREG_SPEC_BEGIN] < this->transtab_count &&
 				itm->node->chars[itm->node_id] != NULL
 			) {
 			if(itm->id + 1 < match_size)
@@ -464,7 +463,7 @@ inline bool CoreNreg::have(int spec) {
 	return(false);
 }
 
-static int _nreg_match_ending_stars(
+static bool _nreg_match_ending_stars(
 		CoreNregTranslation *specials,
 		CoreNregSearch *itm,
 		int *match_count,
