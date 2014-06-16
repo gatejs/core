@@ -23,7 +23,7 @@ var serverConfig = function(bs) { return({
 	
 	pipeline: {
 		pipetest: [
-			['store', 'argtest1', 'argtest2'],
+		//	['store', 'argtest1', 'argtest2'],
 			['cache', { }],
 			['acn', { }],
 			['proxyPass', { mode: 'host', timeout: 10 }]

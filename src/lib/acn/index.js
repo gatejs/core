@@ -200,10 +200,10 @@ function loadSlaveAPI(bs) {
 
 	acn.askDigest = function(pipe, func) {
 		
-		if(highestLatency <= 0) {
-			func.apply(null, [true, 'not ready']);
-			return;
-		}
+// 		if(highestLatency <= 0) {
+// 			func.apply(null, [true, 'not ready']);
+// 			return;
+// 		}
 		
 		var inHash;
 		if(pipe.request.urlParseCacheStore)
@@ -218,6 +218,7 @@ function loadSlaveAPI(bs) {
 			inHash: inHash,
 			encoding: pipe.request.headers['accept-encoding']
 		};
+		
 		requestTable[rnd] = msg;
 		bs.lib.core.ipc.send('LFW', 'askDigest', msg);
 		
@@ -354,12 +355,12 @@ function loadMulticastACN(bs) {
 		
 		/* get remote ACN digest asks  */
 		acn.on('askDigest', function(data, rinfo) {
-
+			
 			if(data.msg.encoding) {
 				var hae = data.msg.encoding.split(',');
 				var a;
 				for(a in hae) {
-					var hash = acn.generateInHash(bs, data.msg.inHash+hae[a].trim());
+					var hash = acn.generateInHash(0, data.msg.inHash+hae[a].trim());
 					var headers = acn.loadHeaderFile(hash.file);
 					if(!headers)
 						continue;
@@ -382,9 +383,11 @@ function loadMulticastACN(bs) {
 					
 				}
 			}
-
-			var hash = acn.generateInHash(bs, data.msg.inHash);
+			
+			
+			var hash = acn.generateInHash(0, data.msg.inHash);
 			var headers = acn.loadHeaderFile(hash.file);
+
 			if(!headers)
 				return;
 			
@@ -392,6 +395,7 @@ function loadMulticastACN(bs) {
 				/* check stale */
 				var isF = acn.isFresh(headers);
 				if(isF != false) {
+					
 					var msg = {
 						cmd: 'answerDigest',
 						id: data.msg.id,
@@ -408,6 +412,7 @@ function loadMulticastACN(bs) {
 		});
 		
 		acn.on('answerDigest', function(data, rinfo) {
+			
 			bs.lib.core.ipc.send('LFW', 'acnReply', {data: data, rinfo: rinfo});
 		});
 		
@@ -445,7 +450,7 @@ function loadMulticastACN(bs) {
 
 acn.divideHash = function(d, hash) {
 	var fileHash = acn.cacheDir;
-	if(!d || d <= 0 || d >= 10)
+// 	if(!d || d <= 0 || d >= 10)
 		d = 8;
 	
 	var dig = hash;
