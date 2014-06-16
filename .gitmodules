@@ -4,4 +4,4 @@
 [submodule "deps/nodejs"]
 	path = deps/nodejs
 	url = git://github.com/joyent/node
-        branch = v0.10.29
+	branch = v0.10
