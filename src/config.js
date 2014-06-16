@@ -25,8 +25,19 @@ var serverConfig = function(bs) { return({
 		pipetest: [
 			['store', 'argtest1', 'argtest2'],
 			['cache', { }],
+// 			['acn', { }],
 			['proxyPass', { mode: 'host', timeout: 10 }]
 		],
+	},
+	
+	acn: {
+		mode: 'multicast',
+		listen: '0.0.0.0',
+		port: 9043,
+		address: "224.0.0.174",
+		deadInterval: 2000,
+		pingInterval: 200,
+		deadRequest: 50
 	}
 
 	
