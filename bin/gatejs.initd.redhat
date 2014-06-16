@@ -1,0 +1,81 @@
+#!/bin/sh
+#
+# nginx - this script starts and stops the nginx daemin
+#
+# chkconfig:   - 85 15 
+# description:  GateJS is a javascript based reverse & forward proxy with high performance & capability.
+# pidfile:     /var/run/gatejs/master.pid
+
+# Author: Julien Tessier <julien@cahri.com>, derivated from Debian's init.d by Maxime Ferrino <mf@verman.fr>
+
+. /etc/rc.d/init.d/functions
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin:%PREFIX_BIN%
+NAME=gatejs
+DAEMON="%PREFIX_SHARE%/node/bin/node"
+DAEMON_ARGS="%PREFIX_SHARE%/gatejs/service.js --config=%PREFIX_CONF%/gatejs/config.js --daemon"
+PIDFILE=%PREFIX_VAR%/run/$NAME/master.pid
+IPCFILE=%PREFIX_VAR%/run/$NAME/ipc
+SCRIPTNAME=%PREFIX_CONF%/init.d/$NAME
+LOGFILE=%PREFIX_VAR%/log/$NAME.log
+LOCKFILE=%PREFIX_VAR%/lock/subsys/$NAME
+
+do_start()
+{
+        echo -n $"Starting $NAME: "
+        daemon --pidfile=$PIDFILE "$DAEMON $DAEMON_ARGS" > $LOGFILE 2>&1 && echo_success || echo_failure
+        RETVAL=$?
+        echo
+        [ $RETVAL -eq 0 ] && touch $LOCKFILE
+}
+do_stop()
+{
+        echo -n $"Stopping $NAME: "
+        kill `cat $PIDFILE` > /dev/null 2>&1 && echo_success || echo_failure
+        RETVAL=$?
+        echo
+        [ $RETVAL -eq 0 ] && rm -f $LOCKFILE
+}
+do_status()
+{
+        status -p $PIDFILE "$DAEMON $DAEMON_ARGS"
+}
+do_logrotate() {
+        echo -n $"Rotating logs for $NAME: "
+        $DAEMON /usr/local/gate/share/gatejs/controler.js --socket="$IPCFILE" send LFW SIGUSR2 > /dev/null && echo_success || echo_failure
+        echo 
+}
+do_reload()
+{
+        echo -n $"Reloading $NAME: "
+        $DAEMON /usr/local/gate/share/gatejs/controler.js --socket="$IPCFILE" send LFW system:graceful > /dev/null  && echo_success || echo_failure
+        echo 
+}
+
+case "$1" in
+        start)
+                do_start
+                ;;
+        stop)
+                do_stop
+                ;;
+        reload|force-reload)
+                do_reload
+                ;;
+        restart)
+                do_stop
+		sleep 1
+                do_start
+                ;;
+        status)
+                do_status
+                ;;
+        logrotate)
+                do_logrotate
+                ;;
+        *)
+                echo "Usage: $0 {start|stop|status|reload|restart|force-reload}"
+                RETVAL=1
+esac
+
+exit $RETVAL
