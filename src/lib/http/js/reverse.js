@@ -146,6 +146,7 @@ reverse.loader = function(gjs) {
 			});
 		});
 		
+		pipe.reverse = true;
 		pipe.root = gjs;
 		pipe.request = request;
 		pipe.response = response;

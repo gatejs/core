@@ -161,7 +161,7 @@ proxyPass.request = function(pipe, proxyname) {
 			options.headers[pipe.request.orgHeaders[n]] = pipe.request.headers[n];
 		
 		/* emit the preProxyPass */
-		pipe.response.emit("proxyPassConnection", pipe, options);
+		pipe.response.emit("rvProxyPassPassConnection", options, req);
 		
 		/* select flow control */
 		var flowSelect = http;
@@ -182,7 +182,7 @@ proxyPass.request = function(pipe, proxyname) {
 				return;
 			}
 
-			pipe.response.emit("proxyPassRequest", pipe, res);
+			pipe.response.emit("rvProxyPassPassRequest", pipe, req, res);
 			
 			res.gjsSetHeader('Server', 'gatejs');
 			if(pipe.server.isClosing == true) {
@@ -249,6 +249,8 @@ proxyPass.request = function(pipe, proxyname) {
 		}
 		
 		req.on('error', function (error) {
+			pipe.response.emit("rvProxyPassSourceRequestError"); 
+
 			if(pipe.response.headerSent == true) {
 				// log error source closing connectio
 				reverse.error(pipe, "Proxy read error on "+
@@ -297,7 +299,7 @@ proxyPass.request = function(pipe, proxyname) {
 			});
 		});
 
-		pipe.response.emit("proxyPassPrepare", req);
+		pipe.response.emit("rvProxyPassPassPrepare", req);
 		pipe.pause();
 		pipe.request.pipe(req);
 	}
