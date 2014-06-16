@@ -82,9 +82,9 @@ function loadTCPReplier(bs) {
 		try {
 			request.urlParse = url.parse(request.url, true);
 		} catch(e) {
-			console.log("ACN URL Parse error on "+request.path+' from '+request.connection.remoteAddress);
+			bs.lib.core.logger.error("ACN URL Parse error on "+request.path+' from '+request.connection.remoteAddress);
 			
-			response.writeHead(403, { server: 'gateJS'});
+			response.writeHead(403, { server: 'gatejs'});
 			response.end();
 		
 			return;
@@ -92,7 +92,7 @@ function loadTCPReplier(bs) {
 		
 		var fileHash = request.urlParse.query.fileHash;
 		if(!fileHash || fileHash.length < 10) {
-			response.writeHead(403, { server: 'gateJS'});
+			response.writeHead(403, { server: 'gatejs'});
 			response.end();
 		
 			return;
@@ -102,7 +102,7 @@ function loadTCPReplier(bs) {
 		var headers = acn.loadHeaderFile(hash.file);
 		
 		if(!headers) {
-			response.writeHead(404, { server: 'gateJS'});
+			response.writeHead(404, { server: 'gatejs'});
 			response.end();
 			return(false);
 		}
@@ -111,7 +111,7 @@ function loadTCPReplier(bs) {
 			/* check stale */
 			var isF = acn.isFresh(headers);
 			if(isF == false) {
-				response.writeHead(404, { server: 'gateJS'});
+				response.writeHead(404, { server: 'gatejs'});
 				response.end();
 				return(false);
 			}
@@ -131,7 +131,7 @@ function loadTCPReplier(bs) {
 				delete headers.headers['content-encoding'];
 				delete headers.headers['content-length'];
 
-// 				bs.lib.bsCore.ipc.send('LFW', 'bsStatus', {
+// 				bs.lib.core.ipc.send('LFW', 'bsStatus', {
 // 					host: request.headers.host,
 // 					hits: true
 // 				});
@@ -141,7 +141,7 @@ function loadTCPReplier(bs) {
 				/* fix headers */
 				var nHeaders = {};
 				for(var n in headers.headers)
-					nHeaders[bs.lib.bsCore.fixCamelLike(n)] = headers.headers[n];
+					nHeaders[bs.lib.core.fixCamelLike(n)] = headers.headers[n];
 				
 				response.writeHead(304, nHeaders);
 				response.end();
@@ -155,7 +155,7 @@ function loadTCPReplier(bs) {
 			/* fix headers */
 			var nHeaders = {};
 			for(var n in headers.headers)
-				nHeaders[bs.lib.bsCore.fixCamelLike(n)] = headers.headers[n];
+				nHeaders[bs.lib.core.fixCamelLike(n)] = headers.headers[n];
 				
 			response.writeHead(200, nHeaders);
 			var st = fs.createReadStream(hash.file, {
@@ -174,15 +174,12 @@ function loadTCPReplier(bs) {
 			return(true);
 		}
 
-		response.writeHead(404, { server: 'gateJS'});
+		response.writeHead(404, { server: 'gatejs'});
 		response.end();
 		return(false);
 	});
 	
 	iface.listen(a.port, a.listen);
-	
-	console.log('Spawning ACN TCP receiver');
-	
 }
 
 
@@ -222,7 +219,7 @@ function loadSlaveAPI(bs) {
 			encoding: pipe.request.headers['accept-encoding']
 		};
 		requestTable[rnd] = msg;
-		bs.lib.bsCore.ipc.send('LFW', 'askDigest', msg);
+		bs.lib.core.ipc.send('LFW', 'askDigest', msg);
 		
 		requestTable[rnd].func = func;
 		requestTable[rnd].timeout = setTimeout(function() {
@@ -240,21 +237,22 @@ function loadSlaveAPI(bs) {
 		
 	}
 	
-	/* update slave latency */
-	bs.lib.bsCore.ipc.on('acnHighLatency', function(p, jdata) {
-		highestLatency = jdata.msg.latency;
-	});
-	
-	/* update slave latency */
-	bs.lib.bsCore.ipc.on('acnReply', function(p, jdata) {
-		var ptr = requestTable[jdata.msg.data.id];
-		if(ptr) {
-			clearTimeout(ptr.timeout);
-			ptr.func.apply(null, [false, jdata.msg]);
-			delete requestTable[jdata.msg.data.id];
-		}
-	});
-	
+	setTimeout(function() {
+		/* update slave latency */
+		bs.lib.core.ipc.on('acnHighLatency', function(p, jdata) {
+			highestLatency = jdata.msg.latency;
+		});
+		
+		/* update slave latency */
+		bs.lib.core.ipc.on('acnReply', function(p, jdata) {
+			var ptr = requestTable[jdata.msg.data.id];
+			if(ptr) {
+				clearTimeout(ptr.timeout);
+				ptr.func.apply(null, [false, jdata.msg]);
+				delete requestTable[jdata.msg.data.id];
+			}
+		});
+	}, 1000);
 
 }
 
@@ -263,14 +261,10 @@ function loadMulticastACN(bs) {
 	if(!cluster.isMaster)
 		return;
 	
-	
-	
-	console.log('Starting ACN master as multicast service at '+bs.serverConfig.acn.address+':'+bs.serverConfig.acn.port);
-	
 	acn.server = dgram.createSocket("udp4");
 
 	acn.server.on("error", function (err) {
-		console.log("server error:\n" + err.stack);
+		bs.lib.core.logger.error("ACN server error:\n" + err.stack);
 		acn.server.close();
 	});
 
@@ -283,7 +277,7 @@ function loadMulticastACN(bs) {
 		var buf = new Buffer(JSON.stringify(data)+"\n");
 		acn.server.send(buf, 0, buf.length, bs.serverConfig.acn.port, dst, function(err, bytes) {
 			if(err)
-				console.log('Error sending ACN packet');
+				bs.lib.core.logger.error('Error sending ACN packet');
 		});
 	}
 	
@@ -303,7 +297,7 @@ function loadMulticastACN(bs) {
 	
 	function onListening() {
 		var address = acn.server.address();
-		console.log("ACN multicast service listening " +
+		bs.lib.core.logger.system("ACN multicast service listening " +
 			address.address + ":" + address.port);
 		
 		acn.server.addMembership(bs.serverConfig.acn.address, bs.serverConfig.acn.listen);
@@ -332,7 +326,7 @@ function loadMulticastACN(bs) {
 // 				console.log('Service node '+s.node+' break point is '+s.breakPoint+'ms');
 			}
 
-			bs.lib.bsCore.ipc.send('LFW', 'acnHighLatency', { latency: highestLatency });
+			bs.lib.core.ipc.send('LFW', 'acnHighLatency', { latency: highestLatency });
 		}
 
 		acn.on('hello', function(data, rinfo) {
@@ -340,14 +334,14 @@ function loadMulticastACN(bs) {
 				clearTimeout(serverTable[data.node].timeout);
 			}
 			else
-				console.log('ACN node '+data.node+' is now UP '+rinfo.address);
+				bs.lib.core.logger.system('ACN node '+data.node+' is now UP '+rinfo.address);
 			
 			serverTable[data.node] = {
 				node: data.node,
 				ip: rinfo.address,
 				last: new Date(),
 				timeout: setTimeout(function() {
-					console.log('ACN node '+data.node+' is now DOWN '+rinfo.address);
+					bs.lib.core.logger.system('ACN node '+data.node+' is now DOWN '+rinfo.address);
 					delete serverTable[data.node];
 				}, bs.serverConfig.acn.deadInterval)
 			}
@@ -414,10 +408,10 @@ function loadMulticastACN(bs) {
 		});
 		
 		acn.on('answerDigest', function(data, rinfo) {
-			bs.lib.bsCore.ipc.send('LFW', 'acnReply', {data: data, rinfo: rinfo});
+			bs.lib.core.ipc.send('LFW', 'acnReply', {data: data, rinfo: rinfo});
 		});
 		
-		bs.lib.bsCore.ipc.on('askDigest', function(p, jdata) {
+		bs.lib.core.ipc.on('askDigest', function(p, jdata) {
 			var msg = {
 				cmd: 'askDigest',
 				msg: jdata.msg
@@ -425,21 +419,18 @@ function loadMulticastACN(bs) {
 			acn.send(msg);
 		});
 		
-		bs.lib.bsCore.ipc.on('pushDigest', function(test) {
+		bs.lib.core.ipc.on('pushDigest', function(test) {
 			
 		});
 	}
-	
 	
 	acn.server.on("message", onMessage);
 	acn.server.on("listening", onListening);
 
 	if(bs.serverConfig.acn.listen != '0.0.0.0') {
-		console.log('binding sub server');
 		acn.subServer = dgram.createSocket("udp4");
 
 		acn.subServer.on("error", function (err) {
-			console.log("subServer error:\n" + err.stack);
 			acn.subServer.close();
 		});
 		

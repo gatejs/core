@@ -86,8 +86,8 @@ cache.request = function(pipe, opts) {
 				for(var n in headers.headers)
 					nHeaders[pipe.root.lib.core.fixCamelLike(n)] = headers.headers[n];
 				
-
-				if(pipe.reverse == true)
+				
+				if(pipe.reverse === true)
 					pipe.root.lib.http.reverse.log(pipe, 304);
 				else
 					pipe.root.lib.http.forward.log(pipe, 304);
@@ -135,11 +135,11 @@ cache.request = function(pipe, opts) {
 // 					hitsBand: counter
 // 				});
 // 			});
-			
-			if(pipe.reverse == true)
-				pipe.root.lib.http.forward.logpipe(pipe, st);
-			else
+
+			if(pipe.reverse === true)
 				pipe.root.lib.http.reverse.logpipe(pipe, st);
+			else
+				pipe.root.lib.http.forward.logpipe(pipe, st);
 			/* check */
 			return(true);
 		}
@@ -376,7 +376,7 @@ cache.request = function(pipe, opts) {
 	});
 
 	/* request emition */
-	if(pipe.reverse == true) 
+	if(pipe.reverse === true) 
 		pipe.response.on("rvProxyPassPassRequest", (function(pipe, req, res) {
 			pipeProxyPassRequest(pipe, req, res);
 		}));
