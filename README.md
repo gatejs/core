@@ -4,17 +4,16 @@ gate
 GateJS is a javascript based reverse &amp; forward proxy with high 
 performance &amp; capability.
 
-Installation
-------------
+## Installation
 
-### TLDR ###
+### TLDR
 To build and install gatejs, run the following commands :
 
 	$ ./configure
 	$ make
 	# sudo make install
 
-### Installation from git ###
+### Installation from git
 To install this project from git, you will have to run the following command :
 
 	$ git clone --recurse-submodules https://github.com/binarysec/gate.git gate
@@ -32,7 +31,7 @@ or :
 If you downloaded the zip from github, you will have to fetch the submodules 
 yourself.
 
-### Available options ###
+### Available options
 The `configure` script have the following options :
 * `--prefix-share` : The path where the static data will be written. Defaults to
   `/usr/local/share`.
@@ -45,3 +44,10 @@ The `configure` script have the following options :
 * `--prefix-data` : The path where the persistent data will be written (Cache
   files). Defaults to `/home/gatejs-data`.
 * `--help` : Show a short help text.
+
+## System spec
+
+### Debian packages
+```bash
+apt-get install gcc make g++
+```
