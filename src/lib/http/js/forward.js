@@ -121,6 +121,7 @@ forward.loader = function(gjs) {
 			});
 		});
 		
+		pipe.forward = true;
 		pipe.root = gjs;
 		pipe.request = request;
 		pipe.response = response;

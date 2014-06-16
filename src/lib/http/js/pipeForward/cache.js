@@ -86,7 +86,11 @@ cache.request = function(pipe, opts) {
 				for(var n in headers.headers)
 					nHeaders[pipe.root.lib.core.fixCamelLike(n)] = headers.headers[n];
 				
-				pipe.root.lib.http.forward.log(pipe, 304);
+
+				if(pipe.reverse == true)
+					pipe.root.lib.http.reverse.log(pipe, 304);
+				else
+					pipe.root.lib.http.forward.log(pipe, 304);
 				pipe.response.writeHead(304, nHeaders);
 				pipe.response.end();
 				
@@ -132,8 +136,10 @@ cache.request = function(pipe, opts) {
 // 				});
 // 			});
 			
-			pipe.root.lib.http.forward.logpipe(pipe, st);
-			
+			if(pipe.reverse == true)
+				pipe.root.lib.http.forward.logpipe(pipe, st);
+			else
+				pipe.root.lib.http.reverse.logpipe(pipe, st);
 			/* check */
 			return(true);
 		}
@@ -170,6 +176,7 @@ cache.request = function(pipe, opts) {
 			return(false);
 	}
 
+	
 	/*
 	 * Take encoding in case
 	 */
@@ -273,7 +280,7 @@ cache.request = function(pipe, opts) {
 		/* remove headers */
 		delete header.headers.connection;
 		delete header.headers["set-cookie"];
-		
+
 		/* here we store datas */
 		if(response.statusCode == 200 || response.statusCode == 206) {
 			/* create tempory files */
@@ -360,7 +367,6 @@ cache.request = function(pipe, opts) {
 // 			console.log('MISS '+response.statusCode, pipe.request.url);
 	});
 
-
 	/*
 	 * Proxy events
 	 */
@@ -368,11 +374,16 @@ cache.request = function(pipe, opts) {
 	pipe.request.on('close', function() {
 		pipe.response.doNotUse = true;
 	});
-	
+
 	/* request emition */
-        pipe.response.on("fwProxyPassPassRequest", (function(pipe, req, res) {
-		pipeProxyPassRequest(pipe, req, res);
-	}));
+	if(pipe.reverse == true) 
+		pipe.response.on("rvProxyPassPassRequest", (function(pipe, req, res) {
+			pipeProxyPassRequest(pipe, req, res);
+		}));
+	else
+		pipe.response.on("fwProxyPassPassRequest", (function(pipe, req, res) {
+			pipeProxyPassRequest(pipe, req, res);
+		}));
 	
 	return(false);
 }
