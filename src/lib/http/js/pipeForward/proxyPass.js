@@ -108,6 +108,7 @@ proxyPass.request = function(pipe, opts) {
 			}
 			
 			pipe.response.emit("fwProxyPassPassRequest", pipe, req, res);
+			pipe.response.emit("response", res, "fwpass");
 			
 			var counter = 0;
 			res.on('data', function(data) { counter += data.length; });

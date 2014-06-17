@@ -183,6 +183,7 @@ proxyPass.request = function(pipe, proxyname) {
 			}
 
 			pipe.response.emit("rvProxyPassPassRequest", pipe, req, res);
+			pipe.response.emit("response", res, "rvpass");
 			
 			res.gjsSetHeader('Server', 'gatejs');
 			if(pipe.server.isClosing == true) {

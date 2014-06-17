@@ -23,7 +23,15 @@ var serverConfig = function(bs) { return({
 	
 	pipeline: {
 		pipetest: [
-		//	['store', 'argtest1', 'argtest2'],
+			/* set & hide request headers */
+			['headers', { 
+				set: { 
+					"X-Header-One": 'Alasklikeuflux',
+				},
+				hide: [
+					'X-FRAME-options'
+				]
+			} ],
 			['cache', { }],
 			['acn', { }],
 			['proxyPass', { mode: 'host', timeout: 10 }]

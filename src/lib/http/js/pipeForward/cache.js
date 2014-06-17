@@ -76,17 +76,22 @@ cache.request = function(pipe, opts) {
 				
 				pipe.response.gjsCache = 'hit_rms';
 
+				/* load headers */
+				for(var n in headers.headers)
+					pipe.response.gjsSetHeader(n, headers.headers[n]);
+				
+				pipe.response.emit("response", pipe.response, 'cache304');
+				
 				if(pipe.server.isClosing == true) {
-					headers.headers.connection = 'Close';
-					delete headers.headers['keep-alive'];
+					pipe.response.gjsSetHeader('Connection', 'Close');
+					delete pipe.response.headers['keep-alive'];
 				}
 				
 				/* fix headers */
 				var nHeaders = {};
-				for(var n in headers.headers)
-					nHeaders[pipe.root.lib.core.fixCamelLike(n)] = headers.headers[n];
-				
-				
+				for(var n in pipe.response.headers)
+					nHeaders[pipe.response.orgHeaders[n]] = pipe.response.headers[n];
+							
 				if(pipe.reverse === true)
 					pipe.root.lib.http.reverse.log(pipe, 304);
 				else
@@ -100,14 +105,21 @@ cache.request = function(pipe, opts) {
 			/*
 			 * Dump the file as 200 response
 			 */
-			if(pipe.server.isClosing == true)
-				headers.headers.connection = 'Close';
+			/* load headers */
+			for(var n in headers.headers)
+				pipe.response.gjsSetHeader(n, headers.headers[n]);
 			
+			pipe.response.emit("response", pipe.response, 'cache200');
+			
+			if(pipe.server.isClosing == true) {
+				pipe.response.gjsSetHeader('Connection', 'Close');
+				delete pipe.response.headers['keep-alive'];
+			}
+		
 			/* fix headers */
 			var nHeaders = {};
-			for(var n in headers.headers)
-				nHeaders[pipe.root.lib.core.fixCamelLike(n)] = headers.headers[n];
-			
+			for(var n in pipe.response.headers)
+				nHeaders[pipe.response.orgHeaders[n]] = pipe.response.headers[n];
 			
 			pipe.response.writeHead(200, nHeaders);
 			var st = fs.createReadStream(hash.file, {

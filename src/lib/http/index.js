@@ -30,6 +30,8 @@ function fixHeaders(field, value) {
 function setHeader(name, value) {
 	if(!this.orgHeaders)
 		this.orgHeaders = {};
+	if(!this.headers)
+		this.headers = {};
 	var k = name.toLowerCase();
 	this.headers[k] = value;
 	this.orgHeaders[k] = name;
