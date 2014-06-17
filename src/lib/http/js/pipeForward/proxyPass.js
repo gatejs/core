@@ -76,6 +76,17 @@ proxyPass.request = function(pipe, opts) {
 
 		for(var n in pipe.request.headers)
 			options.headers[pipe.request.orgHeaders[n]] = pipe.request.headers[n];
+
+		if (pipe.location.hideHeaders instanceof Array) {
+			for(var n in pipe.location.hideHeaders) {
+				delete options.headers[pipe.location.hideHeaders[n]];
+			}
+		}
+		
+		if(pipe.location.setHeaders instanceof Object) {
+			for(var n in pipe.location.setHeaders)
+				options.headers[n] = pipe.location.setHeaders[n];
+		}
 		
 // 		delete pipe.request.headers.connection;
 		var req = http.request(options);
