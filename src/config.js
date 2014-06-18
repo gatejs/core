@@ -7,8 +7,7 @@ var serverConfig = function(bs) { return({
 	dataDir: "/home/bwsfg",
 	logDir: "/var/log/gatejs",
 	confDir: '/home/mykii/Documents/share',
-	gracefulRam: 80,
-	gracefulRamForce: 90,
+	
 	
 	http: {
 		forwardInterface: {

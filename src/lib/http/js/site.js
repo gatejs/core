@@ -8,6 +8,7 @@ var site = function() { /* loader below */ };
 function loadGeneric(gjs, dir, dst) {
 	try {
 		var d = fs.readdirSync(dir), a;
+		
 		for(a in d) {
 			if(d[a].search(/\.js$/) > 0) {
 				var m = d[a].match(/(.*)\.js$/);
@@ -21,14 +22,15 @@ function loadGeneric(gjs, dir, dst) {
 					
 					/* inject nreg server name rules */
 					if(obj.serverName) {
-						if(obj.interfaces instanceof Array) {
+						
+						if(obj.serverName instanceof Array) {
 							for(var b in obj.serverName) {
 								var key = gjs.lib.core.utils.cstrrev(obj.serverName[b]);
 								dst.rules.add(key);
 								dst.sites[key] = obj;
 							}
 						}
-						else if(obj.interfaces instanceof String) {
+						else if(obj.serverName instanceof String) {
 							var key = gjs.lib.core.utils.cstrrev(obj.serverName);
 							dst.rules.add(key);
 							dst.sites[key] = obj;
