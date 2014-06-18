@@ -223,8 +223,12 @@ var gatejs = (function() {
 	
 	/* defaulting server processes */
 	this.serverConfig.serverProcess = parseInt(this.serverConfig.serverProcess);
-	if(!this.serverConfig.serverProcess)
+	if(!this.serverConfig.serverProcess) {
 		this.serverConfig.serverProcess = os.cpus().length;
+		/* reduce by one if possible in order to offer performances to the master */
+		if(this.serverConfig.serverProcess > 1)
+			this.serverConfig.serverProcess--;
+	}
 	
 	/* running cluster */
 	this.events.emit("clusterPreInit", this);

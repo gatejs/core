@@ -88,6 +88,7 @@ reverse.logpipe = function(gjs, src) {
 }
 
 reverse.loader = function(gjs) {
+	
 	if (cluster.isMaster) {
 		var logger = gjs.lib.core.logger;
 		
@@ -135,6 +136,8 @@ reverse.loader = function(gjs) {
 	var processRequest = function(server, request, response) {
 		request.remoteAddress = request.connection.remoteAddress;
 		
+		
+		
 		var pipe = gjs.lib.core.pipeline.create(null, null, function() {
 			gjs.lib.http.error.renderArray({
 				pipe: pipe, 
@@ -151,6 +154,8 @@ reverse.loader = function(gjs) {
 		pipe.request = request;
 		pipe.response = response;
 		pipe.server = server;
+		
+		gjs.lib.core.stats.http(pipe);
 		
 		/* parse the URL */
 		try {
@@ -264,12 +269,14 @@ reverse.loader = function(gjs) {
 		
 		iface.on('connection', (function(socket) {
 			gjs.lib.core.graceful.push(socket);
+			gjs.lib.core.stats.diffuse('httpWaiting', gjs.lib.core.stats.action.add, 1);
 			
 			socket.setTimeout(60000);
 			
 			socket.on('close', function () {
 				socket.inUse = false;
 				gjs.lib.core.graceful.release(socket);
+				gjs.lib.core.stats.diffuse('httpWaiting', gjs.lib.core.stats.action.sub, 1);
 			});
 		}));
 		

@@ -28,9 +28,9 @@ var serverConfig = function(bs) { return({
 				set: { 
 					"X-Header-One": 'Alasklikeuflux',
 				},
-				hide: [
-					'X-FRAME-options'
-				]
+// 				hide: [
+// 					'X-FRAME-options'
+// 				]
 			} ],
 			['cache', { }],
 			['acn', { }],

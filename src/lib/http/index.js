@@ -80,6 +80,92 @@ http.forward = require(__dirname+'/js/forward');
 http.reverse = require(__dirname+'/js/reverse');
 
 http.loader = function(gjs) {
+	var stats = gjs.lib.core.stats;
+	
+	/* */
+	gjs.lib.core.stats.http = function(pipe) {
+		
+		var d = [
+			{
+				name: 'httpRequests',
+				action: stats.action.add,
+				value: 1
+			},
+			{
+				name: 'httpReading',
+				action: stats.action.add,
+				value: 1
+			},
+			{
+				name: 'httpWaiting',
+				action: stats.action.sub,
+				value: 1
+			},
+		];
+		
+		if(pipe.reverse === true) {
+			d.push({
+				name: 'reverseHttpRequests',
+				action: stats.action.add,
+				value: 1
+			});
+		}
+		else {
+			d.push({
+				name: 'forwardHttpRequests',
+				action: stats.action.add,
+				value: 1
+			});
+		}
+		
+		stats.diffuse(d);
+		
+		/* reading token */
+		pipe.request.on('end', function() {
+			stats.diffuse([
+				{
+					name: 'httpReading',
+					action: stats.action.sub,
+					value: 1
+				},
+				{
+					name: 'httpWriting',
+					action: stats.action.add,
+					value: 1
+				},
+			]);
+		});
+		pipe.response.on('finish', function() {
+			stats.diffuse([
+				{
+					name: 'httpWriting',
+					action: stats.action.sub,
+					value: 1
+				},
+				{
+					name: 'httpWaiting',
+					action: stats.action.add,
+					value: 1
+				},
+			]);
+		});
+		pipe.response.on('close', function() {
+			stats.diffuse([
+				{
+					name: 'httpWriting',
+					action: stats.action.sub,
+					value: 1
+				},
+				{
+					name: 'httpWaiting',
+					action: stats.action.add,
+					value: 1
+				},
+			]);
+		});
+	}
+	
+	/* */
 	try {
 		http.log.loader(gjs);
 		http.littleFs.loader(gjs);
