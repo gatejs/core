@@ -8,6 +8,9 @@ var serverConfig = function(bs) { return({
 	logDir: "/var/log/gatejs",
 	confDir: '/home/mykii/Documents/share',
 	
+	plugins: [
+		'/home/mykii/Documents/share/plugin1'
+	],
 	
 	http: {
 		forwardInterface: {

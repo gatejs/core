@@ -96,11 +96,11 @@ http.loader = function(gjs) {
 				action: stats.action.add,
 				value: 1
 			},
-			{
-				name: 'httpWaiting',
-				action: stats.action.sub,
-				value: 1
-			},
+// 			{
+// 				name: 'httpWaiting',
+// 				action: stats.action.sub,
+// 				value: 1
+// 			},
 		];
 		
 		if(pipe.reverse === true) {
@@ -128,41 +128,46 @@ http.loader = function(gjs) {
 					action: stats.action.sub,
 					value: 1
 				},
-				{
-					name: 'httpWriting',
-					action: stats.action.add,
-					value: 1
-				},
+// 				{
+// 					name: 'httpWriting',
+// 					action: stats.action.add,
+// 					value: 1
+// 				},
 			]);
 		});
-		pipe.response.on('finish', function() {
-			stats.diffuse([
-				{
-					name: 'httpWriting',
-					action: stats.action.sub,
-					value: 1
-				},
-				{
-					name: 'httpWaiting',
-					action: stats.action.add,
-					value: 1
-				},
-			]);
-		});
-		pipe.response.on('close', function() {
-			stats.diffuse([
-				{
-					name: 'httpWriting',
-					action: stats.action.sub,
-					value: 1
-				},
-				{
-					name: 'httpWaiting',
-					action: stats.action.add,
-					value: 1
-				},
-			]);
-		});
+// 		pipe.response.on('finish', function() {
+// // 			if(pipe.response.closed)
+// // 				return;
+// // 			console.log('finish', pipe.response.closed);
+// 			stats.diffuse([
+// 				{
+// 					name: 'httpWriting',
+// 					action: stats.action.sub,
+// 					value: 1
+// 				},
+// // 				{
+// // 					name: 'httpWaiting',
+// // 					action: stats.action.add,
+// // 					value: 1
+// // 				},
+// 			]);
+// 		});
+// 		pipe.response.on('close', function() {
+// // 			pipe.response.closed = true;
+// // 			console.log('close');
+// 			stats.diffuse([
+// 				{
+// 					name: 'httpWriting',
+// 					action: stats.action.sub,
+// 					value: 1
+// 				},
+// // 				{
+// // 					name: 'httpWaiting',
+// // 					action: stats.action.add,
+// // 					value: 1
+// // 				},
+// 			]);
+// 		});
 	}
 	
 	/* */

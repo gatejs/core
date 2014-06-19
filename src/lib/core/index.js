@@ -26,6 +26,7 @@ core.logger = require(__dirname+'/js/logger.js');
 core.graceful = require(__dirname+'/js/graceful.js');
 core.pipeline = require(__dirname+'/js/pipeline.js');
 core.stats = require(__dirname+'/js/stats.js');
+core.plugin = require(__dirname+'/js/plugin.js');
 
 core.loader = function(gjs) {
 	if(!gjs.serverConfig.runDir) {
@@ -38,6 +39,7 @@ core.loader = function(gjs) {
 	core.graceful.loader(gjs);
 	core.pipeline.loader(gjs);
 	core.stats.loader(gjs);
+	core.plugin.loader(gjs);
 }
 
 core.fixCamelLike = function(str) { 

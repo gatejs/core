@@ -283,9 +283,6 @@ var gatejs = (function() {
 		});
 		
 		this.events.emit("clusterMasterInit", this);
-		
-
-	
 	} 
 	else {
 		process.title = 'gate.js Slave process';
