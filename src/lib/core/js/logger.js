@@ -140,11 +140,17 @@ logger.spawnMaster = function(gjs) {
 		processSystem(msg);
 	}
 	
+	logger.error = function(data) {
+		var msg = {
+			type: 'ERR',
+			msg: data
+		};
+		processSystem(msg);
+	}
+	
 }
 
 logger.spawnSlave = function(gjs) {
-	var net = require("net");
-	var readline = require('readline');
 
 	logger.commonLogger = function(cmd, data) {
 		var msg = {

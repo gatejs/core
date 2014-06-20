@@ -94,6 +94,14 @@ site.search = function(name) {
 	
 }
 
+site.reload = function() {
+	/* reload pipeline */
+	for(var a in  site.sites)
+		site.sites[a].pipeline = site.gjs.lib.core.pipeline.scanOpcodes('reversing');
+	
+	
+}
+
 site.loader = function(gjs) {
 	
 	var ret;

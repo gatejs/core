@@ -51,14 +51,16 @@ plugin.loader = function(gjs) {
 		}
 	}
 	
-	for(var a in gjs.serverConfig.plugins)
-		loadModule(gjs.serverConfig.plugins[a]);
-	
-	/* init plugin at the end of cluster init */
-	gjs.events.on('clusterPreInit', function() {
-		for(var a in localPlugins)
-			localPlugins[a].loader(gjs);
-	});
+	if(gjs.serverConfig.plugins) {
+		for(var a in gjs.serverConfig.plugins)
+			loadModule(gjs.serverConfig.plugins[a]);
+		
+		/* init plugin at the end of cluster init */
+		gjs.events.on('clusterPreInit', function() {
+			for(var a in localPlugins)
+				localPlugins[a].loader(gjs);
+		});
+	}
 }
 
 module.exports = plugin;

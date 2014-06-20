@@ -19,7 +19,7 @@
  */
 
 var fs = require('fs');
-var pipeline = function(gjs) { };
+var pipeline = function(gjs) { this.gjs = gjs; };
 
 pipeline.status = {
 	execute: 0,
@@ -136,18 +136,25 @@ pipeline.scanOpcodes = function(scanDir, name) {
 	/* get configuration pipeline */
 	if(!opcodes[name])
 		opcodes[name] = {};
+	
+	if(!name)
+		return(opcodes[scanDir]);
+	
 	try {
 		var d = fs.readdirSync(scanDir), a;
 		for(a in d) {
 			if(d[a].search(/\.js$/) > 0) {
 				var m = d[a].match(/(.*)\.js$/);
 				var f = scanDir + '/' + m[1];
-				opcodes[name][m[1]] = require(f);
-				opcodes[name][m[1]].ctor(pipeline.gjs);
+				if(!opcodes[name][m[1]]) {
+					opcodes[name][m[1]] = require(f);
+					if(opcodes[name][m[1]].ctor)
+						opcodes[name][m[1]].ctor(pipeline.gjs);
+				}
 			}
 		}
 	} catch(e) {
-		this.gjs.lib.core.logger.error("Can not read directory "+e.path+" with error code #"+e.code);
+		pipeline.gjs.lib.core.logger.error("Can not read directory "+e.path+" with error code #"+e);
 		return(false);
 	}
 	
