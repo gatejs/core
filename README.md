@@ -4,6 +4,8 @@ gate
 GateJS is a javascript based reverse &amp; forward proxy with high 
 performance &amp; capability.
 
+**note**: gatejs team is looking for someone to maintain debian packages, contact us at info [at] binarysec [dot] com
+
 ## Installation
 
 ### TLDR
