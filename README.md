@@ -6,6 +6,8 @@ performance &amp; capability.
 
 **note**: gatejs team is looking for someone to maintain debian packages, contact us at info [at] binarysec [dot] com
 
+[![build status](https://secure.travis-ci.org/binarysec/gate.png)](http://travis-ci.org/binarysec/gate)
+
 ## Installation
 
 ### TLDR
