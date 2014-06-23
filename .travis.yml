@@ -1,0 +1,26 @@
+language: cpp
+compiler:
+  - gcc
+before_script:
+  - travis_retry ./configure
+script: rake
+branches:
+  only:
+    - master
+notifications:
+  recipients:
+    - mv@verman.fr
+    - mf@verman.fr 
+  email:
+    on_success: change
+    on_failure: always
+  irc:
+    channels:
+      - "chat.freenode.net#gatejs"
+    template:
+      - "%{repository}/%{branch} (%{commit} - %{author}): %{message}"
+env:
+  - LANG="en_US.UTF-8"
+os:
+  - linux
+  - osx
