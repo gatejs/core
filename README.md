@@ -9,6 +9,8 @@ For more informations about gatejs & configuration please visit the wiki at http
 
 **note**: gatejs team is looking for someone to maintain debian packages, contact us at info [at] binarysec [dot] com
 
+Learn more about gatejs contribution @ https://github.com/binarysec/gate/wiki/Contribution
+
 [![build status](https://secure.travis-ci.org/binarysec/gate.png)](http://travis-ci.org/binarysec/gate)
 
 ## Installation
