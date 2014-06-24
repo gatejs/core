@@ -255,36 +255,54 @@ proxyPass.request = function(pipe, opts) {
 		
 		/* launch DNS query */
 		pipe.pause();
-		dns.resolve4(reqHost, function (err, addresses) {
-			if(err) {
-				pipe.root.lib.http.error.renderArray({
-					pipe: pipe, 
-					code: 504, 
-					tpl: "5xx", 
-					log: true,
-					title:  "DNS error",
-					explain: "Unable to resolv DNS entry for "+reqHost+' '+err
-				});
-				pipe.stop();
-				return(true);
-			}
 		
-			if(addresses[0] == '127.0.0.1') {
-				pipe.root.lib.http.error.renderArray({
-					pipe: pipe, 
-					code: 504, 
-					tpl: "5xx", 
-					log: true,
-					title:  "Bad gateway",
-					explain: "Unable to connect to localhost"
-				});
-				pipe.stop();
-				return(true);
-			}
+		/* defaulting dnsRetry */
+		if(!opts.dnsRetry)
+			opts.dnsRetry = 3;
+		
+		var retry = 0;
+		
+		function runDNS() {
+			dns.resolve4(reqHost, function (err, addresses) {
+				if(err) {
+					retry++;
+				
+					if(retry >= opts.dnsRetry) {
+						/* ok error */
+						pipe.root.lib.http.error.renderArray({
+							pipe: pipe, 
+							code: 504, 
+							tpl: "5xx", 
+							log: true,
+							title:  "DNS error",
+							explain: "Unable to resolv DNS entry for "+reqHost+' '+err
+						});
+						pipe.stop();
+						return(true);
+					}
+					
+					runDNS();
+				}
 			
-			spoof = spoof == true ? pipe.request.client._peername.address : undefined;
-			emitDestinationRequest(addresses[0], reqPort, spoof);
-		});
+				if(addresses[0] == '127.0.0.1') {
+					pipe.root.lib.http.error.renderArray({
+						pipe: pipe, 
+						code: 504, 
+						tpl: "5xx", 
+						log: true,
+						title:  "Bad gateway",
+						explain: "Unable to connect to localhost"
+					});
+					pipe.stop();
+					return(true);
+				}
+				
+				spoof = spoof == true ? pipe.request.client._peername.address : undefined;
+				emitDestinationRequest(addresses[0], reqPort, spoof);
+			});
+		}
+		
+		runDNS();
 	}
 
 	
