@@ -18,6 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+var fs = require('fs');
+
 var core = function() { /* loader below */ };
 
 core.utils = require(__dirname+'/build/Release/core.node');
@@ -28,11 +30,27 @@ core.pipeline = require(__dirname+'/js/pipeline.js');
 core.stats = require(__dirname+'/js/stats.js');
 core.plugin = require(__dirname+'/js/plugin.js');
 
+
+function parseDoubleDot(dst, filename) {
+	var lines = fs.readFileSync(filename).toString().split("\n");
+	for(var a in lines) {
+		var t = lines[a].split(':');
+		if(t.length > 1)
+			dst[t[0]] = t;
+	}
+}
+
+core.usersByName = {}
+core.groupsByName = {}
+
 core.loader = function(gjs) {
 	if(!gjs.serverConfig.runDir) {
 		console.log('* No runDir defined, exiting');
 		process.exit(0);
 	}
+	
+	parseDoubleDot(core.usersByName, '/etc/passwd');
+	parseDoubleDot(core.groupsByName, '/etc/group');	
 	
 	core.ipc.loader(gjs);
 	core.logger.loader(gjs);
@@ -40,6 +58,18 @@ core.loader = function(gjs) {
 	core.pipeline.loader(gjs);
 	core.stats.loader(gjs);
 	core.plugin.loader(gjs);
+}
+
+core.getUser = function(name) {
+	if(core.usersByName[name])
+		return(core.usersByName[name]);
+	return(null);
+}
+
+core.getGroup = function(name) {
+	if(core.groupsByName[name])
+		return(core.groupsByName[name]);
+	return(null);
 }
 
 core.fixCamelLike = function(str) { 

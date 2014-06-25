@@ -282,6 +282,7 @@ proxyPass.request = function(pipe, opts) {
 					}
 					
 					runDNS();
+					return(true);
 				}
 			
 				if(addresses[0] == '127.0.0.1') {

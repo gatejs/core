@@ -285,6 +285,22 @@ var gatejs = (function() {
 		this.events.emit("clusterMasterInit", this);
 	} 
 	else {
+		/* check for setgid & setuid */
+		if(this.serverConfig.groupId) {
+			var u = this.lib.core.getGroup(this.serverConfig.groupId);
+			if(!u)
+				this.lib.core.logger.error('Can find group for setgid() "'+this.serverConfig.userId+'"');
+			else 
+				process.setgid(parseInt(u[2]));
+		}
+		if(this.serverConfig.userId) {
+			var u = this.lib.core.getUser(this.serverConfig.userId);
+			if(!u)
+				this.lib.core.logger.error('Can find user for setuid() "'+this.serverConfig.userId+'"');
+			else 
+				process.setuid(parseInt(u[2]));
+		}
+	
 		process.title = 'gate.js Slave process';
 		/* receive IPC to for shuting down the process */
 // 		this.lib.core.ipc.on('system:kill', function() {
