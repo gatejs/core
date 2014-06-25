@@ -41,13 +41,11 @@ cleaner.loader = function(gjs) {
 		var reference = 0;
 		
 		function processFile(args) {
-			console.log('anal', args.file);
 			var hdr = gjs.lib.acn.loadHeaderFile(args.file),
 			isF = gjs.lib.acn.isFresh(hdr);
 			if(isF == false) {
 				try {
 					fs.unlinkSync(args.file);
-					console.log('deleteing', args.file);
 				} catch(e) { /* do nothing */ }
 			}
 			reference--;
