@@ -25,6 +25,7 @@ var http = require("http");
 var https = require("https");
 var events = require('events');
 var dns = require('dns');
+var net = require('net');
 
 var proxyPass = function() { /* loader below */ } 
 
@@ -250,6 +251,13 @@ proxyPass.request = function(pipe, opts) {
 				explain: "Can not resolv you Host header request"
 			});
 			pipe.stop();
+			return(true);
+		}
+		
+		if(net.isIP(reqHost)) {
+			pipe.pause();
+			spoof = spoof == true ? pipe.request.client._peername.address : undefined;
+			emitDestinationRequest(reqHost, reqPort, spoof);
 			return(true);
 		}
 		
