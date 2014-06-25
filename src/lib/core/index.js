@@ -30,7 +30,6 @@ core.pipeline = require(__dirname+'/js/pipeline.js');
 core.stats = require(__dirname+'/js/stats.js');
 core.plugin = require(__dirname+'/js/plugin.js');
 
-
 function parseDoubleDot(dst, filename) {
 	var lines = fs.readFileSync(filename).toString().split("\n");
 	for(var a in lines) {
