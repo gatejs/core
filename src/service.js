@@ -64,7 +64,7 @@ var gatejs = (function() {
 	this.randomString = (function(size) {
 		var ret = new String, a;
 		for(a=0; a<size; a++)
-			ret += String.fromCharCode(Math.randomMax(24)+65);	
+			ret += String.fromCharCode(Math.randomMax(24)+65);
 		return(ret);
 	});
 

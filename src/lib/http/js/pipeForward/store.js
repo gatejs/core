@@ -61,41 +61,38 @@ store.request = function(gjs) {
 }
 
 store.ctor = function(gjs) {
-// 	console.log('store ctor');
-// 	if(cluster.isMaster)
-// 		return;
-// 	
-// 	store.scriptDir = __dirname+"/store/";
-// 
-// 
-// 	
-// 	/* load libraries */
-// 	store.scripts = {};
-// 	function tryLoadLib(dir, file) {
-// 		var filename = __dirname+'/lib/'+dir+'/'+file;
-// 		try {
-// 			var fss = fs.statSync(filename);
-// 			return(filename);
-// 		} catch(e) {
-// 			/* file doesn't exist / do nothing */
+	if(cluster.isMaster)
+		return;
+	
+	store.scriptDir = __dirname+"/store/";
+	
+	/* load libraries */
+	store.scripts = {};
+	function tryLoadLib(dir, file) {
+		var filename = __dirname+'/lib/'+dir+'/'+file;
+		try {
+			var fss = fs.statSync(filename);
+			return(filename);
+		} catch(e) {
+			/* file doesn't exist / do nothing */
+		}
+		return(false);
+	}
+	try {
+		var d = fs.readdirSync(store.scriptDir), a;
+		for(a in d)
+			store.scripts[d[a]] = require(store.scriptDir+d[a]);
+		
+// 		/* post load modules */
+// 		for(a in this.lib) {
+// 			if(this.lib[a].loader)
+// 				this.lib[a].loader(this);
 // 		}
-// 		return(false);
-// 	}
-// 	try {
-// 		var d = fs.readdirSync(store.scriptDir), a;
-// 		for(a in d)
-// 			store.scripts[d[a]] = require(store.scriptDir+d[a]);
-// 		
-// // 		/* post load modules */
-// // 		for(a in this.lib) {
-// // 			if(this.lib[a].loader)
-// // 				this.lib[a].loader(this);
-// // 		}
-// 		
-// 	} catch(e) {
+		
+	} catch(e) {
 // 		console.log("Can not read directory "+e.path+" with error code #"+e.code);
-// 		return(false);
-// 	}
+		return(false);
+	}
 	
 	
 	
