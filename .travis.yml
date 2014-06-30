@@ -3,7 +3,7 @@ compiler:
   - gcc
 before_script:
   - ./configure
-  - make > /dev/null
+  - make | sed -u -e 's/.*/./g'
 script:
   - sudo make install
 branches:
