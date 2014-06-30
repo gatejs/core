@@ -2,8 +2,10 @@ language: cpp
 compiler:
   - gcc
 before_script:
-  - travis_retry ./configure
-script: rake
+  - ./configure
+  - make
+script:
+  - sudo make install
 branches:
   only:
     - master
