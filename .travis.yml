@@ -3,7 +3,7 @@ compiler:
   - gcc
 before_script:
   - ./configure
-  - make
+  - make > /dev/null
 script:
   - sudo make install
 branches:
