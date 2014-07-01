@@ -111,8 +111,6 @@ forward.loader = function(gjs) {
 	var processRequest = function(server, request, response) {
 		request.remoteAddress = request.connection.remoteAddress;
 		
-		
-		
 		var pipe = gjs.lib.core.pipeline.create(forward.opcodes, server.pipeline, function() {
 			gjs.lib.http.error.renderArray({
 				pipe: pipe,
@@ -129,7 +127,6 @@ forward.loader = function(gjs) {
 		pipe.request = request;
 		pipe.response = response;
 		pipe.server = server;
-		
 		
 		gjs.lib.core.stats.http(pipe);
 		

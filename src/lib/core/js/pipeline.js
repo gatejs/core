@@ -88,7 +88,7 @@ function pipelineObject(opcodes, line, errorFunc) {
 	this.stop = function() {
 		/* stop execution */
 		this.pipeStatus = pipeline.status.stop;
-		this.execute();
+// 		this.execute();
 	}
 	
 	this.pause = function() {
