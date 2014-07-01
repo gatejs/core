@@ -3,7 +3,7 @@ compiler:
   - gcc
 before_script:
   - ./configure
-  - make
+  - make | awk -W interactive 'BEGIN{i=0} { if(i%20 == 0) { print("Building...", i, "files done"); }; i++; }'
 script:
   - sudo make install
 branches:
