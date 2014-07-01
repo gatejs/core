@@ -58,5 +58,5 @@ The `configure` script have the following options :
 
 ### Debian packages
 ```bash
-apt-get install gcc make g++
+apt-get install gcc make g++ python
 ```
