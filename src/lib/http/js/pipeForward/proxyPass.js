@@ -271,7 +271,7 @@ proxyPass.request = function(pipe, opts) {
 		var retry = 0;
 		
 		function runDNS() {
-			dns.lookup(reqHost, function (err, addresses) {
+			dns.resolve4(reqHost, function (err, addresses) {
 				if(err) {
 					retry++;
 				
@@ -293,7 +293,7 @@ proxyPass.request = function(pipe, opts) {
 					return(true);
 				}
 			
-				if(addresses == '127.0.0.1') {
+				if(addresses[0] == '127.0.0.1') {
 					pipe.root.lib.http.error.renderArray({
 						pipe: pipe, 
 						code: 504, 
@@ -307,7 +307,7 @@ proxyPass.request = function(pipe, opts) {
 				}
 				
 				spoof = spoof == true ? pipe.request.client._peername.address : undefined;
-				emitDestinationRequest(addresses, reqPort, spoof);
+				emitDestinationRequest(addresses[0], reqPort, spoof);
 			});
 		}
 		
