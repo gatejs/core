@@ -55,7 +55,7 @@ function runDaemon(opt) {
 }
 
 var gatejs = (function() {
-	this.version = "1.2-dev";
+	this.version = "1.2";
 	this.config = new Object;
 	this.pipeline = new Object;
 
