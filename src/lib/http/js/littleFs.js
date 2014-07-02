@@ -28,6 +28,7 @@ littleFs.litteFsMimes = {
 	png: 'image/png',
 	gif: 'image/gif',
 	html: 'text/html',
+	css: 'text/css',
 	js: 'application/javascript',
 	woff: 'application/x-font-woff'
 };
