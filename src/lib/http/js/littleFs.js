@@ -18,35 +18,51 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 var crypto = require('crypto');
+var fs = require('fs');
 
 var littleFs = function() { /* loader below */ };
 
 littleFs.litteFsMimes = {
 	jpg: 'image/jpeg',
+	jpeg: 'image/jpeg',
 	png: 'image/png',
 	gif: 'image/gif',
 	html: 'text/html',
 	js: 'application/javascript',
+	woff: 'application/x-font-woff'
 };
+
+var roots = [];
+
+function fileExists(filename) {
+	try {
+		var sS = fs.statSync(filename);
+	} catch(e) {
+		return(false); 
+	}
+	return(sS);
+}
 
 littleFs.process = function(request, response, dirFile) {
 	function processRendering(ret) {
-		
 		var filename;
-		if(!dirFile)
-			filename = __dirname+'/error';
-		else
-			filename = dirFile;
-		
-		filename += +ret[1].replace(/\.\.\//, "/");
-		
-		try {
-			var sS = fs.statSync(filename);
-		} catch(e) { return(false); }
-		
+		var sS;
+		var found = false;
+		for(var a in roots) {
+			var sf = roots[a]+ret[1].replace(/\.\.\//, "/");
+			var r = fileExists(sf);
+			if(r != false) {
+				sS = r;
+				filename = sf;
+				found = true;
+			}
+		}
+		if(found == false)
+			return(false);
+
 		/* check extension */
-		var ext = filename.sugjstr(filename.lastIndexOf(".")+1);
-		
+		var ext = filename.substr(filename.lastIndexOf(".")+1);
+
 		/* check mime */
 		if(!littleFs.litteFsMimes[ext])
 			return(false);
@@ -54,13 +70,12 @@ littleFs.process = function(request, response, dirFile) {
 		response.writeHead(200, {
 			'Content-Type': littleFs.litteFsMimes[ext],
 			'Content-Length': sS.size,
-			'server': 'BinarySEC'
+			'server': 'gatejs'
 		});
 
 		var readStream = fs.createReadStream(filename);
 		
 		readStream.pipe(response);
-// 			gjs.lib.bwsFg.littleFs.logpipe(pipevar, readStream);
 		
 		return(true);
 	}
@@ -70,6 +85,10 @@ littleFs.process = function(request, response, dirFile) {
 
 
 	return(false);
+}
+
+littleFs.register = function(rootDirectory) {
+	roots.push(rootDirectory);
 }
 
 littleFs.loader = function(gjs) { 
