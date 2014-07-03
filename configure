@@ -82,9 +82,8 @@ install:
 	+make -C src/lib/tproxy/ rebuild NODE_GYP="$PREFIX_SHARE/gatejs/node/bin/node-gyp"
 	
 	mkdir -p "$PREFIX_SHARE/gatejs"
-	mkdir -p "$PREFIX_CONF/gatejs"
 	cp -r src/* "$PREFIX_SHARE/gatejs"
-	cp -r deps/etc/* "$PREFIX_CONF/gatejs"
+	if [ ! -d "$PREFIX_CONF/gatejs" ]; then mkdir -p "$PREFIX_CONF/gatejs"; cp -r deps/etc/* "$PREFIX_CONF/gatejs"; fi
 	
 	sed -i -e "$SED_CMD" "$PREFIX_CONF/gatejs/config.js"
 	

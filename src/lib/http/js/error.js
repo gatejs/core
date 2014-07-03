@@ -20,8 +20,12 @@
 var error = function() { /* loader below */ };
 
 
-error.renderArray = function(msg) {
-	var filename = __dirname+'/errorPages/'+msg.tpl.replace(/\.\.\//, "/")+'.tpl';
+error.renderArray = function(msg, file) {
+	
+	if(file)
+		filename = file;
+	else
+		filename = __dirname+'/errorPages/'+msg.tpl.replace(/\.\.\//, "/")+'.tpl';
 	var pipe = msg.pipe;
 	
 	msg.pipe.response.headers = {
@@ -31,6 +35,7 @@ error.renderArray = function(msg) {
 		'cache-control': 'max-age=0'
 	};
 	
+	pipe.stop();
 	pipe.response.writeHead(msg.code, msg.pipe.response.headers);
 	
 	msg.vd = msg.pipe.root.lib.http.littleFs.virtualDirectory;
