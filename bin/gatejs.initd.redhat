@@ -42,7 +42,7 @@ do_status()
 }
 do_logrotate() {
         echo -n $"Rotating logs for $NAME: "
-        $DAEMON /usr/local/gate/share/gatejs/controler.js --socket="$IPCFILE" send LFW SIGUSR2 > /dev/null && echo_success || echo_failure
+        $DAEMON /usr/local/gate/share/gatejs/controler.js --socket="$IPCFILE" send LFW core:logger:reload > /dev/null && echo_success || echo_failure
         echo 
 }
 do_reload()

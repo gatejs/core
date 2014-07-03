@@ -114,7 +114,7 @@ do_reload() {
 #
 do_logrotate() {
 	if is_up; then
-		$DAEMON %PREFIX_SHARE%/gatejs/controler.js --socket="$IPCFILE" send LFW SIGUSR2 > /dev/null
+		$DAEMON %PREFIX_SHARE%/gatejs/controler.js --socket="$IPCFILE" send LFW core:logger:reload > /dev/null
 		return $?
 	else
 		return 1
