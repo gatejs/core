@@ -67,7 +67,7 @@ proxyPass.request = function(pipe, opts) {
 			method: pipe.request.method,
 			headers: {},
 			rejectUnauthorized: false,
-			//agent: new pipe.root.lib.bwsFg.httpTproxy.newAgent(),
+			agent: pipe.server.agent
 		};
 	
 		if(from != undefined)
@@ -81,7 +81,7 @@ proxyPass.request = function(pipe, opts) {
 // 		delete pipe.request.headers.connection;
 		var req = http.request(options);
 		
-		req.setSocketKeepAlive(false);
+// 		req.setSocketKeepAlive(false);
 		
 // 		pipe.root.lib.core.ipc.send('LFW', 'bsStatus', {
 // 			host: pipe.request.headers.host,

@@ -267,6 +267,12 @@ reverse.loader = function(gjs) {
 			
 		});
 		
+		/* select agent */
+		if(sc.isTproxy == true)
+			iface.agent = gjs.lib.http.agent.httpTproxy;
+		else
+			iface.agent = gjs.lib.http.agent.http;
+		
 		iface.on('connection', (function(socket) {
 			gjs.lib.core.graceful.push(socket);
 			gjs.lib.core.stats.diffuse('httpWaiting', gjs.lib.core.stats.action.add, 1);
@@ -341,6 +347,12 @@ reverse.loader = function(gjs) {
 			processRequest(this, request, response);
 			
 		});
+		
+		/* select agent */
+		if(sc.isTproxy == true)
+			iface.agent = gjs.lib.http.agent.httpsTproxy;
+		else
+			iface.agent = gjs.lib.http.agent.https;
 		
 		iface.on('connection', (function(socket) {
 			gjs.lib.core.graceful.push(socket);

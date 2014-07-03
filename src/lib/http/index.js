@@ -72,6 +72,7 @@ httpPlug.OutgoingMessage.prototype.gjsRemoveHeader = function(name) {
 
 var http = function() { /* loader below */ };
 
+http.agent = require(__dirname+'/js/agent');
 http.log = require(__dirname+'/js/log');
 http.littleFs = require(__dirname+'/js/littleFs');
 http.error = require(__dirname+'/js/error');
@@ -173,6 +174,7 @@ http.loader = function(gjs) {
 	
 	/* */
 	try {
+		http.agent.loader(gjs);
 		http.log.loader(gjs);
 		http.littleFs.loader(gjs);
 		http.error.loader(gjs);

@@ -192,9 +192,18 @@ forward.loader = function(gjs) {
 				return(false);
 			}
 			iface = https.createServer();
+			if(sc.isTproxy == true)
+				iface.agent = gjs.lib.http.agent.httpsTproxy;
+			else
+				iface.agent = gjs.lib.http.agent.https;
 		}
-		else
+		else {
 			iface = http.createServer();
+			if(sc.isTproxy == true)
+				iface.agent = gjs.lib.http.agent.httpTproxy;
+			else
+				iface.agent = gjs.lib.http.agent.http;
+		}
 		
 		/* resolv pipeline */
 		iface.pipeline = gjs.lib.core.pipeline.getGlobalPipe(sc.pipeline); 
