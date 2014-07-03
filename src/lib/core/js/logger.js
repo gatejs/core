@@ -148,6 +148,36 @@ logger.spawnMaster = function(gjs) {
 		processSystem(msg);
 	}
 	
+	
+	/* function receving soft reload */
+	function doReload() {
+
+		for(var a in logger.onlineFile) {
+			var f = logger.onlineFile[a];
+			
+			/* rename */
+			try {
+				/* close */
+				f.stream.close();
+				
+				/* open */
+				gjs.mkdirDeep(f.file);
+				f.stream = fs.createWriteStream(f.file, { flags: 'a' });
+				f.stream.on('error', function(err) { console.log(err); });
+			
+			} catch(e) {
+				console.log("Logger stream error "+e);
+			}
+		}
+		
+		logger.system("Log rotation");
+		
+	}
+	
+	/* handle reload */
+	gjs.lib.core.ipc.on('SIGUSR2', doReload);
+	gjs.lib.core.ipc.on('core:logger:reload', doReload);
+	
 }
 
 logger.spawnSlave = function(gjs) {

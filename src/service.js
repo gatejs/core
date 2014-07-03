@@ -266,7 +266,6 @@ var gatejs = (function() {
 		}
 		
 		this.lib.core.ipc.on('system:graceful', processGraceful);
-		this.lib.core.ipc.on('SIGUSR2', processGraceful);
 		
 		for (var i = 0; i < this.serverConfig.serverProcess; i++) {
 			cluster.fork();
