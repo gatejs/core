@@ -29,6 +29,7 @@ core.graceful = require(__dirname+'/js/graceful.js');
 core.pipeline = require(__dirname+'/js/pipeline.js');
 core.stats = require(__dirname+'/js/stats.js');
 core.plugin = require(__dirname+'/js/plugin.js');
+core.hosts = require(__dirname+'/js/hosts.js');
 
 function parseDoubleDot(dst, filename) {
 	var lines = fs.readFileSync(filename).toString().split("\n");
@@ -57,6 +58,7 @@ core.loader = function(gjs) {
 	core.pipeline.loader(gjs);
 	core.stats.loader(gjs);
 	core.plugin.loader(gjs);
+	core.hosts.loader(gjs);
 }
 
 core.getUser = function(name) {
