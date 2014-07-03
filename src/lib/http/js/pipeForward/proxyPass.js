@@ -311,7 +311,13 @@ proxyPass.request = function(pipe, opts) {
 			});
 		}
 		
-		runDNS();
+		var ip = pipe.root.lib.core.hosts.resolve(reqHost);
+		if(ip) {
+			spoof = spoof == true ? pipe.request.client._peername.address : undefined;
+			emitDestinationRequest(ip, reqPort, spoof);
+		}
+		else
+			runDNS();
 	}
 
 	
