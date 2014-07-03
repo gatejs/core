@@ -78,6 +78,7 @@ http.error = require(__dirname+'/js/error');
 http.site = require(__dirname+'/js/site');
 http.forward = require(__dirname+'/js/forward');
 http.reverse = require(__dirname+'/js/reverse');
+http.server = require(__dirname+'/js/server');
 
 http.loader = function(gjs) {
 	var stats = gjs.lib.core.stats;
@@ -178,6 +179,7 @@ http.loader = function(gjs) {
 		http.site.loader(gjs);
 		http.forward.loader(gjs);
 		http.reverse.loader(gjs);
+		http.server.loader(gjs);
 	} catch(e) {
 		console.log("* HTTP exeption\n", e);
 	}
