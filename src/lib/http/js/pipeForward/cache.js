@@ -255,6 +255,7 @@ cache.request = function(pipe, opts) {
 			base = url.format(pipe.request.urlParseCacheStore)+input;
 		else
 			base = pipe.request.headers.host+url.format(pipe.request.urlParse)+input;
+
 		var hash = pipe.root.lib.acn.generateInHash(opts.dirDiviser, base);
 		
 		/* store header cache file */

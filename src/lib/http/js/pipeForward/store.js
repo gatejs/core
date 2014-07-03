@@ -40,22 +40,20 @@ store.request = function(gjs) {
 	
 	gjs.request.urlParseCacheStore.host = 'store.'+gjs.request.headers.host;
 	
-// 	console.log(gjs.request.urlParseCacheStore, gjs.request.urlParse);
-	
 	/* extends urlParse options */
 	gjs.request.urlParseCacheStore.pathSplit = gjs.request.urlParse.pathname.split('/');
 
-// 	/* basic scan */
-// 	for(var a in store.scripts) {
-// 		var script = store.scripts[a];
-// 		
-// 		var ret;
-// 		ret = script.request(gjs);
-// 		if(ret == true) {
-// 			gjs.storeHit = true;
-// 			break;
-// 		}
-// 	}
+	/* basic scan */
+	for(var a in store.scripts) {
+		var script = store.scripts[a];
+		
+		var ret;
+		ret = script.request(gjs);
+		if(ret == true) {
+			gjs.storeHit = true;
+			break;
+		}
+	}
 
 	return(false);
 }
@@ -83,11 +81,11 @@ store.ctor = function(gjs) {
 		for(a in d)
 			store.scripts[d[a]] = require(store.scriptDir+d[a]);
 		
-// 		/* post load modules */
-// 		for(a in this.lib) {
-// 			if(this.lib[a].loader)
-// 				this.lib[a].loader(this);
-// 		}
+		/* post load modules */
+		for(a in this.lib) {
+			if(this.lib[a].loader)
+				this.lib[a].loader(this);
+		}
 		
 	} catch(e) {
 // 		console.log("Can not read directory "+e.path+" with error code #"+e.code);
