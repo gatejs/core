@@ -21,8 +21,8 @@
 var fs = require('fs');
 var os = require('os');
 
-var hosts_module = function(gjs) { };
-var hosts, file, loaded = false;
+var hostsModule = function(gjs) { };
+var hosts, file;
 
 var detectFile = function() {
 	if(os.platform() == 'linux')
@@ -36,7 +36,7 @@ var detectFile = function() {
 var loadFile = function() {
 	try {
 		/* read file to string, replace \t to ' ' and split lines */
-		var lines = fs.readFileSync(file).toString().replace(/\t/g, " ").split('\n');
+		var lines = fs.readFileSync(file).toString().replace(/[\t ]+/g, " ").split('\n');
 		
 		hosts = {};
 		
@@ -46,7 +46,7 @@ var loadFile = function() {
 			if(lines[i].length && lines[i][0] != '#') {
 				
 				/* split line and retrieve ip */
-				var l = lines[i].split(' ').filter(function(a) {return a.length;});
+				var l = lines[i].split(' ');
 				var ip = l.shift();
 				
 				/* merge or add results */
@@ -67,27 +67,21 @@ var watchFile = function() {
 	});
 }
 
-var resolve = function(host) {
+hostsModule.resolve = function(host) {
 	for(var i in hosts)
 		if(hosts[i].indexOf(host) > -1)
 			return i;
 	return false;
-}
+};
 
-var reverse = function(ip) {
+hostsModule.reverse = function(ip) {
 	return hosts[ip] ? hosts[ip] : false;
+};
+
+hostsModule.loader = function(gjs) {
+	detectFile();
+	loadFile();
+	watchFile();
 }
 
-/* add functions and export */
-hosts_module.resolve = resolve;
-hosts_module.reverse = reverse;
-hosts_module.loader = function(gjs) {
-	if(!loaded) {
-		loaded = true;
-		detectFile();
-		loadFile();
-		watchFile();
-	}
-}
-
-module.exports = hosts_module;
+module.exports = hostsModule;
