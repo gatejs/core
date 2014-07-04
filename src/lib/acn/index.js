@@ -119,8 +119,7 @@ acn.isFresh = function(hdr, maxAge) {
 		return(false);
 	
 	var date = new Date;
-	if(!maxAge) {
-
+	if(!hdr.ccMaxAge) {
 		if(hdr.headers['content-type']) {
 			if(hdr.headers['content-type'].match(/text/))
 				maxAge = 0;
@@ -132,11 +131,10 @@ acn.isFresh = function(hdr, maxAge) {
 		else
 			maxAge = 120000;
 	}
-	/*
-	* Check the cache control timer
-	*/
-	if(hdr.ccMaxAge > 0)
+	else if(hdr.ccMaxAge > 0)
 		maxAge = hdr.ccMaxAge;
+	else
+		return(false);
 	
 	var currentAge = (date.getTime()-hdr.cacheTimer)/1000;
 	if(currentAge > maxAge)
