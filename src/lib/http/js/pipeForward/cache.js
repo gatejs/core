@@ -82,9 +82,13 @@ cache.request = function(pipe, opts) {
 				
 				pipe.response.emit("response", pipe.response, 'cache304');
 				
-				if(pipe.server.isClosing == true) {
+				if(
+					pipe.server.isClosing == true || 
+					pipe.request.headers.connection == 'close' ||
+					(pipe.request.httpVersion == '1.0' && !pipe.request.headers.connection)
+					) {
 					pipe.response.gjsSetHeader('Connection', 'Close');
-					delete pipe.response.headers['keep-alive'];
+					pipe.response.gjsRemoveHeader('keep-alive');
 				}
 				
 				/* fix headers */
@@ -111,11 +115,15 @@ cache.request = function(pipe, opts) {
 			
 			pipe.response.emit("response", pipe.response, 'cache200');
 			
-			if(pipe.server.isClosing == true) {
+			if(
+				pipe.server.isClosing == true || 
+				pipe.request.headers.connection == 'close' ||
+				(pipe.request.httpVersion == '1.0' && !pipe.request.headers.connection)
+				) {
 				pipe.response.gjsSetHeader('Connection', 'Close');
-				delete pipe.response.headers['keep-alive'];
+				pipe.response.gjsRemoveHeader('keep-alive');
 			}
-		
+			
 			/* fix headers */
 			var nHeaders = {};
 			for(var n in pipe.response.headers)
