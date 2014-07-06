@@ -25,6 +25,7 @@ var core = function() { /* loader below */ };
 core.utils = require(__dirname+'/build/Release/core.node');
 core.ipc = require(__dirname+'/js/ipc.js');
 core.logger = require(__dirname+'/js/logger.js');
+core.blacklist = require(__dirname+'/js/blacklist.js');
 core.graceful = require(__dirname+'/js/graceful.js');
 core.pipeline = require(__dirname+'/js/pipeline.js');
 core.stats = require(__dirname+'/js/stats.js');
@@ -54,6 +55,7 @@ core.loader = function(gjs) {
 	
 	core.ipc.loader(gjs);
 	core.logger.loader(gjs);
+	core.blacklist.loader(gjs);
 	core.graceful.loader(gjs);
 	core.pipeline.loader(gjs);
 	core.stats.loader(gjs);
