@@ -147,9 +147,9 @@ case "$1" in
 	log_end_msg $?
 	;;
   logrotate)
-	log_daemon_msg "Logrotating $DESC" "$NAME"
+	test -t 1 && log_daemon_msg "Logrotating $DESC" "$NAME"
 	do_logrotate
-	log_end_msg $?
+	test -t 1 && log_end_msg $?
 	;;
   restart|force-reload)
 	#
