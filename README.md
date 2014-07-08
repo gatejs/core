@@ -60,3 +60,35 @@ The `configure` script have the following options :
 ```bash
 apt-get install gcc make g++ python
 ```
+
+## Forward proxy configuration example
+```js
+var serverConfig = function(bs) { return({
+    serverProcess: 4,
+    hostname: "testServer0",
+    runDir: "/var/run/gatejs",
+    dataDir: "/home/gatejs-data",
+    logDir: "/var/log/gatejs",
+    confDir: '/etc/gatejs',
+
+    http: {
+        forwardInterface: {
+            type: 'forward',
+            port: 80,
+            pipeline: 'pipetest'
+        }
+    },
+
+    pipeline: {
+        pipetest: [
+            ['cache', { }],
+            ['proxyPass', { mode: 'host', timeout: 10 }]
+        ],
+    }
+
+})};
+
+module.exports = serverConfig;
+```
+
+
