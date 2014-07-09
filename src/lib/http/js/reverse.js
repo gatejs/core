@@ -92,6 +92,109 @@ reverse.loader = function(gjs) {
 	reverse.sites.reload();
 	
 	if (cluster.isMaster) {
+		/* background checker */
+		reverse.sitesFaulty = {};
+		
+		function backgroundChecker(input) {
+			var node = input.msg.node;
+			var options = {
+				host: node.host,
+				port: node.port,
+				path: '/',
+				method: 'GET',
+				headers: {
+					Host: input.msg.site,
+					"User-Agent": "gatejs monitor"
+				},
+				rejectUnauthorized: false,
+				servername: input.msg.site,
+				agent: false
+			};
+			
+			var flowSelect = http;
+			if(node.https == true)
+				flowSelect = https;
+			
+			var context = reverse.sitesFaulty[input.hash];
+			var subHash = input.site.confName+node._name+node._key+node._index;
+			var siteHash = context[subHash];
+
+			var req = flowSelect.request(options, function(res) {
+				
+				for(var a in context) {
+					var b = context[a];
+					if(a.substr(0, 1) != '_') {
+						gjs.lib.core.ipc.send('LFW', 'proxyPassWork', {
+							site: b._site,
+							node: b
+						});
+					}
+				}
+				
+				delete reverse.sitesFaulty[input.hash];
+			});
+			
+			req.on('error', function (error) {
+			});
+
+			function socketErrorDetection(socket) {
+				req.abort();
+				socket.destroy();
+				clearTimeout(socket.timeoutId); 
+				context._timer = setTimeout(
+					backgroundChecker,
+					1000,
+					input
+				);
+			}
+			
+			req.on('socket', function (socket) {
+				if(!socket.connected) 
+					socket.connected = false;
+
+				socket.timeoutId = setTimeout(
+					socketErrorDetection, 
+					10000, 
+					socket
+				);
+				socket.on('connect', function() {
+					socket.connected = true;
+					clearTimeout(socket.timeoutId); 
+				});
+			});
+			req.end();
+		
+		}
+		
+		gjs.lib.core.ipc.on('proxyPassFaulty', function(gjs, data) {
+			var d = data.msg.node;
+			var s = site.search(data.msg.site);
+			if(!s)
+				return;
+			
+			/* group by ip and port */
+			var hash = d.host+':'+d.port;
+			if(!reverse.sitesFaulty[hash]) {
+				reverse.sitesFaulty[hash] = {
+					_host: d.host,
+					_port: d.port,
+					_timer: setTimeout(
+						backgroundChecker,
+						2000,
+						{hash: hash, msg: data.msg, site: s }
+					)
+				};
+			}
+			var context = reverse.sitesFaulty[hash];
+			var subHash = s.confName+d._name+d._key+d._index;
+			if(context[subHash])
+				return;
+			var siteHash = context[subHash] = d;
+			
+			siteHash._site = data.msg.site;
+		});
+
+		/* Logging */
 		var logger = gjs.lib.core.logger;
 		
 		/* create logging receiver */

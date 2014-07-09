@@ -73,6 +73,8 @@ server.logpipe = function(gjs, src) {
 }
 
 server.loader = function(gjs) {
+	server.sites = new gjs.lib.http.site(gjs, 'pipeServer');
+	server.sites.reload();
 	
 	if (cluster.isMaster) {
 		var logger = gjs.lib.core.logger;
