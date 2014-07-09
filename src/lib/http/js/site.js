@@ -24,7 +24,7 @@ var crypto = require("crypto");
 var http = require('http');
 
 
-var site = function(gjs, channel) { 
+var site = function(gjs, channel, configuration) { 
 	
 	function loadGeneric(dir, dst) {
 		try {
@@ -139,10 +139,10 @@ var site = function(gjs, channel) {
 	}
 	
 	try {
-		var fss = fs.statSync(gjs.serverConfig.confDir+'/reverseSites');
+		var fss = fs.statSync(gjs.serverConfig.confDir+'/'+configuration);
 		
 		/* load configuration files */
-		ret = loadGeneric(gjs.serverConfig.confDir+'/reverseSites', this);
+		ret = loadGeneric(gjs.serverConfig.confDir+'/'+configuration, this);
 		if(ret != true) {
 			console.log(
 				"Unable to read configuration"

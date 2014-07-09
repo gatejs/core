@@ -88,7 +88,7 @@ reverse.logpipe = function(gjs, src) {
 }
 
 reverse.loader = function(gjs) {
-	reverse.sites = new gjs.lib.http.site(gjs, 'pipeReverse');
+	reverse.sites = new gjs.lib.http.site(gjs, 'pipeReverse', 'reverseSites');
 	reverse.sites.reload();
 	
 	if (cluster.isMaster) {

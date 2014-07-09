@@ -72,8 +72,15 @@ server.logpipe = function(gjs, src) {
 	src.pipe(gjs.response);
 }
 
+server.pipeline = [
+	['scanFileOnDisk'],
+	['directoryListing'],
+	['checkHandler'],
+	['streamFile'],
+];
+
 server.loader = function(gjs) {
-	server.sites = new gjs.lib.http.site(gjs, 'pipeServer');
+	server.sites = new gjs.lib.http.site(gjs, 'pipeServer', 'serverSites');
 	server.sites.reload();
 	
 	if (cluster.isMaster) {
@@ -107,7 +114,7 @@ server.loader = function(gjs) {
 	}
 	
 
-	var processRequest = function(server, request, response) {
+	var processRequest = function(inter, request, response) {
 		request.remoteAddress = request.connection.remoteAddress;
 	
 		var pipe = gjs.lib.core.pipeline.create(null, null, function() {
@@ -120,7 +127,6 @@ server.loader = function(gjs) {
 				explain: "Pipeline did not execute a breaking opcode"
 			});
 		});
-		
 		pipe.server = true;
 		pipe.root = gjs;
 		pipe.request = request;
@@ -137,14 +143,14 @@ server.loader = function(gjs) {
 			request.connection.destroy();
 			return;
 		}
-		
+
 		/* lookup little FS */
 		var lfs = gjs.lib.http.littleFs.process(request, response);
 		if(lfs == true)
 			return;
 		
 		/* get iface */
-		var iface = reverse.list[server.gjsKey];
+		var iface = server.list[inter.gjsKey];
 		if(!iface) {
 			gjs.lib.http.error.renderArray({
 				pipe: pipe, 
@@ -154,15 +160,15 @@ server.loader = function(gjs) {
 				title:  "Internal server error",
 				explain: "no iface found, fatal error"
 			});
-			gjs.lib.core.logger.error('No interface found for key '+server.gjsKey+' from '+request.remoteAddress);
+			gjs.lib.core.logger.error('No interface found for key '+inter.gjsKey+' from '+request.remoteAddress);
 			return;
 		}
 		pipe.iface = iface;
 		
 		/* lookup website */
-		pipe.site = gjs.lib.http.site.search(request.headers.host);
+		pipe.site = server.sites.search(request.headers.host);
 		if(!pipe.site) {
-			pipe.site = gjs.lib.http.site.search('_');
+			pipe.site = server.sites.search('_');
 			if(!pipe.site) {
 				gjs.lib.http.error.renderArray({
 					pipe: pipe, 
@@ -200,20 +206,8 @@ server.loader = function(gjs) {
 			});
 			return;
 		}
-		if(!pipe.location.pipeline instanceof Array) {
-			gjs.lib.http.error.renderArray({
-				pipe: pipe, 
-				code: 500, 
-				tpl: "5xx", 
-				log: false,
-				title:  "Internal server error",
-				explain: "Invalid pipeline format for this website"
-			});
-			return;
-		}
 
-		pipe.update(gjs.lib.http.site.opcodes, pipe.location.pipeline);
-		
+		pipe.update(server.opcodes, server.pipeline);
 		
 		/* execute pipeline */
 		pipe.resume();
@@ -308,11 +302,6 @@ server.loader = function(gjs) {
 			
 		});
 		
-		/* select agent */
-		if(sc.isTproxy == true)
-			iface.agent = gjs.lib.http.agent.httpsTproxy;
-		else
-			iface.agent = gjs.lib.http.agent.https;
 		
 		iface.on('connection', (function(socket) {
 			gjs.lib.core.graceful.push(socket);
@@ -354,13 +343,13 @@ server.loader = function(gjs) {
 	}
 	
 	/* Load opcode context */
-// 	server.opcodes = gjs.lib.core.pipeline.scanOpcodes(
-// 		__dirname+'/pipeServer',
-// 		'serving'
-// 	);
-// 	if(!server.opcodes)
-// 		return(false);
-		
+	server.opcodes = gjs.lib.core.pipeline.scanOpcodes(
+		__dirname+'/pipeServer',
+		'pipeServer'
+	);
+	if(!server.opcodes)
+		return(false);
+	
 	/* 
 	 * Follow configuration
 	 */
