@@ -28,7 +28,6 @@ var site = function(gjs, channel) {
 	
 	function loadGeneric(dir, dst) {
 		try {
-			console.log(dir);
 			var d = fs.readdirSync(dir), a;
 			
 			for(a in d) {
