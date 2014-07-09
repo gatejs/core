@@ -105,12 +105,246 @@ server.loader = function(gjs) {
 	}
 	
 
+	var processRequest = function(server, request, response) {
+		request.remoteAddress = request.connection.remoteAddress;
+	
+		var pipe = gjs.lib.core.pipeline.create(null, null, function() {
+			gjs.lib.http.error.renderArray({
+				pipe: pipe, 
+				code: 513, 
+				tpl: "5xx", 
+				log: false,
+				title:  "Pipeline terminated",
+				explain: "Pipeline did not execute a breaking opcode"
+			});
+		});
+		
+		pipe.server = true;
+		pipe.root = gjs;
+		pipe.request = request;
+		pipe.response = response;
+		pipe.server = server;
+		
+		gjs.lib.core.stats.http(pipe);
+		
+		/* parse the URL */
+		try {
+			pipe.request.urlParse = url.parse(request.url, true);
+		} catch(e) {
+			gjs.lib.core.logger.error('URL Parse error on from '+request.remoteAddress);
+			request.connection.destroy();
+			return;
+		}
+		
+		/* lookup little FS */
+		var lfs = gjs.lib.http.littleFs.process(request, response);
+		if(lfs == true)
+			return;
+		
+		/* get iface */
+		var iface = reverse.list[server.gjsKey];
+		if(!iface) {
+			gjs.lib.http.error.renderArray({
+				pipe: pipe, 
+				code: 500, 
+				tpl: "5xx", 
+				log: false,
+				title:  "Internal server error",
+				explain: "no iface found, fatal error"
+			});
+			gjs.lib.core.logger.error('No interface found for key '+server.gjsKey+' from '+request.remoteAddress);
+			return;
+		}
+		pipe.iface = iface;
+		
+		/* lookup website */
+		pipe.site = gjs.lib.http.site.search(request.headers.host);
+		if(!pipe.site) {
+			pipe.site = gjs.lib.http.site.search('_');
+			if(!pipe.site) {
+				gjs.lib.http.error.renderArray({
+					pipe: pipe, 
+					code: 404, 
+					tpl: "4xx", 
+					log: false,
+					title:  "Not found",
+					explain: "No default website"
+				});
+				return;
+			}
+		}
+	
+		/* scan regex */
+		pipe.location = false;
+		if(pipe.site.locations) {
+			for(var a in pipe.site.locations) {
+				var s = pipe.site.locations[a];
+				if(!s.regex)
+					s.regex = /.*/;
+				if(s.regex.test(request.url)) {
+					pipe.location = s;
+					break;
+				}
+			}
+		}
+		if(pipe.location == false) {
+			gjs.lib.http.error.renderArray({
+				pipe: pipe, 
+				code: 500, 
+				tpl: "5xx", 
+				log: false,
+				title:  "Internal server error",
+				explain: "No locations found for this website"
+			});
+			return;
+		}
+		if(!pipe.location.pipeline instanceof Array) {
+			gjs.lib.http.error.renderArray({
+				pipe: pipe, 
+				code: 500, 
+				tpl: "5xx", 
+				log: false,
+				title:  "Internal server error",
+				explain: "Invalid pipeline format for this website"
+			});
+			return;
+		}
 
+		pipe.update(gjs.lib.http.site.opcodes, pipe.location.pipeline);
+		
+		
+		/* execute pipeline */
+		pipe.resume();
+		pipe.execute();
+	};
+	
+	var bindHttpServer = function(key, sc) {
+		var iface = http.createServer(function(request, response) {
+			request.connection.inUse = true;
+
+			response.on('finish', function() {
+				if(request.connection._handle)
+					request.connection.inUse = false;
+			});
+			
+			processRequest(this, request, response);
+			
+		});
+		
+		iface.on('connection', (function(socket) {
+			gjs.lib.core.graceful.push(socket);
+			gjs.lib.core.stats.diffuse('httpWaiting', gjs.lib.core.stats.action.add, 1);
+			
+			socket.setTimeout(60000);
+			
+			socket.on('close', function () {
+				socket.inUse = false;
+				gjs.lib.core.graceful.release(socket);
+				gjs.lib.core.stats.diffuse('httpWaiting', gjs.lib.core.stats.action.sub, 1);
+			});
+		}));
+		
+		iface.on('listening', function() {
+			gjs.lib.core.logger.system("Binding HTTP server on "+sc.address+":"+sc.port);
+		});
+		
+		iface.on('error', function(e) {
+			gjs.lib.core.logger.error('HTTP server error for instance '+key+': '+e);
+		});
+		
+		iface.gjsKey = key;
+		iface.allowHalfOpen = false;
+		iface.config = sc;
+		iface.listen(sc.port, sc.address);
+		
+		return(iface);
+	}
+	
+	
+	var bindHttpsServer = function(key, sc) {
+		if(!lookupSSLFile(sc)) {
+			console.log("Can not create HTTPS server on "+sc.address+':'+sc.port);
+			return(false);
+		}
+		
+// 		sc.SNICallback = function(hostname) {
+// 			var sites = reverse.list[key].sites;
+// 			var site = lookupServername(sites, hostname);
+// 			if(site && site.sslSNI) {
+// 				/* can not use SNI  */
+// 				if(site.sslSNI.usable == false)
+// 					return(false);
+// 				
+// 				/* SNI resolved */
+// 				if(site.sslSNI.resolv)
+// 					return(site.sslSNI.crypto.context);
+// 				
+// 				/* ok wegjsite has SNI certificate check files */
+// 				if(!lookupSSLFile(site.sslSNI)) {
+// 					site.sslSNI.usable = false;
+// 					site.sslSNI.resolv = true;
+// 					return(false);
+// 				}
+// 				site.sslSNI.usable = true;
+// 				site.sslSNI.resolv = true;
+// 				
+// 				/* associate crypto Credentials */
+// 				site.sslSNI.crypto = crypto.createCredentials(site.sslSNI);
+// 				return(site.sslSNI.crypto.context);
+// 			}
+// 		}
+		
+		var iface = https.createServer(sc, function(request, response) {
+			request.connection.inUse = true;
+
+			response.on('finish', function() {
+				if(request.connection._handle)
+					request.connection.inUse = false;
+			});
+			
+			processRequest(this, request, response);
+			
+		});
+		
+		/* select agent */
+		if(sc.isTproxy == true)
+			iface.agent = gjs.lib.http.agent.httpsTproxy;
+		else
+			iface.agent = gjs.lib.http.agent.https;
+		
+		iface.on('connection', (function(socket) {
+			gjs.lib.core.graceful.push(socket);
+			
+			socket.setTimeout(60000);
+			
+			socket.on('close', function () {
+				socket.inUse = false;
+				gjs.lib.core.graceful.release(socket);
+			});
+		}));
+		
+		iface.on('listening', function() {
+			gjs.lib.core.logger.system("Binding HTTPS reverse proxy on "+sc.address+":"+sc.port);
+		});
+		
+		iface.on('error', function(e) {
+			gjs.lib.core.logger.error('HTTPS reverse error for instance '+key+': '+e);
+		});
+		
+		iface.gjsKey = key;
+		iface.allowHalfOpen = false;
+		iface.listen(sc.port, sc.address);
+		
+		return(iface);
+	}
+	
+	
 	/*
 	 * Associate interface and configuration
 	 */
 	function processConfiguration(key, o) {
 		if(o.type == 'server') {
+			console.log(o);
 			var r = bindHttpServer(key, o);
 			if(r != false)
 				server.list[key] = r;
@@ -118,26 +352,26 @@ server.loader = function(gjs) {
 	}
 	
 	/* Load opcode context */
-	server.opcodes = gjs.lib.core.pipeline.scanOpcodes(
-		__dirname+'/pipeServer',
-		'servering'
-	);
-	if(!server.opcodes)
-		return(false);
+// 	server.opcodes = gjs.lib.core.pipeline.scanOpcodes(
+// 		__dirname+'/pipeServer',
+// 		'serving'
+// 	);
+// 	if(!server.opcodes)
+// 		return(false);
 		
 	/* 
 	 * Follow configuration
 	 */
-// 	for(var a in gjs.serverConfig.http) {
-// 		var sc = gjs.serverConfig.http[a];
-// 		if(sc instanceof Array) {
-// 			for(var b in sc)
-// 				processConfiguration(a, sc[b]);
-// 		}
-// 		else if(sc instanceof Object)
-// 			processConfiguration(a, sc);
-// 	}
-// 	
+	for(var a in gjs.serverConfig.http) {
+		var sc = gjs.serverConfig.http[a];
+		if(sc instanceof Array) {
+			for(var b in sc)
+				processConfiguration(a, sc[b]);
+		}
+		else if(sc instanceof Object)
+			processConfiguration(a, sc);
+	}
+	
 // 	function gracefulReceiver() {
 // 		for(var a in server.list) {
 // 			var server = server.list[a];

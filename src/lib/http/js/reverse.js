@@ -88,6 +88,8 @@ reverse.logpipe = function(gjs, src) {
 }
 
 reverse.loader = function(gjs) {
+	reverse.sites = new gjs.lib.http.site(gjs, 'pipeReverse');
+	reverse.sites.reload();
 	
 	if (cluster.isMaster) {
 		var logger = gjs.lib.core.logger;
@@ -188,9 +190,9 @@ reverse.loader = function(gjs) {
 		pipe.iface = iface;
 		
 		/* lookup website */
-		pipe.site = gjs.lib.http.site.search(request.headers.host);
+		pipe.site = reverse.sites.search(request.headers.host);
 		if(!pipe.site) {
-			pipe.site = gjs.lib.http.site.search('_');
+			pipe.site = reverse.sites.search('_');
 			if(!pipe.site) {
 				gjs.lib.http.error.renderArray({
 					pipe: pipe, 
@@ -240,7 +242,7 @@ reverse.loader = function(gjs) {
 			return;
 		}
 
-		pipe.update(gjs.lib.http.site.opcodes, pipe.location.pipeline);
+		pipe.update(reverse.sites.opcodes, pipe.location.pipeline);
 		
 		
 		/* execute pipeline */
