@@ -23,6 +23,7 @@ var fs = require('fs');
 var core = function() { /* loader below */ };
 
 core.utils = require(__dirname+'/build/Release/core.node');
+core.ipaddr = require(__dirname+'/js/ipaddr.js');
 core.ipc = require(__dirname+'/js/ipc.js');
 core.logger = require(__dirname+'/js/logger.js');
 core.blacklist = require(__dirname+'/js/blacklist.js');
