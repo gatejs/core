@@ -20,9 +20,7 @@
  * Origin: Michael VERGOZ
  */
 
-var util = require("util");
-var http = require("http");
-var cluster = require("cluster");
+var fs = require('fs');
 
 var streamFile = function(gjs) { }
 
@@ -41,8 +39,53 @@ streamFile.request = function(pipe, options) {
 		return(false);
 	}
 	
+	/** \todo check permissions */
+	
+	/* get mime */
+	var mime = pipe.root.lib.http.littleFs.getMime(pipe.file);
+	if(!mime)
+		mime = 'text/plain';
 	
 	
+	/* prepare header for 304 */
+	if(
+		pipe.request.headers['if-modified-since'] == pipe.fileInfo.mtime & 
+		(pipe.request.headers.pragma != 'no-cache' || pipe.request.headers['cache-control'] != 'no-cache')
+		) {
+		var headers = {
+			Server: 'gatejs',
+			'Content-Type': mime,
+			'Last-Modified': pipe.fileInfo.mtime
+		}
+		pipe.stop();
+		pipe.response.writeHead(304, headers);
+		pipe.response.end();
+		return(false);
+	}
+	
+	/* prepare header for 200 */
+	var now = new Date;
+	var cacheDelay = Math.round((now-pipe.fileInfo.mtime)/1000/100);
+	var headers = {
+		Server: 'gatejs',
+		'Content-Length': pipe.fileInfo.size,
+		'Content-Type': mime,
+		'Last-Modified': pipe.fileInfo.mtime,
+		'Cache-Control': "public, max-age="+cacheDelay
+	}
+	if(
+		pipe.server.isClosing == true || 
+		pipe.request.headers.connection == 'close' ||
+		(pipe.request.httpVersion == '1.0' && !pipe.request.headers.connection)
+		) {
+		header['Connection'] = 'Close';
+	}
+
+	var st = fs.createReadStream(pipe.file);
+	
+	pipe.stop();
+	pipe.response.writeHead(200, headers);
+	st.pipe(pipe.response);
 }
 
 streamFile.ctor = function(gjs) {

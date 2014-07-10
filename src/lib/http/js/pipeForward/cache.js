@@ -141,11 +141,6 @@ cache.request = function(pipe, opts) {
 				
 			pipe.response.gjsCache = 'hit';
 // 			console.log('HIT 200', pipe.request.url);
-			
-			if(pipe.server.isClosing == true) {
-				headers.headers.connection = 'Close';
-				delete headers.headers['keep-alive'];
-			}
 				
 // 			var counter = 0;
 // 			st.on('data', function(data) { counter += data.length; });
