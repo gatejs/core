@@ -101,6 +101,26 @@ littleFs.register = function(rootDirectory) {
 
 littleFs.loader = function(gjs) { 
 	
+	/* scan for mime.type */
+	try {
+		var data = fs.readFileSync('/etc/mime.types').toString();
+		data = data.replace(/[\t]/g, " ").split("\n");
+		for(var a in data) {
+			var el = data[a];
+			var pos = el.indexOf(' ');
+			var contentType = el.substr(0, pos);
+			if(contentType.length > 1 && contentType[0] != '#')  {
+				var exts = el.substr(pos).trim().split(' ');
+				if(exts.length > 0)  {
+					for(var b in exts) 
+						littleFs.litteFsMimes[exts[b]] = contentType;
+				}
+			}
+		}
+	} catch(e) {
+		/* nothing */
+	}
+	
 	littleFs.register(__dirname+'/fileSystem');
 	
 	/* generate virtualDirectory */

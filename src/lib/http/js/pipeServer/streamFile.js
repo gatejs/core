@@ -27,9 +27,20 @@ var cluster = require("cluster");
 var streamFile = function(gjs) { }
 
 streamFile.request = function(pipe, options) {
-
-// 	if(!pipe.fileInfo)
-// 		return(false);
+	
+	if(!pipe.fileInfo) {
+		pipe.stop();
+		pipe.root.lib.http.error.renderArray({
+			pipe: pipe, 
+			code: 404, 
+			tpl: "4xx", 
+			log: true,
+			title:  "Not found",
+			explain: "File not found"
+		});
+		return(false);
+	}
+	
 	
 	
 }
