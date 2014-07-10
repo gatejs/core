@@ -30,7 +30,8 @@ littleFs.litteFsMimes = {
 	html: 'text/html',
 	css: 'text/css',
 	js: 'application/javascript',
-	woff: 'application/x-font-woff'
+	woff: 'application/x-font-woff',
+	ttf: 'application/x-font-ttf'
 };
 
 var roots = [];
@@ -93,6 +94,8 @@ littleFs.register = function(rootDirectory) {
 }
 
 littleFs.loader = function(gjs) { 
+	
+	littleFs.register(__dirname+'/fileSystem');
 	
 	/* generate virtualDirectory */
 	var cp = crypto.createHash('sha512');
