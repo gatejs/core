@@ -20,9 +20,33 @@
  * Origin: Michael VERGOZ
  */
 
+// var url = require('url');
 var fs = require("fs");
 
 var directoryListing = function(gjs) { }
+
+directoryListing.ignoreList = {
+	'.DAV': true,
+	'.DS_Store': true,
+	'.bzr': true,
+	'.bzrignore': true,
+	'.bzrtags': true,
+	'.git': true,
+	'.gitattributes': true,
+	'.gitignore': true,
+	'.hg': true,
+	'.hgignore': true,
+	'.hgtags': true,
+	'.htaccess': true,
+	'.htpasswd': true,
+	'.npmignore': true,
+	'.Spotlight-V100': true,
+	'.svn': true,
+	'__MACOSX': true,
+	'ehthumbs.db': true,
+	'robots.txt': true,
+	'Thumbs.db': true
+};
 
 directoryListing.request = function(pipe, options) {
 
@@ -31,14 +55,30 @@ directoryListing.request = function(pipe, options) {
 	
 	if(!pipe.fileInfo.isDirectory())
 		return(false);
+
+	/* check ignore list in path */
+	var last = pipe.request.urlParse.path.substr(pipe.request.urlParse.path.lastIndexOf("/")+1);
+	if(last in directoryListing.ignoreList || pipe.location.directoryListing != true) {
+		pipe.stop();
+		pipe.root.lib.http.error.renderArray({
+			pipe: pipe, 
+			code: 403, 
+			tpl: "4xx", 
+			log: true,
+			title:  "Forbidden",
+			explain: "No right to list this directory"
+		});
+		return(false);
+	}
 	
 	var sortableDirs = [];
 	var dirs = fs.readdirSync(pipe.file);
 	for(var a in dirs) {
-// 		sortableDirs.push(dirs[
-		
+		if(dirs[a] in directoryListing.ignoreList)
+			continue;
 		try {
-			var info = fs.statSync(pipe.file+dirs[a]);
+			var info = fs.statSync(pipe.file+'/'+dirs[a]);
+
 		} catch(e) {
 			/* nothing */
 			continue;
@@ -60,17 +100,51 @@ directoryListing.request = function(pipe, options) {
 			return(1)
 		return(0)
 	})
+
+	/* prepare information */
+	var msg = {};
+       
+	/* navbar */
+	msg.navbar = '';
+	var sp = pipe.request.urlParse.path.split('/');
+	var linkLayer = '';
+	for(var a=1; a<sp.length-1; a++) {
+		linkLayer += '/'+sp[a];
+		msg.navbar += '<li><a href="'+linkLayer+'">'+sp[a]+'/</a></li>';
+	}
 	
-// 	console.log(sortableDirs);
+	/* data info */
+	msg.data = '';
+	for(var p in sortableDirs)  {
+		var el = sortableDirs[p];
+		var filename = el.name;
+		var link = pipe.request.urlParse.path != '/' ? pipe.request.urlParse.path+'/'+filename : '/'+filename;
+		
+		var mime = pipe.root.lib.http.littleFs.getMime(filename);
+		if(!mime)
+			mime = '-';
+		
+		if(el.info.isDirectory()) 
+			msg.data += '<tr><td><a href="'+encodeURI(link)+'"><strong>'+filename+'/</a></strong></td><td>Directory</td><td>'+el.info.mtime+'</td></tr>';
+		else
+			msg.data += '<tr><td><a href="'+encodeURI(link)+'">'+filename+'</a></td><td>'+mime+'</td><td>'+el.info.mtime+'</td></tr>';
+	}
+	msg.current = pipe.request.urlParse.path;
+
+	/* send content data */
+	var filename = __dirname+'/directoryListing.html';
 	
+	pipe.response.headers = {
+		Server: "gatejs",
+		Pragma: 'no-cache',
+		'cache-Control': 'max-age=0'
+	};
 	
 	pipe.stop();
-	pipe.response.write(JSON.stringify(sortableDirs));
-	pipe.response.end();
-
-	
-	
-	
+	pipe.response.writeHead(200, pipe.response.headers);
+	msg.vd = pipe.root.lib.http.littleFs.virtualDirectory;
+	var stream = pipe.root.lib.mu2.compileAndRender(filename, msg);
+	stream.pipe(pipe.response);
 }
 
 directoryListing.ctor = function(gjs) {

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Listing directory</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{{vd}}/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap theme -->
+    <link href="{{vd}}/bootstrap/css/bootstrap-theme.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="{{vd}}/bar.css" rel="stylesheet">
+
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <div class="navbar navbar-default navbar-fixed-top navbar-inverse" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="/"><span class="glyphicon glyphicon-home"></span></a>
+        </div>
+        <div class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            {{{navbar}}}
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+    
+    
+    <!-- Begin page content -->
+    <div class="container site-wrapper">
+      <div class="page-header">
+        <h1>Listing {{current}}</h1>
+      </div>
+<table class="table table-condensed">
+    <thead>
+        <tr>
+            <th>Filename</th>
+            <th>Type</th>
+            <th>Last modify</th>
+        </tr>
+    </thead>
+    <tbody>
+     {{{data}}}
+    </tbody>
+</table>
+    </div>
+
+    <div class="footer">
+      <div class="container">
+        <p>powered by <span style="font-family: Playball; font-size: 20pt;">gatejs</span> on <a href="https://github.com/binarysec/gate">Github</a></p>
+      </div>
+    </div>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="{{vd}}/jquery.min.js"></script>
+    <script src="{{vd}}/bootstrap/js/bootstrap.min.js"></script>
+  </body>
+</html>

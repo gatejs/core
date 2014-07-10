@@ -31,7 +31,8 @@ littleFs.litteFsMimes = {
 	css: 'text/css',
 	js: 'application/javascript',
 	woff: 'application/x-font-woff',
-	ttf: 'application/x-font-ttf'
+	ttf: 'application/x-font-ttf',
+	php: 'application/php',
 };
 
 var roots = [];
@@ -43,6 +44,11 @@ function fileExists(filename) {
 		return(false); 
 	}
 	return(sS);
+}
+
+littleFs.getMime = function(filename) {
+	var ext = filename.substr(filename.lastIndexOf(".")+1);
+	return(littleFs.litteFsMimes[ext]);
 }
 
 littleFs.process = function(request, response, dirFile) {
