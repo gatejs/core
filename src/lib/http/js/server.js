@@ -363,18 +363,18 @@ server.loader = function(gjs) {
 			processConfiguration(a, sc);
 	}
 	
-// 	function gracefulReceiver() {
-// 		for(var a in server.list) {
-// 			var server = server.list[a];
-// 			server.isClosing = true;
-// 			server.close(function() { });
-// 		}
-// 		
-// 		gjs.lib.core.ipc.removeListener('system:graceful:process', gracefulReceiver);
-// 	}
-// 	
-// 	/* add graceful receiver */
-// 	gjs.lib.core.ipc.on('system:graceful:process', gracefulReceiver);
+	function gracefulReceiver() {
+		for(var a in server.list) {
+			var server = server.list[a];
+			server.isClosing = true;
+			server.close(function() { });
+		}
+		
+		gjs.lib.core.ipc.removeListener('system:graceful:process', gracefulReceiver);
+	}
+	
+	/* add graceful receiver */
+	gjs.lib.core.ipc.on('system:graceful:process', gracefulReceiver);
 		
 	return(false);
 	
