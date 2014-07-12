@@ -48,7 +48,7 @@ function fileExists(filename) {
 
 littleFs.getMime = function(filename) {
 	var ext = filename.substr(filename.lastIndexOf(".")+1);
-	return(littleFs.litteFsMimes[ext]);
+	return(littleFs.litteFsMimes[ext.toLowerCase()]);
 }
 
 littleFs.process = function(request, response, dirFile) {
