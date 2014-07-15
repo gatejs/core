@@ -409,7 +409,7 @@ reverse.loader = function(gjs) {
 	
 	
 	var bindHttpsServer = function(key, sc) {
-		if(!lookupSSLFile(sc)) {
+		if(!gjs.lib.http.lookupSSLFile(sc)) {
 			console.log("Can not create HTTPS server on "+sc.address+':'+sc.port);
 			return(false);
 		}
@@ -427,7 +427,7 @@ reverse.loader = function(gjs) {
 					return(site.sslSNI.crypto.context);
 				
 				/* ok wegjsite has SNI certificate check files */
-				if(!lookupSSLFile(site.sslSNI)) {
+				if(!gjs.lib.http.lookupSSLFile(site.sslSNI)) {
 					site.sslSNI.usable = false;
 					site.sslSNI.resolv = true;
 					return(false);

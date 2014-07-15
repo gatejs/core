@@ -19,6 +19,7 @@
  */
 
 var httpPlug = require('http');
+var fs = require('fs');
 
 function fixHeaders(field, value) {
 	if(!this.orgHeaders)
@@ -81,7 +82,28 @@ http.forward = require(__dirname+'/js/forward');
 http.reverse = require(__dirname+'/js/reverse');
 http.server = require(__dirname+'/js/server');
 
+http.lookupSSLFile = function(options) {
+	var root = http.gjs.serverConfig.confDir+'/ssl';
+	var keyLookup = ['cert', 'ca', 'pfx', 'key'];
+	for(var a in keyLookup) {
+		var z = keyLookup[a];
+		if(options[z]) {
+			var file = root+'/'+options[z];
+			try {
+				var fss = fs.statSync(file);
+				options[z] = fs.readFileSync(file);
+				
+			} catch(e) {
+				console.log('Can not open '+file+' '+e);
+				return(false);
+			}
+		}
+	}
+	return(true);
+}
+	
 http.loader = function(gjs) {
+	http.gjs = gjs;
 	var stats = gjs.lib.core.stats;
 	
 	/* */

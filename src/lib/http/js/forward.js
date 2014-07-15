@@ -182,16 +182,23 @@ forward.loader = function(gjs) {
 		if(!sc.timeout)
 			sc.timeout = 30;
 		
+		
 		/** \todo ssl needs file lookup */
 		
 		/* create network interface */
 		var iface;
 		if(sc.ssl == true) {
+			
 			if(!sc.key || !sc.cert) {
 				gjs.lib.core.logger.error('HTTPS forward you need to set the key and cert for '+key);
 				return(false);
 			}
-			iface = https.createServer();
+			
+			/* get certs */
+			gjs.lib.http.lookupSSLFile(sc);
+
+			
+			iface = https.createServer(sc);
 			if(sc.isTproxy == true)
 				iface.agent = gjs.lib.http.agent.httpsTproxy;
 			else
