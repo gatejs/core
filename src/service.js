@@ -54,6 +54,17 @@ function runDaemon(opt) {
 	process.exit();
 }
 
+function runSpawner(gjs) {
+	gjs.lib.core.loader(gjs);
+	
+	
+	gjs.lib.core.ipc.on('requestSpawn', function() {
+		
+	});
+	
+	console.log('spawner');
+}
+
 var gatejs = (function() {
 	this.version = "1.3-dev";
 	this.config = new Object;
@@ -196,6 +207,12 @@ var gatejs = (function() {
 				continue;
 			
 			this.lib[d[a]] = require(file);
+		}
+		
+		/* check for spawner */
+		if(this.options['--spawner']) {
+			runSpawner(this);
+			return(true);
 		}
 		
 		/* post load modules */
