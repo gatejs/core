@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+
+    <title>gatejs by binarysec</title>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="container">
+        <h1>gatejs</h1>
+        <h2>Javascript based reverse &amp; forward proxy with high performance &amp; capability</h2>
+
+        <section id="downloads">
+          <a href="https://github.com/binarysec/gate/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/binarysec/gate/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/binarysec/gate" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+        <h1>
+<a name="gate" class="anchor" href="#gate"><span class="octicon octicon-link"></span></a>gate</h1>
+
+<p>GateJS is a javascript based reverse &amp; forward proxy with high 
+performance &amp; capability.</p>
+
+<p>For more informations about gatejs &amp; configuration please visit the wiki at <a href="https://github.com/binarysec/gate/wiki">https://github.com/binarysec/gate/wiki</a></p>
+
+<p><strong>note</strong>: gatejs team is looking for someone to maintain debian packages, contact us at info [at] binarysec [dot] com</p>
+
+<p>Learn more about gatejs contribution @ <a href="https://github.com/binarysec/gate/wiki/Contribution">https://github.com/binarysec/gate/wiki/Contribution</a></p>
+
+<p><a href="http://travis-ci.org/binarysec/gate"><img src="https://secure.travis-ci.org/binarysec/gate.png" alt="build status"></a></p>
+
+<h2>
+<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
+
+<h3>
+<a name="tldr" class="anchor" href="#tldr"><span class="octicon octicon-link"></span></a>TLDR</h3>
+
+<p>To build and install gatejs, run the following commands :</p>
+
+<pre><code>$ ./configure
+$ make
+# sudo make install
+</code></pre>
+
+<h3>
+<a name="installation-from-git" class="anchor" href="#installation-from-git"><span class="octicon octicon-link"></span></a>Installation from git</h3>
+
+<p>To install this project from git, you will have to run the following command :</p>
+
+<pre><code>$ git clone --recurse-submodules https://github.com/binarysec/gate.git gate
+</code></pre>
+
+<p>If you forgot the <code>--recurse-submodules</code>, the submodules will be downloaded
+automatically by the make step. Optionally, you can also use :</p>
+
+<pre><code>$ cd gate
+$ git submodule update --init --recursive
+</code></pre>
+
+<p>or :</p>
+
+<pre><code>$ make git-submodules-up
+</code></pre>
+
+<p>If you downloaded the zip from github, you will have to fetch the submodules 
+yourself.</p>
+
+<h3>
+<a name="available-options" class="anchor" href="#available-options"><span class="octicon octicon-link"></span></a>Available options</h3>
+
+<p>The <code>configure</code> script have the following options :</p>
+
+<ul>
+<li>
+<code>--prefix-share</code> : The path where the static data will be written. Defaults to
+<code>/usr/local/share</code>.</li>
+<li>
+<code>--prefix-conf</code> : The path where the configuration file will be copied.
+Defaults to <code>/etc</code>.</li>
+<li>
+<code>--prefix-bin</code> : The path where the gatejs program will be installed. Defaults
+to <code>/usr/local/sbin</code>.</li>
+<li>
+<code>--prefix-var</code> : The path where the temporary files will be written (PID file,
+sockets, ...). Defaults to <code>/var</code>.</li>
+<li>
+<code>--prefix-data</code> : The path where the persistent data will be written (Cache
+files). Defaults to <code>/home/gatejs-data</code>.</li>
+<li>
+<code>--help</code> : Show a short help text.</li>
+</ul><h2>
+<a name="system-spec" class="anchor" href="#system-spec"><span class="octicon octicon-link"></span></a>System spec</h2>
+
+<h3>
+<a name="debian-packages" class="anchor" href="#debian-packages"><span class="octicon octicon-link"></span></a>Debian packages</h3>
+
+<div class="highlight highlight-bash"><pre>apt-get install gcc make g++ python
+</pre></div>
+
+<h2>
+<a name="forward-proxy-configuration-example" class="anchor" href="#forward-proxy-configuration-example"><span class="octicon octicon-link"></span></a>Forward proxy configuration example</h2>
+
+<div class="highlight highlight-js"><pre><span class="kd">var</span> <span class="nx">serverConfig</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">bs</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span><span class="p">({</span>
+    <span class="nx">serverProcess</span><span class="o">:</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="nx">hostname</span><span class="o">:</span> <span class="s2">"testServer0"</span><span class="p">,</span>
+    <span class="nx">runDir</span><span class="o">:</span> <span class="s2">"/var/run/gatejs"</span><span class="p">,</span>
+    <span class="nx">dataDir</span><span class="o">:</span> <span class="s2">"/home/gatejs-data"</span><span class="p">,</span>
+    <span class="nx">logDir</span><span class="o">:</span> <span class="s2">"/var/log/gatejs"</span><span class="p">,</span>
+    <span class="nx">confDir</span><span class="o">:</span> <span class="s1">'/etc/gatejs'</span><span class="p">,</span>
+
+    <span class="nx">http</span><span class="o">:</span> <span class="p">{</span>
+        <span class="nx">forwardInterface</span><span class="o">:</span> <span class="p">{</span>
+            <span class="nx">type</span><span class="o">:</span> <span class="s1">'forward'</span><span class="p">,</span>
+            <span class="nx">port</span><span class="o">:</span> <span class="mi">80</span><span class="p">,</span>
+            <span class="nx">pipeline</span><span class="o">:</span> <span class="s1">'pipetest'</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+
+    <span class="nx">pipeline</span><span class="o">:</span> <span class="p">{</span>
+        <span class="nx">pipetest</span><span class="o">:</span> <span class="p">[</span>
+            <span class="p">[</span><span class="s1">'cache'</span><span class="p">,</span> <span class="p">{</span> <span class="p">}],</span>
+            <span class="p">[</span><span class="s1">'proxyPass'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">mode</span><span class="o">:</span> <span class="s1">'host'</span><span class="p">,</span> <span class="nx">timeout</span><span class="o">:</span> <span class="mi">10</span> <span class="p">}]</span>
+        <span class="p">],</span>
+    <span class="p">}</span>
+
+<span class="p">})};</span>
+
+<span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="nx">serverConfig</span><span class="p">;</span>
+</pre></div>
+      </section>
+    </div>
+
+    
+  </body>
+</html>
