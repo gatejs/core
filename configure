@@ -1,22 +1,31 @@
 #!/bin/sh
 
-PREFIX_SHARE=/usr/local/share
-PREFIX_CONF=/etc
-PREFIX_BIN=/usr/local/sbin
-PREFIX_VAR=/var
-PREFIX_DATA=/home/gatejs-data
+PREFIX_ROOT=/
+PREFIX_SHARE=usr/local/share
+PREFIX_CONF=etc
+PREFIX_BIN=usr/local/sbin
+PREFIX_VAR=var
+PREFIX_DATA=home/gatejs-data
 
 while test "$#" -gt 0; do
 	case "$1" in
 		'--help'|'-h'|'-help')
 			echo "Available options :"
 			echo "--help"
+			echo "--prefix-root  ($PREFIX_ROOT)"
 			echo "--prefix-share ($PREFIX_SHARE)"
 			echo "--prefix-conf  ($PREFIX_CONF)"
 			echo "--prefix-bin   ($PREFIX_BIN)"
 			echo "--prefix-var   ($PREFIX_VAR)"
 			echo "--prefix-data  ($PREFIX_DATA)"
 			exit 0
+			;;
+		'--prefix-root')
+			PREFIX_ROOT="$2"
+			shift
+			;;
+		'--prefix-root='*)
+			PREFIX_ROOT="`echo "$1" | cut -d= -f2-`"
 			;;
 		'--prefix-share')
 			PREFIX_SHARE="$2"
@@ -56,6 +65,12 @@ while test "$#" -gt 0; do
 	esac
 	shift
 done
+
+PREFIX_SHARE="$PREFIX_ROOT$PREFIX_SHARE"
+PREFIX_CONF="$PREFIX_ROOT$PREFIX_CONF"
+PREFIX_BIN="$PREFIX_ROOT$PREFIX_BIN"
+PREFIX_VAR="$PREFIX_ROOT$PREFIX_VAR"
+PREFIX_DATA="$PREFIX_ROOT$PREFIX_DATA"
 
 PREFIX_SHARE_SED=`echo "$PREFIX_SHARE" | sed -e 's/~/\\~/g'`
 PREFIX_CONF_SED=`echo "$PREFIX_CONF" | sed -e 's/~/\\~/g'`
@@ -108,6 +123,7 @@ printVar() {
 }
 
 echo "Variables :"
+printVar PREFIX_ROOT
 printVar PREFIX_SHARE
 printVar PREFIX_CONF
 printVar PREFIX_BIN
