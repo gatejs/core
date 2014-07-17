@@ -189,6 +189,8 @@ cache.request = function(pipe, opts) {
 			return(false);
 		if(pipe.request.headers.range || pipe.request.headers['content-range'])
 			return(false);
+		if(pipe.request.headers.pragma == 'no-cache')
+			return(false);
 	}
 
 	

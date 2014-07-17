@@ -30,10 +30,12 @@ var url = require('url');
 var store = function(gjs) { }
 
 store.request = function(gjs) {
-// 	console.log(gjs.request.url);
 	
 	/* no need to try parsing already validated by http server */
-	gjs.request.urlParseCacheStore = url.parse(gjs.request.url, true);
+	try {
+		gjs.request.urlParseCacheStore = url.parse(gjs.request.url, true);
+	} catch(e) { return(false); }
+	
 // 	gjs.request.urlParseCacheStore.protocol = 'http:';
 	
 	delete gjs.request.urlParseCacheStore.hostname;
@@ -42,7 +44,7 @@ store.request = function(gjs) {
 	
 	/* extends urlParse options */
 	gjs.request.urlParseCacheStore.pathSplit = gjs.request.urlParse.pathname.split('/');
-
+	
 	/* basic scan */
 	for(var a in store.scripts) {
 		var script = store.scripts[a];
