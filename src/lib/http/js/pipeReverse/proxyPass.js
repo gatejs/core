@@ -335,7 +335,7 @@ proxyPass.ctor = function(gjs) {
 	/* receive mutual faulty */
 	gjs.lib.core.ipc.on('proxyPassFaulty', function(gjs, data) {
 		var d = data.msg.node;
-		var site = gjs.lib.http.site.search(data.msg.site);
+		var site = gjs.lib.http.reverse.sites.search(data.msg.site);
 		if(!site)
 			return;
 		site.proxyStream[d._name][d._key][d._index].isFaulty = true;
@@ -344,7 +344,7 @@ proxyPass.ctor = function(gjs) {
 	/* receive mutual solution */
 	gjs.lib.core.ipc.on('proxyPassWork', function(gjs, data) {
 		var d = data.msg.node;
-		var site = gjs.lib.http.site.search(data.msg.site);
+		var site = gjs.lib.http.reverse.sites.search(data.msg.site);
 		if(!site)
 			return;
 		var node = site.proxyStream[d._name][d._key][d._index];

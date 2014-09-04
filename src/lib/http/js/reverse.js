@@ -117,7 +117,6 @@ reverse.loader = function(gjs) {
 			
 			var context = reverse.sitesFaulty[input.hash];
 			var subHash = input.site.confName+node._name+node._key+node._index;
-			var siteHash = context[subHash];
 
 			var req = flowSelect.request(options, function(res) {
 				
@@ -131,6 +130,7 @@ reverse.loader = function(gjs) {
 					}
 				}
 				
+				clearTimeout(res.socket.timeoutId);
 				delete reverse.sitesFaulty[input.hash];
 			});
 			
@@ -149,16 +149,12 @@ reverse.loader = function(gjs) {
 			}
 			
 			req.on('socket', function (socket) {
-				if(!socket.connected) 
-					socket.connected = false;
-
 				socket.timeoutId = setTimeout(
 					socketErrorDetection, 
 					10000, 
 					socket
 				);
 				socket.on('connect', function() {
-					socket.connected = true;
 					clearTimeout(socket.timeoutId); 
 				});
 			});
@@ -168,7 +164,7 @@ reverse.loader = function(gjs) {
 		
 		gjs.lib.core.ipc.on('proxyPassFaulty', function(gjs, data) {
 			var d = data.msg.node;
-			var s = site.search(data.msg.site);
+			var s = reverse.sites.search(data.msg.site);
 			if(!s)
 				return;
 			
