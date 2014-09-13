@@ -92,10 +92,12 @@ var site = function(gjs, channel, configuration) {
 								formatProxy('secondary');
 							}
 						}
+						
 					}
 					catch (err) {
 						gjs.lib.core.logger.error("Error loading file "+f+'.js : '+err);
 					}
+
 				}
 			}
 		} catch(e) {

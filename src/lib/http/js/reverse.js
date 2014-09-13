@@ -411,8 +411,8 @@ reverse.loader = function(gjs) {
 		}
 		
 		sc.SNICallback = function(hostname) {
-			var sites = reverse.list[key].sites;
-			var site = lookupServername(sites, hostname);
+			var site = reverse.sites.search(hostname);
+
 			if(site && site.sslSNI) {
 				/* can not use SNI  */
 				if(site.sslSNI.usable == false)
