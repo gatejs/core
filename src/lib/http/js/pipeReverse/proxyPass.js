@@ -157,6 +157,10 @@ proxyPass.request = function(pipe, proxyname) {
 		pipe.response.connector = nodePtr.host+":"+nodePtr.port;
 		pipe.request.gjsOptions = options;
 
+		/* use local address to emit network tcp connection */
+		if(nodePtr.localAddress)
+			options.localAddress = nodePtr.localAddress;
+		
 		for(var n in pipe.request.headers)
 			options.headers[pipe.request.orgHeaders[n]] = pipe.request.headers[n];
 		
