@@ -31,7 +31,7 @@ proxyPass.request = function(pipe, proxyname) {
 	
 	/* lookup proxy stream */
 	if(!pipe.site.proxyStream && !pipe.site.proxyStream[proxyname]) {
-		gjs.lib.http.error.renderArray({
+		pipe.root.lib.http.error.renderArray({
 			pipe: pipe, 
 			code: 500, 
 			tpl: "5xx", 
@@ -110,8 +110,8 @@ proxyPass.request = function(pipe, proxyname) {
 		}
 		else if(proxyStream.type == "iphash") {
 			var id = 0;
-			if(gjs.request.remoteAddress) {
-				var ipNums = gjs.request.remoteAddress.split(/[^0-9]+/).reverse();
+			if(pipe.root.request.remoteAddress) {
+				var ipNums = pipe.root.request.remoteAddress.split(/[^0-9]+/).reverse();
 				for(var i in ipNums)
 					id ^= ipNums[i];
 			}
