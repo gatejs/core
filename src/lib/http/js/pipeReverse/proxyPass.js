@@ -110,12 +110,12 @@ proxyPass.request = function(pipe, proxyname) {
 		}
 		else if(proxyStream.type == "iphash") {
 			var id = 0;
-			if(pipe.root.request.remoteAddress) {
-				var ipNums = pipe.root.request.remoteAddress.split(/[^0-9]+/).reverse();
+			if(pipe.request.remoteAddress) {
+				var ipNums = pipe.request.remoteAddress.split(/[^0-9]+/).reverse();
 				for(var i in ipNums)
 					id ^= ipNums[i];
 			}
-			base.currentStream = id % base.reverse.length;
+			base.currentStream = id % reverse.length;
 			
 			/* check if the stream is usable */
 			nodePtr = reverse[base.currentStream];
