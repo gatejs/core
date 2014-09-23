@@ -26,13 +26,13 @@ var cp = require('child_process');
  * l'ip est bannie par une regle L3
  */
 
-var blacklist = function(bs) { /* loader below */ };
+var blacklist = function(gjs) { /* loader below */ };
 
-blacklist.spawnMaster = function(bs) {
+blacklist.spawnMaster = function(gjs) {
 
-	var bsCore = bs.lib.bsCore;
+	var core = gjs.lib.core;
 	
-	if(!bs.serverConfig.blacklist)
+	if(!gjs.serverConfig.blacklist)
 		return;
 
 	/* initialize iptables */
@@ -58,13 +58,13 @@ blacklist.spawnMaster = function(bs) {
 		lookupWhy(ip, msg.why);
 		ip.points += msg.points;
 		
-// 		bs.lib.bsCore.ipScore.pushAlert(
+// 		gjs.lib.core.ipScore.pushAlert(
 // 			msg.ip, 
-// 			bsCore.ipScore.level.pass, 
+// 			core.ipScore.level.pass, 
 // 			'Warning before L3 ban because '+msg.why
 // 		);
 		
-		if(ip.points > bs.serverConfig.blacklist.maxPoint)
+		if(ip.points > gjs.serverConfig.blacklist.maxPoint)
 			doBan(ip, msg);
 	}
 	
@@ -86,21 +86,21 @@ blacklist.spawnMaster = function(bs) {
 		for(var w in ip.why)
 			why += w+' ';
 			
-		bs.lib.bsCore.logger.system(
+		gjs.lib.core.logger.system(
 			"IP "+ip.ip+' has been blacklisted on layer 3 within '+
-			bs.serverConfig.blacklist.l3BanTime/1000+' seconds because '+
+			gjs.serverConfig.blacklist.l3BanTime/1000+' seconds because '+
 			why
 		);
 		
-// 		bs.lib.bsCore.ipScore.pushAlert(
+// 		gjs.lib.core.ipScore.pushAlert(
 // 			ip, 
-// 			bsCore.ipScore.level.ban, 
+// 			core.ipScore.level.ban, 
 // 			'L3 firewall in response of '+msg
 // 		);
 		
 		/* send far message if forward is false */
 		if(msg.forward == false) {
-			bs.lib.bsCore.ipc.send('FFW', 'BAN', {
+			gjs.lib.core.ipc.send('FFW', 'BAN', {
 				ip: ip.ip, 
 				why: why,
 				points: ip.points,
@@ -117,15 +117,15 @@ blacklist.spawnMaster = function(bs) {
 			var el = blacklist.inTable[a];
 		
 			if(el.banned == false)
-				el.points -= bs.serverConfig.blacklist.reducePoint;
+				el.points -= gjs.serverConfig.blacklist.reducePoint;
 			else {
-				if(now-el.banTime > bs.serverConfig.blacklist.l3BanTime) {
+				if(now-el.banTime > gjs.serverConfig.blacklist.l3BanTime) {
 					var ipt = 
 						'iptables -D BWSRG_BLACKLIST -s '+el.ip+' -j DROP; '+
 						'iptables -D BWSRG_BLACKLIST -d '+el.ip+' -j DROP';
 					cp.exec(ipt);
 					
-					bs.lib.bsCore.logger.system(
+					gjs.lib.core.logger.system(
 						"Layer 3 Blacklist on IP "+el.ip+' has been released'
 					);
 					delete blacklist.inTable[a];
@@ -140,7 +140,7 @@ blacklist.spawnMaster = function(bs) {
 		'iptables -F BWSRG_BLACKLIST';
 	cp.exec(ipt);
 
-	bs.lib.bsCore.ipc.on('BAN', function(bs, data) {
+	gjs.lib.core.ipc.on('BAN', function(gjs, data) {
 		processMessage(data.msg);
 	});
 	
@@ -155,22 +155,22 @@ blacklist.spawnMaster = function(bs) {
 
 }
 
-blacklist.spawnSlave = function(bs) {
+blacklist.spawnSlave = function(gjs) {
 	blacklist.message = function(ip, why, points) {
 		if(!points)
 			points = 1;
-		bs.lib.bsCore.ipc.send('LFW', 'BAN', {
+		gjs.lib.core.ipc.send('LFW', 'BAN', {
 			ip: ip, why: why,
 			 points: points
 		});
 	}
 }
 
-blacklist.loader = function(bs) {
+blacklist.loader = function(gjs) {
 	if(cluster.isMaster)
-		blacklist.spawnMaster(bs);
+		blacklist.spawnMaster(gjs);
 	else
-		blacklist.spawnSlave(bs);
+		blacklist.spawnSlave(gjs);
 	
 }
 
