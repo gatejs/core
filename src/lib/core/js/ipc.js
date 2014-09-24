@@ -89,7 +89,7 @@ ipc.spawnMaster = function(gjs) {
 			/* far forward */
 			if(jdata.type == 'FFW') {
 				/* remote forward */
-				gjs.lib.gjsCore.npc.send(jdata);
+				gjs.lib.core.npc.send(jdata);
 				
 				/* local forward */
 				ipc.broadcast(data, client.fd);

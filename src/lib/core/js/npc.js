@@ -26,9 +26,9 @@ var util = require("util");
 var crypto = require("crypto");
 var cluster = require("cluster");
 
-var npc = function(bs) { /* loader below */ };
+var npc = function(gjs) { /* loader below */ };
 
-npc.loader = function(bs) {
+npc.loader = function(gjs) {
 	if(!cluster.isMaster)
 		return;
 	
@@ -37,17 +37,17 @@ npc.loader = function(bs) {
 	npc.send = function(msg) {
 		msg.ttl = 1;
 		msg.rand = Math.random();
-		msg.from = bs.serverConfig.hostname+':'+msg.from;
+		msg.from = gjs.serverConfig.hostname+':'+msg.from;
 		
 		for(var a in npc.userCast)
 			npc.userCast[a].send(msg);
 	}
 	
 	/* sanatize configuration */
-	if(!bs.serverConfig.npc)
+	if(!gjs.serverConfig.npc)
 		return;
 	
-	if(!bs.serverConfig.hostname) {
+	if(!gjs.serverConfig.hostname) {
 		console.log("Please define hostname in server configuration to use NPC");
 		return;
 	}
@@ -61,13 +61,13 @@ npc.loader = function(bs) {
 		try {
 			var jdata = JSON.parse(data);
 		} catch(e) {
-			bs.lib.bsCore.logger.system('NPC server JSON parse error from '+client.remoteAddress);
+			gjs.lib.core.logger.system('NPC server JSON parse error from '+client.remoteAddress);
 			client.end();
 			return(false);
 		}
 		
 		/* send message to local IPC */
-		bs.master.ipc.broadcast(JSON.stringify(jdata), false);
+		gjs.master.ipc.broadcast(JSON.stringify(jdata), false);
 		
 		/* broadcast remote message */
 		for(var a in npc.userCast) {
@@ -84,21 +84,21 @@ npc.loader = function(bs) {
 		var service = net.Server().listen(conf.port, conf.address);
 		
 		service.on('listening', function() {
-			bs.lib.bsCore.logger.system("NPC service running on "+conf.address+':'+conf.port);
+			gjs.lib.core.logger.system("NPC service running on "+conf.address+':'+conf.port);
 		});
 		
 		service.on('connection', function(client) {
-			bs.lib.bsCore.logger.system("Receive NPC connection from "+client.remoteAddress);
+			gjs.lib.core.logger.system("Receive NPC connection from "+client.remoteAddress);
 
 			function timeoutChecker() {
 				client.destroy();
 			}
 			
 			client.npcCipher = crypto.createCipher(
-				bs.serverConfig.npc.algo, bs.serverConfig.npc.sharedKey
+				gjs.serverConfig.npc.algo, gjs.serverConfig.npc.sharedKey
 			);
 			client.npcDecipher = crypto.createDecipher(
-				bs.serverConfig.npc.algo, bs.serverConfig.npc.sharedKey
+				gjs.serverConfig.npc.algo, gjs.serverConfig.npc.sharedKey
 			);
 			client.npcCipher.setAutoPadding(false);
 			client.npcDecipher.setAutoPadding(false);
@@ -137,26 +137,26 @@ npc.loader = function(bs) {
 					try {
 						var jdata = JSON.parse(data);
 					} catch(e) {
-						bs.lib.bsCore.logger.system('NPC server JSON parse error from '+client.remoteAddress);
+						gjs.lib.core.logger.system('NPC server JSON parse error from '+client.remoteAddress);
 						client.end();
 						return(false);
 					}
 				
 					if(!jdata.key || !jdata.hostname) {
-						bs.lib.bsCore.logger.system('NPC server parse error from '+client.remoteAddress);
+						gjs.lib.core.logger.system('NPC server parse error from '+client.remoteAddress);
 						// log
 						client.end();
 						return;
 					}
 					
-					if(jdata.key != bs.serverConfig.npc.sharedKey) {
-						bs.lib.bsCore.logger.system('NPC server wrong key from '+client.remoteAddress);
+					if(jdata.key != gjs.serverConfig.npc.sharedKey) {
+						gjs.lib.core.logger.system('NPC server wrong key from '+client.remoteAddress);
 						client.end();
 						return;
 					}
 					
-					if(jdata.hostname == bs.serverConfig.hostname) {
-						bs.lib.bsCore.logger.system('NPC server authentified on the same host');
+					if(jdata.hostname == gjs.serverConfig.hostname) {
+						gjs.lib.core.logger.system('NPC server authentified on the same host');
 						client.end();
 						return;
 					}
@@ -164,7 +164,7 @@ npc.loader = function(bs) {
 					client.npcAuth = true;
 					// log auth
 					
-					bs.lib.bsCore.logger.system('NPC server authentified from '+client.remoteAddress);
+					gjs.lib.core.logger.system('NPC server authentified from '+client.remoteAddress);
 					
 					client.setTimeout(0);
 					
@@ -200,10 +200,10 @@ npc.loader = function(bs) {
 			
 			/* create cypher */
 			client.npcCipher = crypto.createCipher(
-				bs.serverConfig.npc.algo, bs.serverConfig.npc.sharedKey
+				gjs.serverConfig.npc.algo, gjs.serverConfig.npc.sharedKey
 			);
 			client.npcDecipher = crypto.createDecipher(
-				bs.serverConfig.npc.algo, bs.serverConfig.npc.sharedKey
+				gjs.serverConfig.npc.algo, gjs.serverConfig.npc.sharedKey
 			);
 			client.npcCipher.setAutoPadding(false);
 			client.npcDecipher.setAutoPadding(false);
@@ -231,16 +231,16 @@ npc.loader = function(bs) {
 				
 			});
 			
-			bs.lib.bsCore.logger.system('NPC client connected to '+conf.address+':'+conf.port);
+			gjs.lib.core.logger.system('NPC client connected to '+conf.address+':'+conf.port);
 			client.send({
-				hostname: bs.serverConfig.hostname,
-				key: bs.serverConfig.npc.sharedKey
+				hostname: gjs.serverConfig.hostname,
+				key: gjs.serverConfig.npc.sharedKey
 				
 			});
 		});
 		
 		client.on('error', function(err) {
-			bs.lib.bsCore.logger.system(
+			gjs.lib.core.logger.system(
 				'NPC error connecting to '+conf.address+
 				':'+conf.port+' #'+err.code
 			);
@@ -257,22 +257,22 @@ npc.loader = function(bs) {
 			b.interval = setInterval(tryClient, 10000, conf);
 			client.end();
 			
-			bs.lib.bsCore.logger.system('NPC client disconnected from '+conf.address+':'+conf.port);
+			gjs.lib.core.logger.system('NPC client disconnected from '+conf.address+':'+conf.port);
 		});
 	}
 
 	/*
 	 * Bind npc servers
 	 */
-	for(var a in bs.serverConfig.npc.servers)
-		bindServer(bs.serverConfig.npc.servers[a]);
+	for(var a in gjs.serverConfig.npc.servers)
+		bindServer(gjs.serverConfig.npc.servers[a]);
 	
 
 	/*
 	 * Bind npc clients
 	 */
-	for(var a in bs.serverConfig.npc.clients) {
-		var b = bs.serverConfig.npc.clients[a];
+	for(var a in gjs.serverConfig.npc.clients) {
+		var b = gjs.serverConfig.npc.clients[a];
 		b.interval = setInterval(tryClient, 10000, b);
 	}
 

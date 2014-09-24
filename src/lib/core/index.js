@@ -25,6 +25,7 @@ var core = function() { /* loader below */ };
 core.utils = require(__dirname+'/build/Release/core.node');
 core.ipaddr = require(__dirname+'/js/ipaddr.js');
 core.ipc = require(__dirname+'/js/ipc.js');
+core.npc = require(__dirname+'/js/npc.js');
 core.logger = require(__dirname+'/js/logger.js');
 core.blacklist = require(__dirname+'/js/blacklist.js');
 core.graceful = require(__dirname+'/js/graceful.js');
@@ -54,6 +55,7 @@ core.loader = function(gjs) {
 	parseDoubleDot(core.usersByName, '/etc/passwd');
 	parseDoubleDot(core.groupsByName, '/etc/group');	
 	
+	core.npc.loader(gjs);
 	core.ipc.loader(gjs);
 	core.logger.loader(gjs);
 	core.blacklist.loader(gjs);
