@@ -21,12 +21,16 @@ var error = function() { /* loader below */ };
 
 
 error.renderArray = function(msg, file) {
+	var pipe = msg.pipe;
 	
 	if(file)
 		filename = file;
+	else if(pipe.errorPagesDir)
+		filename = pipe.errorPagesDir+'/'+msg.tpl.replace(/\.\.\//, "/")+'.tpl';
+	else if(pipe.root.serverConfig.errorPagesDir)
+		filename = pipe.root.serverConfig.errorPagesDir+'/'+msg.tpl.replace(/\.\.\//, "/")+'.tpl';
 	else
 		filename = __dirname+'/errorPages/'+msg.tpl.replace(/\.\.\//, "/")+'.tpl';
-	var pipe = msg.pipe;
 	
 	msg.pipe.response.headers = {
 		server: "gatejs",
@@ -39,11 +43,10 @@ error.renderArray = function(msg, file) {
 	pipe.response.writeHead(msg.code, msg.pipe.response.headers);
 	
 	msg.vd = msg.pipe.root.lib.http.littleFs.virtualDirectory;
-
+	
 	var stream = msg.pipe.root.lib.mu2.compileAndRender(filename, msg);
-
+	
 	stream.pipe(pipe.response);
-
 }
 
 error.loader = function(gjs) { }
