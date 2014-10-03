@@ -5,3 +5,6 @@
 	path = deps/nodejs
 	url = git://github.com/joyent/node
 	branch = 0.10.29-release
+[submodule "src/lib/ipaddr"]
+	path = src/lib/ipaddr
+	url = git@github.com:binarysec/node-ipaddr.git
