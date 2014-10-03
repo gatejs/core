@@ -247,10 +247,12 @@ forward.loader = function(gjs) {
 		
 		iface.on('listening', function() {
 			gjs.lib.core.logger.system("Binding forward HTTP proxy on "+sc.address+":"+sc.port);
+			iface.working = true;
 		});
 		
 		iface.on('error', function(e) {
 			gjs.lib.core.logger.error('HTTP forward error for instance '+key+': '+e);
+			console.log('* HTTP forward error for instance '+key+': '+e);
 		});
 		
 		iface.gjsKey = key;
@@ -301,8 +303,10 @@ forward.loader = function(gjs) {
 	function gracefulReceiver() {
 		for(var a in forward.list) {
 			var server = forward.list[a];
-			server.isClosing = true;
-			server.close(function() { });
+			if(server.working == true) {
+				server.isClosing = true;
+				server.close(function() { });
+			}
 		}
 		
 		gjs.lib.core.ipc.removeListener('system:graceful:process', gracefulReceiver);

@@ -242,10 +242,12 @@ server.loader = function(gjs) {
 		
 		iface.on('listening', function() {
 			gjs.lib.core.logger.system("Binding HTTP server on "+sc.address+":"+sc.port);
+			iface.working = true;
 		});
 		
 		iface.on('error', function(e) {
 			gjs.lib.core.logger.error('HTTP server error for instance '+key+': '+e);
+			console.log('* HTTPS server error for instance '+key+': '+e);
 		});
 		
 		iface.gjsKey = key;
@@ -316,10 +318,12 @@ server.loader = function(gjs) {
 		
 		iface.on('listening', function() {
 			gjs.lib.core.logger.system("Binding HTTPS reverse proxy on "+sc.address+":"+sc.port);
+			iface.working = true;
 		});
 		
 		iface.on('error', function(e) {
 			gjs.lib.core.logger.error('HTTPS reverse error for instance '+key+': '+e);
+			console.log('* HTTPS server error for instance '+key+': '+e);
 		});
 		
 		iface.gjsKey = key;
@@ -335,7 +339,6 @@ server.loader = function(gjs) {
 	 */
 	function processConfiguration(key, o) {
 		if(o.type == 'server') {
-			console.log(o);
 			var r = bindHttpServer(key, o);
 			if(r != false)
 				server.list[key] = r;
@@ -365,9 +368,11 @@ server.loader = function(gjs) {
 	
 	function gracefulReceiver() {
 		for(var a in server.list) {
-			var server = server.list[a];
-			server.isClosing = true;
-			server.close(function() { });
+			var s = server.list[a];
+			if(s.working == true) {
+				s.isClosing = true;
+				s.close(function() { });
+			}
 		}
 		
 		gjs.lib.core.ipc.removeListener('system:graceful:process', gracefulReceiver);

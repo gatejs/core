@@ -389,17 +389,19 @@ reverse.loader = function(gjs) {
 		
 		iface.on('listening', function() {
 			gjs.lib.core.logger.system("Binding HTTP reverse proxy on "+sc.address+":"+sc.port);
+			iface.working = true;
 		});
 		
 		iface.on('error', function(e) {
 			gjs.lib.core.logger.error('HTTP reverse error for instance '+key+': '+e);
+			console.log('* HTTP reverse error for instance '+key+': '+e);
 		});
 		
 		iface.gjsKey = key;
 		iface.allowHalfOpen = false;
 		iface.config = sc;
 		iface.listen(sc.port, sc.address);
-		
+
 		return(iface);
 	}
 	
@@ -468,10 +470,12 @@ reverse.loader = function(gjs) {
 		
 		iface.on('listening', function() {
 			gjs.lib.core.logger.system("Binding HTTPS reverse proxy on "+sc.address+":"+sc.port);
+			iface.working = true;
 		});
 		
 		iface.on('error', function(e) {
 			gjs.lib.core.logger.error('HTTPS reverse error for instance '+key+': '+e);
+			console.log('* HTTPS reverse error for instance '+key+': '+e);
 		});
 		
 		iface.gjsKey = key;
@@ -525,8 +529,10 @@ reverse.loader = function(gjs) {
 			/* close all server accept */
 			for(var b in config.ifaces) {
 				var server = config.ifaces[b];
-				server.isClosing = true;
-				server.close(function() { });
+				if(server.working == true) {
+					server.isClosing = true;
+					server.close(function() { });
+				}
 			}
 		}
 		
