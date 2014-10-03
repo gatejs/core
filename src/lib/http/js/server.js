@@ -127,7 +127,7 @@ server.loader = function(gjs) {
 				explain: "Pipeline did not execute a breaking opcode"
 			});
 		});
-		pipe.server = true;
+		pipe.service = true;
 		pipe.root = gjs;
 		pipe.request = request;
 		pipe.response = response;

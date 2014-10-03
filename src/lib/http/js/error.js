@@ -32,6 +32,17 @@ error.renderArray = function(msg, file) {
 	else
 		filename = __dirname+'/errorPages/'+msg.tpl.replace(/\.\.\//, "/")+'.tpl';
 	
+	/* internal log */
+	if(msg.log == true) {
+		if(msg.pipe.forward)
+			msg.pipe.root.lib.http.forward.log(msg.pipe, msg.code);
+		else if(msg.pipe.reverse)
+			msg.pipe.root.lib.http.reverse.log(msg.pipe, msg.code);
+		else if(msg.pipe.service) {
+			// todo
+		}
+		
+	}
 	msg.pipe.response.headers = {
 		server: "gatejs",
 		pragma: 'no-cache',
