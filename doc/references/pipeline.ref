@@ -1,0 +1,78 @@
+
+
+pipeline {{
+
+extends: http:forward
+type: array-opt
+description: Pipeline definition
+scope: pipeline:forward reverseSite:locations
+
+param-1: (Required) Name of the opcode. For example **['cache']**
+param-2: (optionnal) Opcode's options. Generally an object.
+
+mark {{
+Pipeline array is a list of opcodes that will be executed one by one.
+It is a common and global subset of gatejs. 
+
+*For example in HTTP: an incoming request pass through a pipeline*
+}}
+
+example {{
+[
+	['store'],
+	['cache', { }],
+	['acn', { }],
+	['proxyPass', { mode: 'host', timeout: 10 }]
+]
+
+}}
+
+}}
+
+// - - - - - - - - - - - - - - - - - - - - - - 
+
+
+pipeline:forward {{
+
+extends: http:forward
+type: object-kv
+key: pipeline name for forward proxy
+value: pipeline
+description: Pipelines for forward proxy
+scope: root
+
+mark {{
+In HTTP forward proxy mode pipelines are defined in the global configuration. You can define multiple pipeline distinctly using the name (key).
+
+Next time, the pipeline name has to be used into a HTTP forward proxy interface.
+}}
+
+example {{
+var serverConfig = function(bs) { return({
+	[...]
+	
+	http: {
+		[...]
+	},
+	
+	pipeline: {
+		pipetest: [
+			['store'],
+			['cache', { }],
+			['acn', { }],
+			['proxyPass', { mode: 'host', timeout: 10 }]
+		],
+	},
+})};
+
+module.exports = serverConfig;
+}}
+
+}}
+
+// - - - - - - - - - - - - - - - - - - - - - - 
+
+
+
+
+

@@ -1,0 +1,96 @@
+
+
+root {{
+
+type: object-opt
+description: Global server configuration
+see: reverseSite
+
+
+param-serverProcess: is the number of processes to run in the case of using multi-core CPUs, **default automatic adjustment**. 
+param-userId: is the user id used to jail process with setuid()
+param-groupId: is the user id used to jail process with setgid()
+param-adminName: defines the name of the technical gatejs admin
+param-adminMail: defines the mail of the technical contact
+param-hostname: is the name of the gate.js instance. This information is important when using gate.js inside a cluster
+param-runDir: is the running directory use to store different files such as sockets, pipes... there is no default value.
+param-dataDir: is the global data directory. It will store files such as cached files or proxy temporary
+param-logDir: is the logging directory use to store log files
+param-confDir: is the directory to store specific gate.js configuration files
+param-http: An object defined in ::http
+param-plugins: An array defined in ::plugins
+param-agent: An object defined in ::agent
+param-acn: An object defined in ::acn
+param-pipeline: An object defines **pipelines** for forward proxy explained in ::pipeline:forward
+
+mark {{
+sometext here
+}}
+
+
+}}
+
+// - - - - - - - - - - - - - - - - - - - - - - 
+
+agent {{
+
+type: object-opt
+extends: root
+scope: root
+description: Agent manager
+
+param-http: number of connections for HTTP
+param-https: number of connections for HTTPS
+param-httpTproxy: number of connections for HTTP using **TPROXY**
+param-httpsTproxy: number of connections for HTTPS using **TPROXY**
+
+mark {{
+Agents are made to keep alive connections made by gatejs.
+
+The default value for these parameters is 15 connections per address:port.
+}}
+
+example {{
+var serverConfig = function(gcnf) { return({
+	// [[..]]
+	agent: {
+		http: 30,
+		https: 30,
+		httpTproxy: 30,
+		httpsTproxy: 30,
+	},
+})};
+module.exports = serverConfig;
+}}
+
+
+}}
+
+// - - - - - - - - - - - - - - - - - - - - - - 
+
+plugins {{
+
+type: array-string
+extends: root
+scope: root
+description: Plugins manager
+
+mark {{
+List of plugins directories as following
+}}
+
+example {{
+var serverConfig = function(gjs) { return({
+	// [[..]]
+	plugins: {
+		'/path/to/plugin/one',
+		'/path/to/plugin/two',
+	},
+})};
+module.exports = serverConfig;
+}}
+
+
+}}
+
+

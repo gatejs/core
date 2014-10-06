@@ -1,0 +1,200 @@
+
+
+http {{
+
+extends: root
+scope: root
+type: object-kv
+key: name of the http server interface
+value: http:forward http:reverse http:server
+description: HTTP service interfaces
+see: pipeline
+
+mark {{
+sometext here
+}}
+
+example {{
+
+}}
+
+}}
+
+// - - - - - - - - - - - - - - - - - - - - - - 
+
+http:forward {{
+
+extends: http
+scope: http
+type: object-opt
+description: HTTP forward proxy
+see: pipeline:forward pipeline
+
+param-type: is the type of http interface, in our case you must define **forward**.
+param-isTproxy: activates tproxy implementation (true or false) for the instance. Activating this options will make your http service replying with the destination address used by the user. It allows transprent L7 OSI interception. This option is actually only supported under Linux systems and needs iptables rules. Default is false (off)
+param-address: is the service listening address, default 0.0.0.0
+param-port: is the service port, default 80
+param-pipeline: is the name of the pipeline associated
+param-ssl: enable or disable SSL on instance. default false.
+param-pfx: (ssl) A filename containing the private key, certificate and CA certs of the server in PFX or PKCS12 format. (Mutually exclusive with the key, cert and ca options.)
+param-key: (ssl) A filename containing the private key of the server in PEM format. (Required)
+param-passphrase: (ssl) A string of passphrase for the private key or pfx.
+param-cert: (ssl) A filename containing the certificate key of the server in PEM format. (Required)
+param-ca: (ssl) An array of strings or Buffers of trusted certificates in PEM format. If this is omitted several well known "root" CAs will be used, like VeriSign. These are used to authorize connections.
+param-crl: (ssl) Either a filename or list of filenames containing PEM encoded CRLs (Certificate Revocation List)
+param-ciphers: (ssl) A string describing the ciphers to use or exclude.
+
+mark {{
+HTTP forward proxys are defined globaly in configuration as http sub-object:
+
+Here is a base example:
+
+}}
+
+example {{
+var serverConfig = function(bs) { return({
+	hostname: "testServer0",
+	runDir: "/tmp/gatejs",
+	dataDir: "/path/to/dataDir",
+	logDir: "/var/log/gatejs",
+
+	http: {
+		generalInterface: {
+			type: 'forward',
+			port: 8080,
+		},
+	},
+})};
+}}
+
+mark {{
+gatejs HTTP engine can run multiple network instances in http object. Each instance has it owns name defined as a Javascript object key, which is **generalInterface** in our example.
+
+Below are all options available for HTTP forwarding
+}}
+
+example {{
+http: {
+	generalInterface: {
+		type: 'forward',
+		isTproxy: false,
+		address: "0.0.0.0", 
+		port: 8080, 
+		method: 'host', /* will be moved to proxyPass opcode */
+		pipeline: 'forwardPipe',
+		/* SSL part */
+		ssl: true,
+	},
+},
+}}
+
+mark {{
+### SSL options
+In order to activate SSL on the interface you must set **ssl** to **true**.
+
+SSL options are provided by node.js for more information please look at [tls.createServer() function](http://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener). 
+
+More options could be applied please read node.js manual for further.
+}}
+
+
+}}
+
+// - - - - - - - - - - - - - - - - - - - - - - 
+
+http:reverse:opcodes {{
+
+extends: http:reverse
+scope: http:reverse
+type: object-opt
+description: Reverse proxy opcodes
+see: reverseSite
+
+mark {{
+
+}}
+
+example {{
+}}
+
+
+}}
+
+
+
+// - - - - - - - - - - - - - - - - - - - - - - 
+
+http:reverse {{
+
+extends: http
+scope: http
+type: object-opt
+description: HTTP reverse proxy
+see: reverseSite
+
+param-type: is the type of http interface, in our case you must define **reverse**.
+param-address: is the service listening address, default 0.0.0.0
+param-port: is the service port, default 80
+param-isTproxy: activates response IP spoofing using TPROXY, default OFF (false)
+param-ssl: enable or disable SSL on instance. default false.
+param-pfx: (ssl) A filename containing the private key, certificate and CA certs of the server in PFX or PKCS12 format. (Mutually exclusive with the key, cert and ca options.)
+param-key: (ssl) A filename containing the private key of the server in PEM format. (Required)
+param-passphrase: (ssl) A string of passphrase for the private key or pfx.
+param-cert: (ssl) A filename containing the certificate key of the server in PEM format. (Required)
+param-ca: (ssl) A filename containing the trusted certificates in PEM format. If this is omitted several well known "root" CAs will be used, like VeriSign. These are used to authorize connections.
+param-crl: (ssl) Either a filename or list of filenames containing PEM encoded CRLs (Certificate Revocation List)
+param-ciphers: (ssl) A string describing the ciphers to use or exclude.
+
+mark {{
+HTTP reverse proxys are defined globally in configuration as http sub-object.
+The major difference between forward & reverse proxy is that reverse mode well knowns websites passing.
+Then, in case of using reverse proxy you will have to define websites. Website creation is explained below.
+
+As forward proxy, reverse proxy needs a global configuration.
+
+Here is a base example:
+}}
+
+example {{
+var serverConfig = function(bs) { return({
+	serverProcess: 4,
+	hostname: "testServer0",
+	runDir: "/tmp/gatejs",
+	dataDir: "/path/to/dataDir",
+	logDir: "/var/log/gatejs",
+
+	http: {
+		generalInterface: {
+			type: 'reverse',
+			port: 80,
+		},
+	},
+})};
+}}
+
+mark {{
+As in forward proxy mode, gatejs HTTP engine can run multiple network instances in http object. Each instance has it owns name defined as a Javascript object key, which is **generalInterface** in our example.
+}}
+
+
+}}
+
+// - - - - - - - - - - - - - - - - - - - - - - 
+
+http:forward:opcodes {{
+
+extends: http:forward
+scope: http:forward
+type: object-opt
+description: Forward proxy opcodes
+see: reverseSite
+
+mark {{
+
+}}
+
+example {{
+}}
+
+
+}}

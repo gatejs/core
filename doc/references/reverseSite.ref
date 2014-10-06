@@ -1,0 +1,267 @@
+
+
+reverseSite {{
+
+extends: http:reverse
+type: object-opt
+description: Reverse proxy site configuration
+see: root
+
+param-name: name of the configuration used to create a context for the website, default is **default**. Logging used this name to split log files.
+param-serverName: hostnames associated with the website, this field isn't a regex but a gatejs nreg which work faster than regex for host header association but it supports only wildcard (*).
+param-interfaces: associate the website with an interface, if no interface specified then website is global
+param-proxyStream: defines output stream contexts, explained in ::reverseSite:proxyStream
+param-locations: URL routing and locations explained in ::reverseSite:locations
+
+mark {{
+Each website has it owns configuration where different parameters can be used such as **proxyStream** or **locations**. It also has a dedicated pipeline used to control the website flow.
+
+A website configuration is stored using **confDir + /reverseSites/someconfig.js** for example: **/etc/gatejs/reverseSites/someconfig.js**
+
+Full example bellow
+}}
+
+example {{
+{
+	name: 'gatejs.org',
+	serverName: [ "*.gatejs.org" ],
+	interfaces:  [ 'reverseInterface'],
+
+	proxyStream: {
+		nodeOne: {
+			type: "rr",
+			hybrid: true,
+			primary: [
+				{
+					host: "192.168.0.1", 
+					weight: 10
+				},
+				{
+					host: "192.168.0.2", 
+					localAddress: "192.168.1.2", 
+					weight: 10
+				},
+			],
+			secondary: [
+				{
+					host: "192.168.1.1", 
+					weight: 1
+				}
+			]
+		}
+	},
+	
+	locations: [
+		{ 
+			name: 'root',
+			regex: /.*/,
+			pipeline: [
+				['proxyPass', "nodeOne"],
+			]
+		}
+	],
+}
+}}
+
+}}
+
+// - - - - - - - - - - - - - - - - - - - - - - 
+
+reverseSite:proxyStream {{
+
+extends: http:reverse reverseSite
+scope: reverseSite
+type: object-kv
+description: proxyStream source servers
+see: reverseSite
+key: name or id of the proxy stream
+value: reverseSite:proxyStream:node
+
+example {{
+{
+	proxyStream: {
+		nodeOne: {
+			type: "rr",
+			hybrid: true,
+			primary: [
+				{
+					host: "192.168.0.1", 
+					weight: 10
+				},
+				{
+					host: "192.168.0.2", 
+					localAddress: "192.168.1.2", 
+					weight: 10
+				},
+			],
+			secondary: [
+				{
+					host: "192.168.1.1", 
+					weight: 1
+				}
+			]
+		},
+		nodeTwo: {
+			type: "iphash",
+			hybrid: true,
+			primary: [
+				{
+					host: "192.168.0.1", 
+				},
+				{
+					host: "192.168.0.2", 
+					localAddress: "192.168.1.2", 
+				},
+			],
+			secondary: [
+				{
+					host: "192.168.1.1", 
+				}
+			]
+		}
+	},
+}
+}}
+
+}}
+
+}}
+
+// - - - - - - - - - - - - - - - - - - - - - - 
+
+reverseSite:proxyStream:node {{
+
+extends: reverseSite:proxyStream
+scope: reverseSite:proxyStream
+type: object-opt
+description: proxyStream node definition
+see: reverseSite
+
+param-type: Set the load sharing behavior. **rr** for round-robin all requests are shared on all servers following the **weight** parameter. **iphash**  for IP hashing all requests are shared following the hash of the source ip address and the number of servers available.
+param-hyrbid: Set the proxy upstream as hybrid SSL. When a request comes using HTTP then the proxy will send HTTP request however if SSL request comes then the proxy will send HTTPS request automaticaly.
+param-primary: A list (array) of node servers primary, will be used if one server is in the pool. To follow the parameter format defined in ::reverseSite:proxyStream:node:server
+param-secondary: A list (array) of node servers secondary, will be used if one server is in the pool and **primary** node servers are all down. To follow the parameter format defined in ::reverseSite:proxyStream:node:server
+
+
+example {{
+{
+	proxyStream: {
+		nodeOne: {
+			type: "rr",
+			hybrid: true,
+			primary: [
+				{
+					host: "192.168.0.1", 
+					weight: 10
+				},
+				{
+					host: "192.168.0.2", 
+					localAddress: "192.168.1.2", 
+					weight: 10
+				},
+			],
+			secondary: [
+				{
+					host: "192.168.1.1", 
+					weight: 1
+				}
+			]
+		}
+	},
+}
+}}
+
+
+}}
+
+// - - - - - - - - - - - - - - - - - - - - - - 
+
+reverseSite:proxyStream:node:server {{
+
+extends: reverseSite:proxyStream
+scope: reverseSite:proxyStream:node
+type: object-opt
+description: proxyStream server definition
+see: reverseSite
+
+param-host: IP address of the source server  
+param-port: TCP port of the source server, default to 80
+param-weight: The proxy node weight used in load sharing, default to 1.
+param-localAddress: Specify the IP to bind for network connections. NOTE: In the case of network interface alias don't forget to use a /32 mask
+param-https: true to force using HTTPS, default false (off)
+param-timeout: connection timeout (in second) default 10 seconds
+param-retry: amount of retry after considering source server as down
+param-readTimeout: read timeout for source server in second, default 900 seconds w/o data -NYI-
+
+example {{
+{
+	proxyStream: {
+		nodeOne: {
+			type: "rr",
+			hybrid: true,
+			primary: [
+				{
+					host: "192.168.0.1", 
+					weight: 10
+				},
+				{
+					host: "192.168.0.2", 
+					localAddress: "192.168.1.2", 
+					weight: 10
+				},
+			],
+			secondary: [
+				{
+					host: "192.168.1.1", 
+					weight: 1
+				}
+			]
+		}
+	},
+}
+}}
+
+}}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - 
+
+reverseSite:locations {{
+
+extends: http:reverse
+scope: reverseSite
+type: object-opt
+description: Reverse proxy locations
+
+param-name: The location name (used to identify location)
+param-regex: The regex used to match with the URL 
+param-pipeline: A pipeline for the location, see ::pipeline
+
+mark {{
+
+In the following example we have created 2 pipelines for 2 differents locations. the **regex** field is used to match the URL.
+}}
+
+example {{
+locations: [
+	{ 
+		name: 'status',
+		regex: /^\/status/,
+		pipeline: [
+			['nginxStatus'],
+		]
+	},
+	{ 
+		name: 'root',
+		regex: /.*/,
+		pipeline: [
+			['proxyPass', 'nodeOne'],
+		]
+	}
+],
+}}
+
+
+}}
+
+

@@ -1,0 +1,36 @@
+
+
+opcode:forward:proxyPass {{
+
+extends: http:forward:opcodes
+scope: pipeline:forward pipeline
+type: object-opt
+description: proxyPass - Forward proxy request retransmission opcode
+
+param-mode: is the forwarding method used to connect to source servers **see Modes below**
+param-timeout: is the connection timeout in second, default 30 seconds
+param-allowConnect: to allow CONNECT methods on the interface
+param-localAddress: is used to specify the IP to bind for network connections. NOTE: In the case of network interface alias don't forget to use a /32 mask
+
+mark {{
+HTTP forward proxy pass operation opcode used to connect to the source server.
+
+*Info*: This opcode can be used only in forward proxy operation
+
+### Modes
+* **host** : use the request host HTTP header with IP DNS resolving in order to emit connections
+* **tproxy-src-host** spoof the source address and use the IP DNS resolving to emit connections
+* **tproxy-src-dst** spoof the source and use the destination address to emit connections (need tproxy server interface ON)
+* **tproxy-dst**  do not spoof the source address but use the destination address to emit connections (need tproxy server interface ON)
+ 
+}}
+
+example {{
+['proxyPass', {
+	mode: 'host',
+	timeout: 100,
+	allowConnect: false
+}]
+}}
+
+}}

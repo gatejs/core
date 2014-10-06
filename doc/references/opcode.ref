@@ -1,0 +1,67 @@
+
+
+opcode:headers {{
+
+extends: http:forward:opcodes http:reverse:opcodes
+scope: pipeline:forward pipeline
+type: object-opt
+description: headers - Headers manipulation opcode
+
+param-request: is a boolean used to activate header manipulation on request, by default is false which means it works on responses
+param-set: is a Javascript object used to set new headers 
+param-hide: is a Javascript array used to disable or hide headers
+
+mark {{
+The "headers" opcode is used to manipulate the request and response headers.It works for reverse & forward proxy 
+
+*Info*: This opcode can be used both in reverse and forward proxy
+
+It can set or hide headers in both request & response. 
+
+By default it acts on the response by defining options you can work on request. See options below.
+
+Note: gatejs headers searching is case insensitive 
+}}
+
+example {{
+/* set & hide request headers */
+['headers', { 
+	set: { 
+		"X-Header-One": 'Alasklikeuflux',
+	},
+	hide: [
+		'X-FRAME-options'
+	]
+}],
+}}
+
+}}
+
+// - - - - - - - - - - - - - - - - - - - - - - 
+
+opcode:cache {{
+
+extends: http:forward:opcodes http:reverse:opcodes
+scope: pipeline:forward pipeline
+type: object-opt
+description: cache - Data caching opcode
+
+param-exclusive: set exclusive cache behavior
+param-ignoreCache: ignore cache-control from server response.
+param-stale: allow stale time for objects without cache age.
+param-staleTime: set the default stale time 
+param-feeding: true or false, activate or not the caching feeding feature. Default true.
+param-dirDiviser: number of division operate on the filename. Default 8.
+
+mark {{
+*Info*: This opcode can be used both in reverse and forward proxy
+
+}}
+
+example {{
+['cache', { 
+	exclusive: true,
+	ignoreCache: false
+}],
+}}
+}}

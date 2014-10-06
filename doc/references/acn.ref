@@ -1,0 +1,106 @@
+
+
+acn {{
+
+type: object-opt
+extends: http
+scope: root
+description: Associative Cache Network
+
+
+param-mode: multicast
+param-listen: the UDP and TCP listening address, default 0.0.0.0
+param-port: the UDP and TCP port, default 9043
+param-address: the multicast address to join
+param-deadInterval: Remote host dead interval, default 2000 (2seconds)
+param-pingInterval: Multicast pings delay, default 200ms 
+param-deadRequest: Delay before to consider an ACN request timeout, default 50 ms
+param-cleanDelay: Delay before to start the clean engine, default 60000 (60 seconds)
+param-cleanInterval: Interval between each scan of directory and file, default 500 (500 ms / 2 files per seconds)
+
+mark {{
+Associative Cache Network (ACN) is a protocol defined by gatejs team in order to provider a unified way to share cache datas between servers. 
+
+ACN is also the cache core engine of gatejs. It manages all files cached by forward or reverse proxy.
+
+The chose was taken to construct a new protocol in opposition with ICP (Internet Cache Protocol) because its design wasn't enough to support gatejs devel's ideas. 
+
+ACN is deeply present in the gatejs cache system. It is in fact the core engine. Every requests are managed by ACN (reverse or forward proxy requests). 
+
+Every servers have to configure its ACN instance. You will have to choose the way to talk with servers. Actually gatejs only support the multicast mode but unicast is in milestones.
+
+Here is a full example of a gatejs server using ACN
+}}
+
+example {{
+var serverConfig = function(bs) { return({
+	hostname: "testServer0",
+	runDir: "/tmp/gatejs",
+	dataDir: "/home/bwsfg",
+	logDir: "/var/log/gatejs",
+	confDir: '/home/mykii/Documents/share',
+	
+	http: {
+		forwardInterface: {
+			type: 'forward',
+			port: 8080,
+			pipeline: 'pipetest'
+		},
+	},
+	
+	pipeline: {
+		pipetest: [
+			['cache', { }],
+			['acn', { }],
+			['proxyPass', { mode: 'host', timeout: 10 }]
+		],
+	},
+	
+	acn: {
+		mode: 'multicast',
+		listen: '0.0.0.0',
+		port: 9043,
+		address: "224.0.0.174",
+		deadInterval: 2000,
+		pingInterval: 200,
+		deadRequest: 50,
+		cleanDelay: 60000,
+		cleanInterval: 500
+	}
+})};
+
+module.exports = serverConfig;
+}}
+
+mark {{
+## ACN global options
+
+ACN runs into the master process in order to provide safe-atomic cache operations. First, you will have to define the global configuration then you will have to add the ACN opcodes into the considered pipeline.
+
+### Using multicast
+
+Multicast mode works with UDP and TCP together. Requests & replies are sent using multicast UDP to source servers and replies.
+
+Once the requester server has the answer it will emit an HTTP TCP connection to the source server to get the data.
+
+If no data is presents then source server don't reply and the requester will wait for 50 ms as defined deadRequest in configuration below.
+}}
+
+example {{
+acn: {
+	mode: 'multicast',
+	listen: '0.0.0.0',
+	port: 9043,
+	address: "224.0.0.174",
+	deadInterval: 2000,
+	pingInterval: 200,
+	deadRequest: 50,
+	cleanDelay: 60000,
+	cleanInterval: 500
+}
+}}
+
+}}
+
+// - - - - - - - - - - - - - - - - - - - - - - 
+

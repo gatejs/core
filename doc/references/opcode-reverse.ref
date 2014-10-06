@@ -1,0 +1,32 @@
+
+
+opcode:reverse:nginxStatus {{
+
+extends: http:reverse:opcodes
+scope: reverseSite:locations
+type: object-opt
+description: nginxStatus - Mimic nginx status
+
+mark {{
+Opcode used to mimics nginx stub status page. It only works in reverse proxy operation.
+
+This opcode blocks then a special location has to be performed in site configuration.
+
+No options provided.
+
+*Info*: This opcode can be used only in forward proxy operation
+}}
+
+example {{
+locations: [
+    { 
+        name: 'status',
+        regex: /^\/status/,
+        pipeline: [
+            ['nginxStatus'],
+        ]
+    }
+],
+}}
+
+}}
