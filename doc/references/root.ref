@@ -24,9 +24,26 @@ param-acn: An object defined in ::acn
 param-pipeline: An object defines **pipelines** for forward proxy explained in ::pipeline:forward
 
 mark {{
-sometext here
+Global server configuration is used to be in the directory **/etc/gatejs/config.js**.
+
+It corresponds to the global gatejs configuration.
 }}
 
+example {{
+var serverConfig = function(bs) { return({
+	hostname: "testServer0",
+	runDir: "/tmp/gatejs",
+	dataDir: "/path/to/dataDir",
+	logDir: "/var/log/gatejs",
+
+	http: {
+		generalInterface: {
+			type: 'forward',
+			port: 8080,
+		},
+	},
+})};
+}}
 
 }}
 
