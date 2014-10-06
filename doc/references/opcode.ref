@@ -2,7 +2,7 @@
 opcode:acl {{
 
 extends: http:forward:opcodes http:reverse:opcodes
-scope: pipeline:forward pipeline
+scope: pipeline
 type: object-kv
 description: acl - Access Control List
 key: IP address w/ or w/o CIDR (IPv4 and IPv6)
@@ -28,7 +28,7 @@ example {{
 opcode:headers {{
 
 extends: http:forward:opcodes http:reverse:opcodes
-scope: pipeline:forward pipeline
+scope: pipeline
 type: object-opt
 description: headers - Headers manipulation opcode
 
@@ -67,7 +67,7 @@ example {{
 opcode:cache {{
 
 extends: http:forward:opcodes http:reverse:opcodes
-scope: pipeline:forward pipeline
+scope: pipeline
 type: object-opt
 description: cache - Data caching opcode
 
@@ -90,3 +90,25 @@ example {{
 }],
 }}
 }}
+
+// - - - - - - - - - - - - - - - - - - - - - - 
+
+opcode:acn {{
+
+extends: http:forward:opcodes http:reverse:opcodes
+scope: acn pipeline
+type: object-opt
+description: acn - Use Associative Cache Network resolver
+
+mark {{
+Use Associative Cache Network to resolv remote cache object.
+
+*Info*: This opcode can be used both in reverse and forward proxy
+}}
+
+example {{
+['acn'],
+}}
+
+}}
+
