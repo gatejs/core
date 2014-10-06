@@ -1,4 +1,29 @@
 
+opcode:acl {{
+
+extends: http:forward:opcodes http:reverse:opcodes
+scope: pipeline:forward pipeline
+type: object-kv
+description: acl - Access Control List
+key: IP address w/ or w/o CIDR (IPv4 and IPv6)
+
+mark {{
+The object key correspond to a CIDR address and the value to the state of the rule. If **true** is set then the address will be **accepted** or **rejected** depending **default** policy and if set to **false** the address will not be used.
+
+You can use **default** as object key to define the default policy. true all accepted and false all is rejected. **The default policy is false for rejected**.
+* If **default** is set to **true** (then accepted) then all address matched rules will be **rejected** (blacklist mode)
+* If **default** is set to **false** (then rejected) then all address matched rules will be **accepted** (whitelist mode)
+}}
+
+example {{
+/* set & hide request headers */
+['acl', { 
+	'127.0.0.1' => true,
+	'192.168.0.0/24' => true,
+}],
+}}
+
+}}
 
 opcode:headers {{
 

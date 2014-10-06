@@ -7,7 +7,7 @@ acl.request = function(gjs, options) {
 	/* compilation step */
 	if(!options.__built)  {
 		options.__ipaddr = new gjs.root.lib.ipaddr;
-		options.__default = true;
+		options.__default = false;
 		options.__rangeList = [];
 		
 		for(var a in options) {
@@ -29,7 +29,9 @@ acl.request = function(gjs, options) {
 	
 	/* checking step */
 	var result = options.__ipaddr.search(gjs.request.remoteAddress);
-	if(!result) {
+	if( 
+		(result == false && options.__default == false) ||
+		(result == true && options.__default == true)) {
 		gjs.root.lib.http.error.renderArray({
 			pipe: gjs, 
 			code: 403, 
