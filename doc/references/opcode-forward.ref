@@ -3,7 +3,7 @@
 opcode:forward:proxyPass {{
 
 extends: http:forward:opcodes
-scope: pipeline:forward pipeline
+scope: pipeline
 type: object-opt
 description: proxyPass - Forward proxy request retransmission opcode
 
@@ -38,7 +38,7 @@ example {{
 opcode:forward:store {{
 
 extends: http:forward:opcodes
-scope: pipeline:forward pipeline
+scope: pipeline
 type: object-opt
 description: store - URL cache store hash rewriting
 

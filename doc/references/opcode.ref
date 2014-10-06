@@ -112,3 +112,43 @@ example {{
 
 }}
 
+// - - - - - - - - - - - - - - - - - - - - - - 
+
+opcode:executer {{
+
+extends: http:forward:opcodes http:reverse:opcodes
+scope: pipeline
+type: object-opt
+description: executer - Run Javascript function
+
+mark {{
+**executer** opcode is used to run a Javascript function in the pipeline.
+
+It allows user to define a special process for request and response.
+
+*Info*: This opcode can be used both in reverse and forward proxy
+}}
+
+example {{
+['executer', function(pipe) {
+	if(pipe.request.headers.host.match(/^wpad(:[0-9]+)?$/)) {
+		pipe.stop();
+		pipe.response.setHeader("Content-Type", "application/x-ns-proxy-autoconfig");
+		pipe.response.write(
+			'function FindProxyForURL(url, host) {\n' +
+			'	return "PROXY wpad:80; DIRECT";\n' +
+			'}'
+		);
+		pipe.response.end();
+	}
+}],
+}}
+
+mark {{
+
+}}
+Here, the request is catched first with executer, and if the host is "wpad", a specific response is sent.
+
+It may be used as-is for an automatic forward proxy in a LAN.
+See [Web_Proxy_Autodiscovery_Protocol](https://en.wikipedia.org/wiki/Web_Proxy_Autodiscovery_Protocol) and [Proxy_auto-config](https://en.wikipedia.org/wiki/Proxy_auto-config)
+}}
