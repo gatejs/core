@@ -34,3 +34,35 @@ example {{
 }}
 
 }}
+
+opcode:forward:store {{
+
+extends: http:forward:opcodes
+scope: pipeline:forward pipeline
+type: object-opt
+description: store - URL cache store hash rewriting
+
+mark {{
+gatejs **store** opcode manage the URL rewriting for cache store hash.
+
+Each object in the cache has it own reference calculated using a hash. It is really useful to have to way to modify the hash before the reference creation. 
+
+It works as squid store_url. 
+
+}}
+
+example {{
+['store']
+}}
+
+mark {{
+### Explanation
+Store controlers are located in **pipeForward/store** and are formated like below.
+}}
+
+example {{
+// to explained
+}}
+
+}}
+
