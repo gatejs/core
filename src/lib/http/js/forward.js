@@ -23,6 +23,7 @@ var https = require("https");
 var url = require("url");
 var cluster = require("cluster");
 var fs = require("fs");
+var net = require("net");
 var crypto = require("crypto");
 
 var forward = function() { /* loader below */ };
@@ -48,6 +49,13 @@ forward.log = function(gjs, connClose) {
 			referer: gjs.request.headers.referer ? gjs.request.headers.referer : '-',
 			cache: gjs.response.gjsCache ? gjs.response.gjsCache : 'miss'
 		}
+	);
+}
+
+forward.logConnect = function(gjs, args) {
+	gjs.lib.core.logger.commonLogger(
+		'FWLOGCONNECT',
+		args
 	);
 }
 
@@ -100,7 +108,27 @@ forward.loader = function(gjs) {
 				f.stream.write(inline+'\n');
 		}
 		
+		var processConnect = function(req) {
+			var dateStr = gjs.lib.core.dateToStr(req.msg.time);
+
+			var inline = 
+				dateStr+
+				' - CONNECT '+
+				req.msg.code.toUpperCase()+' on '+
+				req.msg.address+':'+
+				req.msg.port+
+				' from '+
+				req.msg.remote
+			;
+			
+			/* write log */
+			var f = logger.selectFile(null, 'forward-connect');
+			if(f) 
+				f.stream.write(inline+'\n');
+		}
+		
 		logger.typeTab['FWLOG'] = processLog;
+		logger.typeTab['FWLOGCONNECT'] = processConnect;
 		return;
 	}
 	
@@ -164,6 +192,7 @@ forward.loader = function(gjs) {
 		pipe.execute();
 	};
 	
+
 // 	var slowLoris = function(socket) {
 // 		console.log("Probable SlowLoris attack from "+socket.remoteAddress+", closing.");
 // 		clearInterval(socket.bwsFg.interval);
@@ -182,6 +211,57 @@ forward.loader = function(gjs) {
 		if(!sc.timeout)
 			sc.timeout = 30;
 		
+		var processConnectRequest = function(request, socket, head) {
+			var s = request.url.split(':');
+			var ip = socket.remoteAddress;
+			
+			/* open raw stream */
+			var client = net.connect({
+				host: s[0],
+				port: s[1] ? s[1] : 80
+				
+			},
+			function() {
+				forward.logConnect(
+					gjs, {
+					version: request.httpVersion,
+					code: 'open',
+					reason: 'Connection established',
+					remote: ip,
+					address: s[0],
+					port: s[1] ? s[1] : 80
+				});
+				socket.write('HTTP/1.0 200 Connection established\n\n');
+				socket.pipe(client);
+				client.pipe(socket);
+			});
+			client.on('error', function(err) {
+				forward.logConnect(
+					gjs, {
+					version: request.httpVersion,
+					code: 'error',
+					reason: 'Connection error '+err.code+' on '+s.join(':'),
+					remote: ip,
+					address: s[0],
+					port: s[1] ? s[1] : 80
+				});
+				socket.destroy();
+			});
+			socket.on('close', function(err) {
+				forward.logConnect(
+					gjs, {
+					version: request.httpVersion,
+					code: 'close',
+					reason: 'Closing connection '+s.join(':'),
+					remote: ip,
+					address: s[0],
+					port: s[1] ? s[1] : 80
+				});
+				client.destroy();
+			});
+			
+		}
+	
 		
 		/** \todo ssl needs file lookup */
 		
@@ -197,12 +277,14 @@ forward.loader = function(gjs) {
 			/* get certs */
 			gjs.lib.http.lookupSSLFile(sc);
 
-			
 			iface = https.createServer(sc);
 			if(sc.isTproxy == true)
 				iface.agent = gjs.lib.http.agent.httpsTproxy;
 			else
 				iface.agent = gjs.lib.http.agent.https;
+			
+			if(sc.allowConnect == true) 
+				iface.on('connect', processConnectRequest);
 		}
 		else {
 			iface = http.createServer();
@@ -210,7 +292,11 @@ forward.loader = function(gjs) {
 				iface.agent = gjs.lib.http.agent.httpTproxy;
 			else
 				iface.agent = gjs.lib.http.agent.http;
+			
+			if(sc.allowConnect == true) 
+				iface.on('connect', processConnectRequest);
 		}
+		
 		
 		/* resolv pipeline */
 		iface.pipeline = gjs.lib.core.pipeline.getGlobalPipe(sc.pipeline); 

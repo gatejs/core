@@ -35,6 +35,7 @@ param-isTproxy: activates tproxy implementation (true or false) for the instance
 param-address: is the service listening address, default 0.0.0.0
 param-port: is the service port, default 80
 param-pipeline: is the name of the pipeline associated
+param-allowConnect: **true** to allow HTTP tunneling. All requests are logged in **forward-connect** log file. default: false (since 1.4) 
 param-ssl: enable or disable SSL on instance. default false.
 param-pfx: (ssl) A filename containing the private key, certificate and CA certs of the server in PFX or PKCS12 format. (Mutually exclusive with the key, cert and ca options.)
 param-key: (ssl) A filename containing the private key of the server in PEM format. (Required)
