@@ -2,7 +2,7 @@
 
 pipeline {{
 
-extends: http:forward
+extends: root
 type: array-opt
 description: Pipeline definition
 scope: pipeline:forward reverseSite:locations
