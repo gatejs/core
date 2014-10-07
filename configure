@@ -92,7 +92,7 @@ install:
 	+make -C ./deps/nodejs install
 	$PREFIX_SHARE/gatejs/node/bin/npm install -g node-gyp
 	
-	
+	+make -C src/lib/ipaddr/ rebuild NODE_GYP="$PREFIX_SHARE/gatejs/node/bin/node-gyp"
 	+make -C src/lib/core/ rebuild NODE_GYP="$PREFIX_SHARE/gatejs/node/bin/node-gyp"
 	+make -C src/lib/tproxy/ rebuild NODE_GYP="$PREFIX_SHARE/gatejs/node/bin/node-gyp"
 	
