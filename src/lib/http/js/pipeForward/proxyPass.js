@@ -134,6 +134,9 @@ proxyPass.request = function(pipe, opts) {
 				delete res.headers['keep-alive'];
 			}
 			
+			if(!pipe.server.noVia)
+				res.gjsSetHeader('Via', 'gatejs MISS');
+			
 			/* fix headers */
 			var nHeaders = {};
 			for(var n in res.headers)

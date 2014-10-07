@@ -167,14 +167,15 @@ proxyPass.request = function(pipe, proxyname) {
 		/* emit the preProxyPass */
 		pipe.response.emit("rvProxyPassPassConnection", options, req);
 		
+		
 		/* select flow control */
 		var flowSelect = http;
 		if(nodePtr.https == true)
 			flowSelect = https;
 		else if(proxyStream.hybrid == true) {
-			if(pipe.server.https == true)
+			if(pipe.server.config.ssl == true)
 				flowSelect = https;
-			options.port = pipe.server.port;
+			options.port = pipe.server.config.port ? pipe.server.config.port : 443;
 		}
 		
 		var req = flowSelect.request(options, function(res) {
@@ -190,11 +191,15 @@ proxyPass.request = function(pipe, proxyname) {
 			pipe.response.emit("response", res, "rvpass");
 			
 			res.gjsSetHeader('Server', 'gatejs');
+			
 			if(pipe.server.isClosing == true) {
 				res.gjsSetHeader('Connection', 'Close');
 				delete res.headers['keep-alive'];
 			}
 			
+			if(!pipe.server.noVia)
+				res.gjsSetHeader('Via', 'gatejs MISS');
+				
 			/* fix headers */
 			var nHeaders = {};
 			for(var n in res.headers)

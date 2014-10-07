@@ -91,6 +91,9 @@ cache.request = function(pipe, opts) {
 					pipe.response.gjsRemoveHeader('keep-alive');
 				}
 				
+				if(!pipe.server.noVia)
+					pipe.response.gjsSetHeader('Via', 'gatejs HITRMS');
+				
 				/* fix headers */
 				var nHeaders = {};
 				for(var n in pipe.response.headers)
@@ -123,6 +126,9 @@ cache.request = function(pipe, opts) {
 				pipe.response.gjsSetHeader('Connection', 'Close');
 				pipe.response.gjsRemoveHeader('keep-alive');
 			}
+			
+			if(!pipe.server.noVia)
+				pipe.response.gjsSetHeader('Via', 'gatejs HIT');
 			
 			/* fix headers */
 			var nHeaders = {};
@@ -189,29 +195,28 @@ cache.request = function(pipe, opts) {
 			return(false);
 		if(pipe.request.headers.range || pipe.request.headers['content-range'])
 			return(false);
-		if(pipe.request.headers.pragma == 'no-cache')
-			return(false);
 	}
 
-	
-	/*
-	 * Take encoding in case
-	 */
-	if(pipe.request.headers['accept-encoding']) {
-		var hae = pipe.request.headers['accept-encoding'].split(',');
-		var a;
-		for(a in hae) {
-			if(tryToStream(hae[a].trim()) == true) {
-				pipe.pause();
-				return(true);
+	if(pipe.request.forceCache != true && pipe.request.headers.pragma != 'no-cache') {
+		/*
+		 * Take encoding in case
+		 */
+		if(pipe.request.headers['accept-encoding']) {
+			var hae = pipe.request.headers['accept-encoding'].split(',');
+			var a;
+			for(a in hae) {
+				if(tryToStream(hae[a].trim()) == true) {
+					pipe.pause();
+					return(true);
+				}
 			}
 		}
+		if(tryToStream('') == true) {
+			pipe.pause();
+			return(true);
+		}
 	}
-	if(tryToStream('') == true) {
-		pipe.pause();
-		return(true);
-	}
-
+	
 	var pipeProxyPassRequest = (function(pipe, request, response) {
 		/*
 		 * check Pragma
@@ -362,11 +367,11 @@ cache.request = function(pipe, opts) {
 
 			
 			}));
-			
-			
+						
 			response.pipe(st);
 
 // 			console.log('MISS: '+pipe.request.url);
+// 			pipe.response.gjsSetHeader('Via', 'gatejs MISS');
 		}
 		/* store partial data at lookup time remove cache headers */
 		else if(response.statusCode == 304 && opts.feeding == true) {

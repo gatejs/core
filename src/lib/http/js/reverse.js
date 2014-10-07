@@ -401,7 +401,7 @@ reverse.loader = function(gjs) {
 		iface.allowHalfOpen = false;
 		iface.config = sc;
 		iface.listen(sc.port, sc.address);
-
+		
 		return(iface);
 	}
 	
@@ -480,6 +480,7 @@ reverse.loader = function(gjs) {
 		
 		iface.gjsKey = key;
 		iface.allowHalfOpen = false;
+		iface.config = sc;
 		iface.listen(sc.port, sc.address);
 		
 		return(iface);
