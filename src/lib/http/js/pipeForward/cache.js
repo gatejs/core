@@ -91,7 +91,7 @@ cache.request = function(pipe, opts) {
 					pipe.response.gjsRemoveHeader('keep-alive');
 				}
 				
-				if(!pipe.server.noVia)
+				if(!pipe.server.config.noVia)
 					pipe.response.gjsSetHeader('Via', 'gatejs HITRMS');
 				
 				/* fix headers */
@@ -127,7 +127,7 @@ cache.request = function(pipe, opts) {
 				pipe.response.gjsRemoveHeader('keep-alive');
 			}
 			
-			if(!pipe.server.noVia)
+			if(!pipe.server.config.noVia)
 				pipe.response.gjsSetHeader('Via', 'gatejs HIT');
 			
 			/* fix headers */

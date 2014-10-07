@@ -109,6 +109,9 @@ proxyPass.request = function(pipe, opts) {
 		req.on('response', function(res) {
 			pipe.request.removeListener('close', reqAbort);
 			
+			/* remove request timeout */
+			req.connection.connected = true;
+			clearTimeout(req.connection.timeoutId); 
 				
 // 			console.log(res.headers);
 			/* abort connexion because someone is using it for a post response*/
@@ -134,7 +137,7 @@ proxyPass.request = function(pipe, opts) {
 				delete res.headers['keep-alive'];
 			}
 			
-			if(!pipe.server.noVia)
+			if(!pipe.server.config.noVia)
 				res.gjsSetHeader('Via', 'gatejs MISS');
 			
 			/* fix headers */
@@ -209,10 +212,6 @@ proxyPass.request = function(pipe, opts) {
 				pipe.server.config.timeout*1000, 
 				socket
 			);
-			socket.on('connect', function() {
-				socket.connected = true;
-				clearTimeout(socket.timeoutId); 
-			});
 		});
 
 		pipe.response.emit("fwProxyPassPassPrepare", req);

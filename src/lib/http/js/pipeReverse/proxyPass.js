@@ -54,10 +54,27 @@ proxyPass.request = function(pipe, proxyname) {
 		var rkey = key+'Ctx';
 		var reverse = proxyStream[key];
 		var base = proxyStream[rkey] ? proxyStream[rkey] : proxyStream[rkey] = {};
-			
+		
+		
+		
 		/* no current stream */
 		if(!base.currentStream)
 			base.currentStream = 0;
+		
+		/* no more proxy up */
+		if(!reverse) {
+			pipe.root.lib.http.error.renderArray({
+				pipe: pipe, 
+				code: 504, 
+				tpl: "5xx", 
+				log: true,
+				title:  "Bad gateway",
+				explain: "Unable to establish connection to the backend server"
+			});
+			
+			return(false);
+		}
+		
 		
 		/* check current stream if we can use it */
 		nodePtr = reverse[base.currentStream];
@@ -179,6 +196,10 @@ proxyPass.request = function(pipe, proxyname) {
 		}
 		
 		var req = flowSelect.request(options, function(res) {
+			/* remove request timeout */
+			req.connection.connected = true;
+			clearTimeout(req.connection.timeoutId); 
+				
 			nodePtr._retry = 0;
 			
 			/* abort connexion because someone is using it for a post response */
@@ -303,10 +324,6 @@ proxyPass.request = function(pipe, proxyname) {
 				nodePtr.timeout*1000, 
 				socket
 			);
-			socket.on('connect', function() {
-				socket.connected = true;
-				clearTimeout(socket.timeoutId); 
-			});
 		});
 
 		pipe.response.emit("rvProxyPassPassPrepare", req);
