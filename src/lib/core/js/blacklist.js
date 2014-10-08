@@ -63,8 +63,8 @@ blacklist.spawnMaster = function(gjs) {
 
 	var core = gjs.lib.core;
 	
-// 	if(!gjs.serverConfig.blacklist)
-// 		return;
+	if(!gjs.serverConfig.blacklist)
+		return;
 	
 	/* select os engine */
 	blacklist.engine = false;
