@@ -167,7 +167,7 @@ blacklist.spawnMaster = function(gjs) {
 				el.points -= gjs.serverConfig.blacklist.reducePoint;
 			else {
 				if(now-el.banTime > gjs.serverConfig.blacklist.l3BanTime) {
-					blacklist.engine.unBan(ip.ip);
+					blacklist.engine.unBan(el.ip);
 					
 					gjs.lib.core.logger.system(
 						"Layer 3 Blacklist on IP "+el.ip+' has been released'

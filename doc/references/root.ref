@@ -118,6 +118,7 @@ type: object-opt
 extends: root
 scope: root
 description: Dynamic blacklist manager
+see: opcode:dos
 
 param-maxPoint: Number of maximum points allowed before to get a ban (default 10000 points)
 param-reducePoint: Number of points which will be subtracts of the current points (default 1000 points)

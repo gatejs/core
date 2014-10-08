@@ -152,3 +152,46 @@ Here, the request is catched first with executer, and if the host is "wpad", a s
 It may be used as-is for an automatic forward proxy in a LAN.
 See [Web_Proxy_Autodiscovery_Protocol](https://en.wikipedia.org/wiki/Web_Proxy_Autodiscovery_Protocol) and [Proxy_auto-config](https://en.wikipedia.org/wiki/Proxy_auto-config)
 }}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - 
+
+opcode:dos {{
+
+extends: http:forward:opcodes http:reverse:opcodes
+scope: pipeline blacklist
+type: object-opt
+description: dos - Denial of service prevention
+see: blacklist
+since: 1.4
+
+param-rps: number of accepted requests per second (default: 100)
+param-banTime: the ban time while a HTTP 429 error is sent to the client. (default: 60 seconds)
+param-disableBlacklist: set to **true** to disable Dynamic Blacklist (default: false)
+param-markPoints: corresponds to the points added into the Dynamic Blacklist (default 250 points per limit reached)
+
+mark {{
+The **dos** opcode is used to control the requests flow sent by users to gatejs. 
+
+A user corresponds to an IP address.
+
+It has 2 levels of blocking mode. 
+
+* Firstly, if a user sends more than **rps** per second then he gets banned for **banTime**.
+* Secondly, if the user continues to reach the limit (depending the **markPoints** scoring) he will get banned following the Dynamic Blacklist (firewall rule)
+
+Actually **markPoints** is set by default to 250 which means that the user has to reach 40 times the limit (**rps**) to get banned via the firewall
+
+*Info*: This opcode can be used both in reverse and forward proxy
+}}
+
+example {{
+['dos', { 
+	markPoints: 250,
+	rps: 100,
+	banTime: 60,
+	disableBlacklist: false
+}],
+}}
+}}
+
