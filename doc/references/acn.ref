@@ -15,8 +15,8 @@ param-address: the multicast address to join
 param-deadInterval: Remote host dead interval, default 2000 (2seconds)
 param-pingInterval: Multicast pings delay, default 200ms 
 param-deadRequest: Delay before to consider an ACN request timeout, default 50 ms
-param-cleanDelay: Delay before to start the clean engine, default 60000 (60 seconds)
-param-cleanInterval: Interval between each scan of directory and file, default 500 (500 ms / 2 files per seconds)
+param-cleanDelay: Delay before to start the clean engine, default 43200 seconds (1/2 day)
+param-cleanInterval: Interval between each scan of directory and file, default 250 (250 ms / 4 files per seconds)
 
 mark {{
 Associative Cache Network (ACN) is a protocol defined by gatejs team in order to provider a unified way to share cache datas between servers. 

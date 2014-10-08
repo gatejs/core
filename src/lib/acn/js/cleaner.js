@@ -27,12 +27,12 @@ var cleaner = function(gjs) {}
 cleaner.loader = function(gjs) {
 	cleaner.gjs = gjs;
 	
-	var delay = 60000;
-	var interval = 500;
+	var delay = 43200000;
+	var interval = 250;
 	
 	if(gjs.serverConfig.acn) {
 		if(gjs.serverConfig.acn.cleanDelay)
-			delay = gjs.serverConfig.acn.cleanDelay;
+			delay = gjs.serverConfig.acn.cleanDelay*1000;
 		if(gjs.serverConfig.acn.cleanInterval)
 			interval = gjs.serverConfig.acn.cleanInterval;
 	}
