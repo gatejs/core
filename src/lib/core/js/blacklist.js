@@ -20,6 +20,37 @@
 
 var cluster = require("cluster");
 var cp = require('child_process');
+var os = require('os');
+
+var blacklistDrvLinux = function(gjs) {
+	var chainName = 'GATEJS';
+	
+	this.initialize = function(newChain) {
+		if(newChain)
+			chainName = newChain;
+		/* initialize iptables */
+		var ipt = 
+			'iptables -N '+chainName+'; '+
+			'iptables -F '+chainName+'; ';
+		cp.exec(ipt);
+	}
+	
+	this.ban = function(ip) {
+		var ipt = 
+			'iptables -A '+chainName+' -s '+ip+' -j DROP; '+
+			'iptables -A '+chainName+' -d '+ip+' -j DROP';
+		cp.exec(ipt);
+	}
+	
+	this.unBan = function(ip) {
+		var ipt = 
+			'iptables -D '+chainName+' -s '+ip+' -j DROP; '+
+			'iptables -D '+chainName+' -d '+ip+' -j DROP';
+		cp.exec(ipt);
+	}
+	
+}
+
 
 /*
  * si le poids dépasse 1000 points à 60 secondes 
@@ -32,9 +63,19 @@ blacklist.spawnMaster = function(gjs) {
 
 	var core = gjs.lib.core;
 	
-	if(!gjs.serverConfig.blacklist)
+// 	if(!gjs.serverConfig.blacklist)
+// 		return;
+	
+	/* select os engine */
+	blacklist.engine = false;
+	if(os.type() == 'Linux')
+		blacklist.engine = new blacklistDrvLinux(gjs);
+	
+	if(blacklist.engine == false)
 		return;
-
+	
+	blacklist.engine.initialize();
+	
 	/* initialize iptables */
 	blacklist.inTable = {};
 	
@@ -75,10 +116,7 @@ blacklist.spawnMaster = function(gjs) {
 		if(ip.banned == true)
 			return;
 		
-		var ipt = 
-			'iptables -A BWSRG_BLACKLIST -s '+ip.ip+' -j DROP; '+
-			'iptables -A BWSRG_BLACKLIST -d '+ip.ip+' -j DROP';
-		cp.exec(ipt);
+		blacklist.engine.ban(ip.ip);
 		ip.banned = true;
 		ip.banTime = now;
 		
@@ -120,10 +158,7 @@ blacklist.spawnMaster = function(gjs) {
 				el.points -= gjs.serverConfig.blacklist.reducePoint;
 			else {
 				if(now-el.banTime > gjs.serverConfig.blacklist.l3BanTime) {
-					var ipt = 
-						'iptables -D BWSRG_BLACKLIST -s '+el.ip+' -j DROP; '+
-						'iptables -D BWSRG_BLACKLIST -d '+el.ip+' -j DROP';
-					cp.exec(ipt);
+					blacklist.engine.unBan(ip.ip);
 					
 					gjs.lib.core.logger.system(
 						"Layer 3 Blacklist on IP "+el.ip+' has been released'
@@ -133,12 +168,6 @@ blacklist.spawnMaster = function(gjs) {
 			}
 		}
 	}
-	
-	/* initialize iptables */
-	var ipt = 
-		'iptables -N BWSRG_BLACKLIST; '+
-		'iptables -F BWSRG_BLACKLIST';
-	cp.exec(ipt);
 
 	gjs.lib.core.ipc.on('BAN', function(gjs, data) {
 		processMessage(data.msg);
@@ -167,6 +196,7 @@ blacklist.spawnSlave = function(gjs) {
 }
 
 blacklist.loader = function(gjs) {
+	
 	if(cluster.isMaster)
 		blacklist.spawnMaster(gjs);
 	else
