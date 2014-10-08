@@ -41,6 +41,9 @@ var site = function(gjs, channel, configuration) {
 						var obj = eval(estr);
 						obj.confName = m[1];
 						
+						if(!obj.name)
+							throw('No site configuration name');
+						
 						/* inject nreg server name rules */
 						if(obj.serverName) {
 							
