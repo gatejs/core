@@ -63,9 +63,6 @@ blacklist.spawnMaster = function(gjs) {
 
 	var core = gjs.lib.core;
 	
-	if(!gjs.serverConfig.blacklist)
-		return;
-	
 	/* select os engine */
 	blacklist.engine = false;
 	if(os.type() == 'Linux')
@@ -75,6 +72,18 @@ blacklist.spawnMaster = function(gjs) {
 		return;
 	
 	blacklist.engine.initialize();
+	
+	if(!gjs.serverConfig.blacklist)
+		return;
+	
+	if(!gjs.serverConfig.blacklist.maxPoint)
+		 gjs.serverConfig.blacklist.maxPoint = 10000;
+	
+	if(!gjs.serverConfig.blacklist.reducePoint)
+		gjs.serverConfig.blacklist.reducePoint = 1000;
+	
+	if(!gjs.serverConfig.blacklist.l3BanTime)
+		gjs.serverConfig.blacklist.l3BanTime = 300;
 	
 	/* initialize iptables */
 	blacklist.inTable = {};

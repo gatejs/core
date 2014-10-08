@@ -110,4 +110,73 @@ module.exports = serverConfig;
 
 }}
 
+// - - - - - - - - - - - - - - - - - - - - - - 
 
+blacklist {{
+
+type: object-opt
+extends: root
+scope: root
+description: Dynamic blacklist manager
+
+param-maxPoint: Number of maximum points allowed before to get a ban (default 10000 points)
+param-reducePoint: Number of points which will be subtracts of the current points (default 1000 points)
+param-l3banTime: Time in second before the ban gets released (default: 300 seconds) 
+
+
+mark {{
+### Behavior
+The Dynamic blacklist creates a special **chain rule** by default its name is **GATEJS**. 
+
+Different programs in gatejs are allowed to detect bad users (users attempts to break/alter something). For example the HTTP opcode **dos** will try to ban people who are trying to stop your services.
+
+The banishment process works as following :
+* A program sends an alert with X points (X is defined by program side)
+* The dynamic blacklist receives and adds those points into an entry hashed by the ip address
+* If current IP points is upper than **maxPoint** (default: XXX) then the IP address is banned for **l3BanTime** seconds using a firewall rule
+* Each 60 seconds a background process works to remove outdated bans from firewall rules and at each time a **reducePoint** is applied to every entry in order to reduce the current entry points, once points are at zero then entry is removed
+
+
+### Activation
+To activate the master process of the dynamic blacklist manager you must set to **object** the key **blacklist** in your server configuration file.
+
+As following
+}}
+
+example {{
+var serverConfig = function(gcnf) { return({
+	// [[..]]
+	blacklist: { },
+})};
+module.exports = serverConfig;
+}}
+
+mark {{
+After all of that you will have to execute the firewall **chain rule**.
+
+#### Chain rule for Linux
+```
+iptables -A INPUT -j GATEJS
+iptables -A OUTPUT -j GATEJS
+iptables -A FORWARD -j GATEJS
+```
+
+### Development side
+
+At any time a developper can send a message to the Dynamic blacklist just by using the **message()** in **core.blacklist**.
+
+```
+gjs.lib.core.blacklist.message(
+	'127.0.0.1',
+	'HTTP Denial of service',
+	1000
+);
+```
+
+In this example 1000 points will be added to the entry of 127.0.0.1. The system leaves a message that indicates the kind of problem.
+So in this example with general blacklist settings, after 10 executions of the **message()** function before 60 seconds the IP address will be banned.
+
+}}
+
+
+}}
