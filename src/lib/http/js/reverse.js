@@ -368,6 +368,10 @@ reverse.loader = function(gjs) {
 			
 		});
 		
+		iface.gjsKey = key;
+		iface.allowHalfOpen = false;
+		iface.config = sc;
+		
 		/* select agent */
 		if(sc.isTproxy == true)
 			iface.agent = gjs.lib.http.agent.httpTproxy;
@@ -397,11 +401,12 @@ reverse.loader = function(gjs) {
 			console.log('* HTTP reverse error for instance '+key+': '+e);
 		});
 		
-		iface.gjsKey = key;
-		iface.allowHalfOpen = false;
-		iface.config = sc;
-		iface.listen(sc.port, sc.address);
-		
+		/* listen */
+		if(sc.isTproxy == true)
+			iface.listenTproxy(sc.port, sc.address);
+		else
+			iface.listen(sc.port, sc.address);
+			
 		return(iface);
 	}
 	
@@ -451,6 +456,10 @@ reverse.loader = function(gjs) {
 			
 		});
 		
+		iface.gjsKey = key;
+		iface.allowHalfOpen = false;
+		iface.config = sc;
+		
 		/* select agent */
 		if(sc.isTproxy == true)
 			iface.agent = gjs.lib.http.agent.httpsTproxy;
@@ -477,11 +486,12 @@ reverse.loader = function(gjs) {
 			gjs.lib.core.logger.error('HTTPS reverse error for instance '+key+': '+e);
 			console.log('* HTTPS reverse error for instance '+key+': '+e);
 		});
-		
-		iface.gjsKey = key;
-		iface.allowHalfOpen = false;
-		iface.config = sc;
-		iface.listen(sc.port, sc.address);
+	
+		/* listen */
+		if(sc.isTproxy == true)
+			iface.listenTproxy(sc.port, sc.address);
+		else
+			iface.listen(sc.port, sc.address);
 		
 		return(iface);
 	}
