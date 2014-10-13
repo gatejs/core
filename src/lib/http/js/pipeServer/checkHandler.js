@@ -27,7 +27,7 @@ var cluster = require("cluster");
 var checkHandler = function(gjs) { }
 
 checkHandler.request = function(pipe, options) {
-
+console.log('check handler');
 }
 
 checkHandler.ctor = function(gjs) {
