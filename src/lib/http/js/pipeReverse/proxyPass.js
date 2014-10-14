@@ -233,7 +233,13 @@ proxyPass.request = function(pipe, proxyname) {
 			
 			pipe.response.writeHead(res.statusCode, nHeaders);
 			pipe.response.headerSent = true;
-			pipe.root.lib.http.reverse.logpipe(pipe, res);
+			
+			/* lookup sub pipe */
+			var subPipe = res;
+			if(pipe.subPipe)
+				subPipe = pipe.subPipe;
+			
+			pipe.root.lib.http.reverse.logpipe(pipe, subPipe);
 		});
 		
 		function computeRetry() {

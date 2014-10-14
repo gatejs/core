@@ -152,9 +152,13 @@ proxyPass.request = function(pipe, opts) {
 			
 			pipe.response.writeHead(res.statusCode, nHeaders);
 			pipe.response.headerSent = true;
-// 			console.log(res.headers);
-			pipe.root.lib.http.forward.logpipe(pipe, res);
-// 			res.pipe(pipe.response);
+
+			/* lookup sub pipe */
+			var subPipe = res;
+			if(pipe.subPipe)
+				subPipe = pipe.subPipe;
+			
+			pipe.root.lib.http.forward.logpipe(pipe, subPipe);
 			
 		});
 	

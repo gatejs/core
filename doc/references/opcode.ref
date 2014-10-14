@@ -195,3 +195,38 @@ example {{
 }}
 }}
 
+// - - - - - - - - - - - - - - - - - - - - - - 
+
+opcode:gzip {{
+
+extends: http:forward:opcodes http:reverse:opcodes
+scope: pipeline
+type: object-opt
+description: gzip - GZIP on-the-fly compression
+since: 1.4
+
+param-level: 1 gives best speed, 9 gives best compression level (default: -1 zlib internal default ~6)
+param-memLevel: how much memory should be allocated for the internal compression state. (default: 8)
+param-types: An object representing the content type allowed to be compressed
+
+mark {{
+Compression of responses often allows you to significantly reduce the size of transmitted data. However, since compression happens at run time it can also add considerable overhead which can negatively affect performance. Compression happens before a response is sent to the client and can be applied to all responses that are not yet compressed (for example, by a proxied server).
+
+*Info*: This opcode can be used both in reverse and forward proxy
+}}
+
+example {{
+['gzip', { 
+	level: -1,
+	memLevel: 8,
+	types: {
+		'application/javascript': true,
+		'text/plain': true,
+		'text/html': true,
+		'text/css': true,
+	}
+}],
+}}
+}}
+
+

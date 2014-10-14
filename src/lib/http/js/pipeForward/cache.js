@@ -157,10 +157,15 @@ cache.request = function(pipe, opts) {
 // 				});
 // 			});
 
+			/* lookup sub pipe */
+			var subPipe = st;
+			if(pipe.subPipe)
+				subPipe = pipe.subPipe;
+			
 			if(pipe.reverse === true)
-				pipe.root.lib.http.reverse.logpipe(pipe, st);
+				pipe.root.lib.http.reverse.logpipe(pipe, subPipe);
 			else
-				pipe.root.lib.http.forward.logpipe(pipe, st);
+				pipe.root.lib.http.forward.logpipe(pipe, subPipe);
 			/* check */
 			return(true);
 		}
