@@ -417,6 +417,8 @@ reverse.loader = function(gjs) {
 			return(false);
 		}
 		
+		gjs.lib.http.hardeningSSL(sc);
+		
 		sc.SNICallback = function(hostname) {
 			var site = reverse.sites.search(hostname);
 			
@@ -437,6 +439,8 @@ reverse.loader = function(gjs) {
 				}
 				site.sslSNI.usable = true;
 				site.sslSNI.resolv = true;
+				
+				gjs.lib.http.hardeningSSL(site.sslSNI);
 				
 				/* associate crypto Credentials */
 				site.sslSNI.crypto = crypto.createCredentials(site.sslSNI);

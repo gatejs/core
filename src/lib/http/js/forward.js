@@ -268,6 +268,7 @@ forward.loader = function(gjs) {
 		/* create network interface */
 		var iface;
 		if(sc.ssl == true) {
+			gjs.lib.http.hardeningSSL(sc);
 			
 			if(!sc.key || !sc.cert) {
 				gjs.lib.core.logger.error('HTTPS forward you need to set the key and cert for '+key);
