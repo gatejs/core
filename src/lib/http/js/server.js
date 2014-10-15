@@ -265,6 +265,8 @@ server.loader = function(gjs) {
 			return(false);
 		}
 		
+		gjs.lib.http.hardeningSSL(sc);
+		
 // 		sc.SNICallback = function(hostname) {
 // 			var sites = reverse.list[key].sites;
 // 			var site = lookupServername(sites, hostname);

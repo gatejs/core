@@ -20,6 +20,7 @@
 
 var httpPlug = require('http');
 var fs = require('fs');
+var constants = require('constants');
 
 function fixHeaders(field, value) {
 	if(!this.orgHeaders)
@@ -107,6 +108,9 @@ http.hardeningSSL = function(conf) {
 		conf.ciphers = '!SSLv2:ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS';
 	if(!conf.honorCipherOrder)
 		conf.honorCipherOrder = true;
+	
+	conf.secureProtocol = 'SSLv23_method';
+	conf.secureOptions = constants.SSL_OP_NO_SSLv3;
 }
 
 http.loader = function(gjs) {
