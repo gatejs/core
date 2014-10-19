@@ -35,10 +35,17 @@ reverse.log = function(gjs, connClose) {
 	if(!connClose)
 		connClose = gjs.response.statusCode;
 	
+	var version;
+	if(gjs.request.spdyVersion)
+		version = "SPDY/"+gjs.request.spdyVersion;
+	else
+		version = "HTTP/"+gjs.request.httpVersion;
+		
+	
 	gjs.root.lib.core.logger.commonLogger(
 		'RVLOG',
 		{
-			version: gjs.request.httpVersion,
+			version: version,
 			site: gjs.site.name ? gjs.site.name : 'default',
 			ip: gjs.request.remoteAddress,
 			code: connClose,
@@ -53,10 +60,16 @@ reverse.log = function(gjs, connClose) {
 }
 
 reverse.error = function(gjs, error) {
+	var version;
+	if(gjs.request.spdyVersion)
+		version = "SPDY/"+gjs.request.spdyVersion;
+	else
+		version = "HTTP/"+gjs.request.httpVersion;
+	
 	gjs.root.lib.core.logger.commonLogger(
 		'RVERR',
 		{
-			version: gjs.request.httpVersion,
+			version: version,
 			site: gjs.site.name ? gjs.site.name : 'default',
 			ip: gjs.request.remoteAddress,
 			method: gjs.request.method,
@@ -203,6 +216,7 @@ reverse.loader = function(gjs) {
 				dateStr+' - '+
 				req.msg.site+' - '+
 				req.msg.ip+' '+
+				req.msg.version+' '+
 				req.msg.cache.toUpperCase()+' '+
 				req.msg.method+' '+
 				req.msg.code+' '+

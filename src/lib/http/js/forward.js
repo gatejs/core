@@ -35,10 +35,16 @@ forward.log = function(gjs, connClose) {
 	if(!connClose)
 		connClose = gjs.response.statusCode;
 	
+	var version;
+	if(gjs.request.spdyVersion)
+		version = "SPDY/"+gjs.request.spdyVersion;
+	else
+		version = "HTTP/"+gjs.request.httpVersion;
+	
 	gjs.root.lib.core.logger.commonLogger(
 		'FWLOG',
 		{
-			version: gjs.request.httpVersion,
+			version: version,
 			site: gjs.request.headers.host,
 			ip: gjs.request.remoteAddress,
 			code: connClose,
@@ -93,6 +99,7 @@ forward.loader = function(gjs) {
 				dateStr+' - '+
 				req.msg.site+' - '+
 				req.msg.ip+' '+
+				req.msg.version+' '+
 				req.msg.cache.toUpperCase()+' '+
 				req.msg.method+' '+
 				req.msg.code+' '+
