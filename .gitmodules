@@ -3,8 +3,8 @@
 	url = git://github.com/raycmorgan/Mu
 [submodule "deps/nodejs"]
 	path = deps/nodejs
-	url = git://github.com/joyent/node
-	branch = v0.10.32
+	url = git://github.com/joyent/node.git
+	branch = 0.10.32-release
 [submodule "src/lib/ipaddr"]
 	path = src/lib/ipaddr
 	url = http://git@github.com/binarysec/node-ipaddr.git
