@@ -8,3 +8,6 @@
 [submodule "src/lib/ipaddr"]
 	path = src/lib/ipaddr
 	url = http://git@github.com/binarysec/node-ipaddr.git
+[submodule "src/lib/http/js/node-spdy"]
+	path = src/lib/http/js/node-spdy
+	url = https://github.com/indutny/node-spdy.git
