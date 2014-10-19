@@ -58,8 +58,10 @@ description: Agent manager
 
 param-http: number of connections for HTTP
 param-https: number of connections for HTTPS
+param-spdy: number of connections for SPDY
 param-httpTproxy: number of connections for HTTP using **TPROXY**
 param-httpsTproxy: number of connections for HTTPS using **TPROXY**
+param-spdyTproxy: number of connections for SPDY using **TPROXY**
 
 mark {{
 Agents are made to keep alive connections made by gatejs.

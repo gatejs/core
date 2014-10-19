@@ -137,6 +137,7 @@ param-type: is the type of http interface, in our case you must define **reverse
 param-address: is the service listening address, default 0.0.0.0
 param-port: is the service port, default 80
 param-isTproxy: activates response IP spoofing using TPROXY, default OFF (false)
+param-spdy: enable or disable SPDY support. default **false**
 param-ssl: enable or disable SSL on instance. default false.
 param-pfx: (ssl) A filename containing the private key, certificate and CA certs of the server in PFX or PKCS12 format. (Mutually exclusive with the key, cert and ca options.)
 param-key: (ssl) A filename containing the private key of the server in PEM format. (Required)

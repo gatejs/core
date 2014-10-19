@@ -25,6 +25,8 @@ var cluster = require("cluster");
 var fs = require("fs");
 var crypto = require("crypto");
 
+var spdy = require("./node-spdy/lib/spdy.js");
+
 var reverse = function() { /* loader below */ };
 
 reverse.list = {};
@@ -411,6 +413,7 @@ reverse.loader = function(gjs) {
 	}
 	
 	
+	
 	var bindHttpsServer = function(key, sc) {
 		if(!gjs.lib.http.lookupSSLFile(sc)) {
 			console.log("Can not create HTTPS server on "+sc.address+':'+sc.port);
@@ -448,7 +451,11 @@ reverse.loader = function(gjs) {
 			}
 		}
 		
-		var iface = https.createServer(sc, function(request, response) {
+		var int = https;
+		if(sc.spdy == true) 
+			int = spdy;
+		
+		var iface = int.createServer(sc, function(request, response) {
 			request.connection.inUse = true;
 
 			response.on('finish', function() {
@@ -465,7 +472,13 @@ reverse.loader = function(gjs) {
 		iface.config = sc;
 		
 		/* select agent */
-		if(sc.isTproxy == true)
+		if(sc.spdy == true) {
+			if(sc.isTproxy == true)
+				iface.agent = gjs.lib.http.agent.spdyTproxy;
+			else
+				iface.agent = gjs.lib.http.agent.spdy;
+		}
+		else if(sc.isTproxy == true)
 			iface.agent = gjs.lib.http.agent.httpsTproxy;
 		else
 			iface.agent = gjs.lib.http.agent.https;

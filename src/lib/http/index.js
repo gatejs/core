@@ -109,8 +109,11 @@ http.hardeningSSL = function(conf) {
 	if(!conf.honorCipherOrder)
 		conf.honorCipherOrder = true;
 	
-	conf.secureProtocol = 'SSLv23_method';
-	conf.secureOptions = constants.SSL_OP_NO_SSLv3;
+	if(!conf.secureProtocol)
+		conf.secureProtocol = 'SSLv23_method';
+	
+	if(!conf.secureOptions)
+		conf.secureOptions = constants.SSL_OP_NO_SSLv3;
 }
 
 http.loader = function(gjs) {

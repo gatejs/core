@@ -33,10 +33,14 @@ agent.loader = function(gjs) {
 	agent.http.is = 'http';
 	agent.https = new gjs.lib.tproxy.httpAgent;
 	agent.https.is = 'https';
+	agent.spdy = new gjs.lib.tproxy.httpAgent;
+	agent.spdy.is = 'spdy';
 	agent.httpTproxy = new gjs.lib.tproxy.httpAgent;
 	agent.httpTproxy.is = 'httpTproxy';
 	agent.httpsTproxy = new gjs.lib.tproxy.httpAgent;
 	agent.httpsTproxy.is = 'httpsTproxy';
+	agent.spdyTproxy = new gjs.lib.tproxy.httpAgent;
+	agent.spdyTproxy.is = 'spdyTproxy';
 	
 	agent.httpTproxy.tproxy();
 	agent.httpsTproxy.tproxy();
@@ -46,11 +50,17 @@ agent.loader = function(gjs) {
 			processConfig(agent.http, gjs.serverConfig.agent.http);
 		if(gjs.serverConfig.agent.https)
 			processConfig(agent.https, gjs.serverConfig.agent.https);
+		if(gjs.serverConfig.agent.spdy)
+			processConfig(agent.spdy, gjs.serverConfig.agent.spdy);
 		
 		if(gjs.serverConfig.agent.httpTproxy)
 			processConfig(agent.httpTproxy, gjs.serverConfig.agent.httpTproxy);
 		if(gjs.serverConfig.agent.https)
 			processConfig(agent.httpsTproxy, gjs.serverConfig.agent.httpsTproxy);
+		if(gjs.serverConfig.agent.spdyTproxy)
+			processConfig(agent.spdyTproxy, gjs.serverConfig.agent.spdyTproxy);
+		
+		
 	}
 
 }
