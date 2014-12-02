@@ -23,11 +23,11 @@ Associative Cache Network (ACN) is a protocol defined by gatejs team in order to
 
 ACN is also the cache core engine of gatejs. It manages all files cached by forward or reverse proxy.
 
-The chose was taken to construct a new protocol in opposition with ICP (Internet Cache Protocol) because its design wasn't enough to support gatejs devel's ideas. 
+The choice was taken to construct a new protocol in opposition with ICP (Internet Cache Protocol) because its design wasn't well enough to support gatejs features. 
 
 ACN is deeply present in the gatejs cache system. It is in fact the core engine. Every requests are managed by ACN (reverse or forward proxy requests). 
 
-Every servers have to configure its ACN instance. You will have to choose the way to talk with servers. Actually gatejs only support the multicast mode but unicast is in milestones.
+Every servers have to configure its ACN instance. You will have to choose the way it talks with other servers. Actually gatejs only support the multicast mode but unicast is in milestones.
 
 Here is a full example of a gatejs server using ACN
 }}
@@ -75,15 +75,15 @@ module.exports = serverConfig;
 mark {{
 ## ACN global options
 
-ACN runs into the master process in order to provide safe-atomic cache operations. First, you will have to define the global configuration then you will have to add the ACN opcodes into the considered pipeline.
+ACN runs into the master process in order to provide safe atomic cache operations. First, you will have to define the global configuration then you will have to add the ACN opcodes into the considered pipeline.
 
 ### Using multicast
 
-Multicast mode works with UDP and TCP together. Requests & replies are sent using multicast UDP to source servers and replies.
+Multicast mode works with UDP and TCP together. Requests & replies are sent using multicast UDP to source servers.
 
 Once the requester server has the answer it will emit an HTTP TCP connection to the source server to get the data.
 
-If no data is presents then source server don't reply and the requester will wait for 50 ms as defined deadRequest in configuration below.
+If no data is present, source server won't reply and the requester will wait for 50 ms as defined deadRequest in configuration below.
 }}
 
 example {{
