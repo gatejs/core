@@ -17,6 +17,7 @@ param-runDir: is the running directory use to store different files such as sock
 param-dataDir: is the global data directory. It will store files such as cached files or proxy temporary
 param-logDir: is the logging directory use to store log files
 param-confDir: is the directory to store specific gate.js configuration files
+param-hostsFile: optionnal configuration to specify the path of a surrogate /etc/hosts file
 param-http: An object defined in ::http
 param-plugins: An array defined in ::plugins
 param-agent: An object defined in ::agent
