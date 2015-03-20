@@ -2,9 +2,9 @@ var fs = require('fs');
 var mu = require('../src/lib/mu2/index.js');
 
 var build  = function() {
-	var version = "1.4";
+	var version = "1.5";
 	var vdf = "/index.php";
-	var vd = '/documentation/1-4/';
+	var vd = '/documentation/1-5/';
 	
 	console.log('gatejs documentation builder');
 	
