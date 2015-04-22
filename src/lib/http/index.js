@@ -219,7 +219,7 @@ http.loader = function(gjs) {
 		http.reverse.loader(gjs);
 		http.server.loader(gjs);
 	} catch(e) {
-		console.log("* HTTP exeption\n", e);
+		console.log("* HTTP plugin failed", e);
 	}
 }
 

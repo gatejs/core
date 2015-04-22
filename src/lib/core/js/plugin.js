@@ -47,7 +47,7 @@ plugin.loader = function(gjs) {
 			gjs.lib[name] = o;
 			localPlugins[name] = o;
 		} catch(e) {
-			gjs.lib.core.logger.system('Can not load module in '+dir);
+			gjs.lib.core.logger.system('Can not load module in '+dir+': '+e);
 		}
 	}
 	

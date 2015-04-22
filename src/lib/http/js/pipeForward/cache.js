@@ -177,7 +177,7 @@ cache.request = function(pipe, opts) {
 
 		return(false);
 	}
-
+	
 	/* sanatization */
 	if(!pipe.root.serverConfig.dataDir) {
 		pipe.root.lib.core.logger.error('You need to provide dataDir in configuration');
@@ -223,6 +223,11 @@ cache.request = function(pipe, opts) {
 	}
 	
 	var pipeProxyPassRequest = (function(pipe, request, response) {
+		
+		/* check if application has to stop cache process */
+		if(pipe.cantCache == true)
+			return;
+		
 		/*
 		 * check Pragma
 		 */
