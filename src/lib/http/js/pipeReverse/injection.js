@@ -27,6 +27,8 @@ var Stream = require("stream");
 var injection = function() {} 
 
 injection.request = function(pipe, options) {
+	
+	
 	if(options === undefined)
 		options = {};
 	
@@ -47,10 +49,13 @@ injection.request = function(pipe, options) {
 				ctrl = true;
 		}
 		
+		
 		if(ctrl == true) {
 			pipe.cantCache = true;
 			
+			
 			function interpretation(dIn, dOut) {
+				
 				var token = 0;
 				
 				dIn.on('data', function(data) {
@@ -62,7 +67,7 @@ injection.request = function(pipe, options) {
 						switch(token) {
 							/* <body> */
 							case 0:
-								if(dataStr.indexOf('<body>') >= 0)
+								if(dataStr.indexOf('<body') >= 0)
 									token = 1;
 								else
 									block = false;
@@ -70,6 +75,7 @@ injection.request = function(pipe, options) {
 								
 							/* </body> */
 							case 1:
+								
 								var pos = dataStr.indexOf('</body>'); // 7
 								if(pos >= 0) {
 									var newBody = dataStr.substr(0, pos)+
@@ -80,6 +86,10 @@ injection.request = function(pipe, options) {
 									token = 2;
 								}
 								
+								block = false;
+								break;
+								
+							case 2:
 								block = false;
 								break;
 						}
@@ -106,6 +116,7 @@ injection.request = function(pipe, options) {
 			/* check for gzip content */
 			if(res.headers['content-encoding'] == 'gzip') {
 				delete res.headers['content-length'];
+
 				interpretation(zlib.createGunzip(), zlib.createGzip());
 			}
 			else if(res.headers['content-encoding'] == 'deflate') {

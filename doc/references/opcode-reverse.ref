@@ -30,3 +30,32 @@ locations: [
 }}
 
 }}
+
+
+opcode:forward:injection {{
+
+extends: http:forward:opcodes
+scope: pipeline
+type: object-opt
+description: injection - On-the-fly HTML code injection
+
+param-code: HTML to be embedded in the page
+
+mark {{
+Injection is an opcode used to embed code on-the-fly into HTML pages.
+
+Once the DOM structure is identified the process will inject the HTML code (specified in the example below) in the body of the page.
+
+The process is fully async. 
+
+}}
+
+example {{
+
+['injection', {
+	code: "<h1>w00t injection</h1>"
+}],
+
+}}
+
+}}
