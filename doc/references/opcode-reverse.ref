@@ -32,10 +32,10 @@ locations: [
 }}
 
 
-opcode:forward:injection {{
+opcode:reverse:injection {{
 
-extends: http:forward:opcodes
-scope: pipeline
+extends: http:reverse:opcodes
+scope: reverseSite:locations
 type: object-opt
 description: injection - On-the-fly HTML code injection
 
@@ -51,7 +51,6 @@ The process is fully async.
 }}
 
 example {{
-
 ['injection', {
 	code: "<h1>w00t injection</h1>"
 }],

@@ -54,11 +54,9 @@ The process is fully async.
 }}
 
 example {{
-
 ['injection', {
 	code: "<h1>w00t injection</h1>"
 }],
-
 }}
 
 }}
