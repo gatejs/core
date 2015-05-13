@@ -73,8 +73,8 @@ server.logpipe = function(gjs, src) {
 }
 
 server.pipeline = [
-	['checkHandler'],
 	['scanFileOnDisk'],
+	['checkHandler'],
 	['directoryListing'],
 	['streamFile'],
 ];

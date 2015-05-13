@@ -96,6 +96,20 @@ var site = function(gjs, channel, configuration) {
 							}
 						}
 						
+						/* lookup some important stuff */
+						if(obj.locations) {
+							
+							for(var a in obj.locations) {
+								var p = obj.locations[a];
+								if(p.userId)
+									p.userId = gjs.lib.core.getUser(p.userId);
+								if(p.groupId)
+									p.groupId = gjs.lib.core.getGroup(p.groupId);
+							}
+// 							console.log(obj.locations);
+						}
+						
+						
 					}
 					catch (err) {
 						gjs.lib.core.logger.error("Error loading file "+f+'.js : '+err);
