@@ -11,7 +11,11 @@ For more informations about gatejs & configuration please visit the wiki at http
 
 Learn more about gatejs contribution @ https://github.com/binarysec/gate/wiki/Contribution
 
-[![build status](https://secure.travis-ci.org/binarysec/gate.png)](http://travis-ci.org/binarysec/gate)
+[![][travis-build-img]][travis-build-url]
+[![][gt-issues]][gt-issues]
+[![][gt-forks]][gt-forks]
+[![][gt-stars]][gt-stars]
+[![][gt-licence]][gt-licence]
 
 ## Installation
 
@@ -91,4 +95,9 @@ var serverConfig = function(bs) { return({
 module.exports = serverConfig;
 ```
 
-
+[travis-build-img]: https://secure.travis-ci.org/binarysec/gate.png
+[travis-build-url]: http://travis-ci.org/binarysec/gate
+[gt-issues]: https://img.shields.io/github/issues/binarysec/gate.svg
+[gt-forks]: https://img.shields.io/github/forks/binarysec/gate.svg
+[gt-stars]: https://img.shields.io/github/stars/binarysec/gate.svg
+[gt-licence]: https://img.shields.io/badge/license-GPLv3-blue.svg
