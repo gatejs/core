@@ -25,7 +25,7 @@ var log = function() { /* loader below */ };
 log.log = function(gjs) {
 	gjs.root.lib.gjsCore.logger.siteAccess({
 		version: gjs.request.httpVersion,
-		site: gjs.request.selectedConfig.serverName[0],
+		site: gjs.request.selectedConfig.name,
 		ip: gjs.request.remoteAddress,
 		code: gjs.response.statusCode,
 		method: gjs.request.method,

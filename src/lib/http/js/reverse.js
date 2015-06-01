@@ -36,7 +36,7 @@ reverse.log = function(gjs, connClose) {
 		connClose = gjs.response.statusCode;
 	
 	var version;
-	if(gjs.request.spdyVersion)
+	if(gjs.request.isSpdy)
 		version = "SPDY/"+gjs.request.spdyVersion;
 	else
 		version = "HTTP/"+gjs.request.httpVersion;
@@ -61,7 +61,7 @@ reverse.log = function(gjs, connClose) {
 
 reverse.error = function(gjs, error) {
 	var version;
-	if(gjs.request.spdyVersion)
+	if(gjs.request.isSpdy)
 		version = "SPDY/"+gjs.request.spdyVersion;
 	else
 		version = "HTTP/"+gjs.request.httpVersion;

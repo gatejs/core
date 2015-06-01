@@ -194,6 +194,7 @@ proxyPass.request = function(pipe, proxyname) {
 				flowSelect = https;
 			options.port = pipe.server.config.port ? pipe.server.config.port : 443;
 		}
+
 		
 		var req = flowSelect.request(options, function(res) {
 			/* remove request timeout */
@@ -289,9 +290,11 @@ proxyPass.request = function(pipe, proxyname) {
 			pipe.response.emit("rvProxyPassSourceRequestError"); 
 
 			if(pipe.response.headerSent == true) {
+				var connector = options.host+":"+options.port;
+				
 				// log error source closing connectio
 				reverse.error(pipe, "Proxy read error on "+
-					pipe.response.connector+" for "+
+					connector+" for "+
 					pipe.request.remoteAddress+
 					":"+pipe.request.connection.remotePort);
 			
@@ -304,8 +307,11 @@ proxyPass.request = function(pipe, proxyname) {
 		});
 
 		function socketErrorDetection(socket) {
+			
+			var connector = options.host+":"+options.port;
+			
 			reverse.error(pipe, "Proxy pass timeout on "+
-				pipe.response.connector+" from "+
+				connector+" from "+
 				pipe.request.remoteAddress+
 				":"+pipe.request.connection.remotePort);
 			socket.destroy();
