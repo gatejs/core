@@ -144,6 +144,8 @@ var gatejs = (function() {
 	}
 	
 	/* Load server configuration */
+	var path = require("path");
+	this.confFile = path.resolve(confFile);
 	try {
 		var fss = fs.statSync(confFile);
 		var req = require(confFile);
