@@ -51,6 +51,10 @@ ipc.spawnMaster = function(gjs) {
 	for(var a in eventEmitter)
 		ipc[a] = eventEmitter[a];
 	
+	ipc.self = function(cmd, msg) {
+		ipc.emit(cmd, gjs, msg);
+	}
+	
 	ipc.send = function(type, cmd, msg) {
 		ipc.broadcast(JSON.stringify({
 			from: 'root',

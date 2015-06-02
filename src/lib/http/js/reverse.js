@@ -564,7 +564,7 @@ reverse.loader = function(gjs) {
 	
 	
 	function gracefulReceiver() {
-	
+		console.log('Process receive graceful message');
 		for(var a in reverse.list) {
 			var config = reverse.list[a];
 		
