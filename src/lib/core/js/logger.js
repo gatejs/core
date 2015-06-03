@@ -74,42 +74,32 @@ logger.spawnMaster = function(gjs) {
 			
 		});
 		
+		ptr.write = function(line) {
+			var hn = gjs.serverConfig.hostname ? gjs.serverConfig.hostname : '-';
+			ptr.stream.write(Date.now()+" "+hn+" - "+line+'\n');
+		}
+		
 		return(ptr);
 	}
 	 
 
 	var processSystem = function(req) {
-		var dateStr = gjs.lib.core.dateToStr();
 	
-		var inline = 
-			"SYS - "+
-			dateStr+' - '+
-			req.msg
-		;
-		
 		/* write log */
 		var f = logger.selectFile(null, 'system');
 		if(f) 
-			f.stream.write(inline+'\n');
+			f.write(req.msg);
 		else
-			console.log('LOG ERROR', inline);
+			console.log('LOG ERROR', req.msg);
 	}
 	
-	var processError = function(req) {
-		var dateStr = gjs.lib.core.dateToStr();
-	
-		var inline = 
-			"ERROR - "+
-			dateStr+' - '+
-			req.msg
-		;
-		
+	var processError = function(req) {		
 		/* write log */
 		var f = logger.selectFile(null, 'error');
 		if(f) 
-			f.stream.write(inline+'\n');
+			f.write(req.msg);
 		else
-			console.log('LOG ERROR', inline);
+			console.log('LOG ERROR', req.msg);
 	}
 	
 	logger.typeTab = {

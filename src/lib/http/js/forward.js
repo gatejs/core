@@ -93,10 +93,7 @@ forward.loader = function(gjs) {
 		
 		/* create logging receiver */
 		var processLog = function(req) {
-			var dateStr = gjs.lib.core.dateToStr(req.msg.time);
-
 			var inline = 
-				dateStr+' - '+
 				req.msg.site+' - '+
 				req.msg.ip+' '+
 				req.msg.version+' '+
@@ -112,15 +109,12 @@ forward.loader = function(gjs) {
 			/* write log */
 			var f = logger.selectFile(null, 'forward-access');
 			if(f) 
-				f.stream.write(inline+'\n');
+				f.write(inline);
 		}
 		
 		var processConnect = function(req) {
-			var dateStr = gjs.lib.core.dateToStr(req.msg.time);
 
 			var inline = 
-				dateStr+
-				' - CONNECT '+
 				req.msg.code.toUpperCase()+' on '+
 				req.msg.address+':'+
 				req.msg.port+
@@ -131,7 +125,7 @@ forward.loader = function(gjs) {
 			/* write log */
 			var f = logger.selectFile(null, 'forward-connect');
 			if(f) 
-				f.stream.write(inline+'\n');
+				f.write(inline);
 		}
 		
 		logger.typeTab['FWLOG'] = processLog;

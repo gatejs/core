@@ -210,10 +210,7 @@ reverse.loader = function(gjs) {
 		
 		/* create logging receiver */
 		var processLog = function(req) {
-			var dateStr = gjs.lib.core.dateToStr(req.msg.time);
-			
 			var inline = 
-				dateStr+' - '+
 				req.msg.site+' - '+
 				req.msg.ip+' '+
 				req.msg.version+' '+
@@ -229,20 +226,13 @@ reverse.loader = function(gjs) {
 			/* write log */
 			var f = logger.selectFile(req.msg.site, 'access');
 			if(f) 
-				f.stream.write(inline+'\n');
+				f.write(inline);
 		}
 		var processError = function(req) {
-			var dateStr = gjs.lib.core.dateToStr(req.msg.time);
-			
-			var inline = 
-				dateStr+' - '+
-				req.msg.message
-			;
-			
 			/* write log */
 			var f = logger.selectFile(req.msg.site, 'error');
 			if(f) 
-				f.stream.write(inline+'\n');
+				f.write(req.msg.message);
 		}
 		
 		logger.typeTab['RVLOG'] = processLog;
