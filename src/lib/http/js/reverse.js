@@ -54,7 +54,8 @@ reverse.log = function(gjs, connClose) {
 			outBytes: gjs.request.gjsWriteBytes ? gjs.request.gjsWriteBytes : '0',
 			userAgent: gjs.request.headers['user-agent'] ? gjs.request.headers['user-agent'] : '-',
 			referer: gjs.request.headers.referer ? gjs.request.headers.referer : '-',
-			cache: gjs.response.gjsCache ? gjs.response.gjsCache : 'miss'
+			cache: gjs.response.gjsCache ? gjs.response.gjsCache : 'miss',
+			logAdd: gjs.logAdd
 		}
 	);
 }
@@ -76,7 +77,8 @@ reverse.error = function(gjs, error) {
 			url: gjs.request.url,
 			userAgent: gjs.request.headers['user-agent'] ? gjs.request.headers['user-agent'] : '-',
 			referer: gjs.request.headers.referer ? gjs.request.headers.referer : '-',
-			message: error
+			message: error,
+			logAdd: gjs.logAdd
 		}
 	);
 }
@@ -210,6 +212,8 @@ reverse.loader = function(gjs) {
 		
 		/* create logging receiver */
 		var processLog = function(req) {
+			
+			var logAdd = req.msg.logAdd ? req.msg.logAdd : ''; 
 			var inline = 
 				req.msg.site+' - '+
 				req.msg.ip+' '+
@@ -220,7 +224,8 @@ reverse.loader = function(gjs) {
 				req.msg.url+' '+
 				'"'+req.msg.userAgent+'" '+
 				req.msg.outBytes+' '+
-				req.msg.referer+' '
+				req.msg.referer+
+				logAdd
 			;
 			
 			/* write log */
@@ -243,8 +248,6 @@ reverse.loader = function(gjs) {
 	var processRequest = function(server, request, response) {
 		request.remoteAddress = request.connection.remoteAddress;
 		
-		
-		
 		var pipe = gjs.lib.core.pipeline.create(null, null, function() {
 			gjs.lib.http.error.renderArray({
 				pipe: pipe, 
@@ -256,6 +259,7 @@ reverse.loader = function(gjs) {
 			});
 		});
 		
+		pipe.logAdd = '';
 		pipe.reverse = true;
 		pipe.root = gjs;
 		pipe.request = request;
