@@ -177,7 +177,7 @@ forward.loader = function(gjs) {
 		}
 		
 		/* lookup little FS */
-		var lfs = gjs.lib.http.littleFs.process(request, response);
+		var lfs = gjs.lib.http.littleFs.process(pipe);
 		if(lfs == true)
 			return;
 		

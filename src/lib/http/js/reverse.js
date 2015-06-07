@@ -277,8 +277,28 @@ reverse.loader = function(gjs) {
 			return;
 		}
 		
+		/* lookup website */
+		pipe.site = reverse.sites.search(request.headers.host);
+		if(!pipe.site) {
+			pipe.site = reverse.sites.search('_');
+			if(!pipe.site) {
+				pipe.response.end();
+				/*
+				gjs.lib.http.error.renderArray({
+					pipe: pipe, 
+					code: 404, 
+					tpl: "4xx", 
+					log: false,
+					title:  "Not found",
+					explain: "No default website"
+				});
+				*/
+				return;
+			}
+		}
+		
 		/* lookup little FS */
-		var lfs = gjs.lib.http.littleFs.process(request, response);
+		var lfs = gjs.lib.http.littleFs.process(pipe);
 		if(lfs == true)
 			return;
 		
@@ -298,23 +318,6 @@ reverse.loader = function(gjs) {
 		}
 		pipe.iface = iface;
 		
-		/* lookup website */
-		pipe.site = reverse.sites.search(request.headers.host);
-		if(!pipe.site) {
-			pipe.site = reverse.sites.search('_');
-			if(!pipe.site) {
-				gjs.lib.http.error.renderArray({
-					pipe: pipe, 
-					code: 404, 
-					tpl: "4xx", 
-					log: false,
-					title:  "Not found",
-					explain: "No default website"
-				});
-				return;
-			}
-		}
-	
 		/* scan regex */
 		pipe.location = false;
 		if(pipe.site.locations) {

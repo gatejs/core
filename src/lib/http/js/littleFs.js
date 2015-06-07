@@ -51,7 +51,10 @@ littleFs.getMime = function(filename) {
 	return(littleFs.litteFsMimes[ext.toLowerCase()]);
 }
 
-littleFs.process = function(request, response, dirFile) {
+littleFs.process = function(pipe) {
+	
+	var request = pipe.request, response = pipe.response;
+	
 	function processRendering(ret) {
 		var filename;
 		var sS;
@@ -75,15 +78,51 @@ littleFs.process = function(request, response, dirFile) {
 		if(!littleFs.litteFsMimes[ext])
 			return(false);
 		
+		var fileDateC = new Date(sS.ctime);
+		var fileDateM = new Date(sS.ctime);
+		
+		
+		var noBody = false;
+		var inputDate = false;
+		if(pipe.request.headers["if-modified-since"]) {
+			inputDate = new Date(pipe.request.headers["if-modified-since"]);
+		}
+		
+		console.log(inputDate, fileDateM);
+		if(inputDate && inputDate.getTime() == fileDateM.getTime()) {
+			response.writeHead(304, {
+				'Content-Type': littleFs.litteFsMimes[ext],
+				'Content-Length': sS.size,
+				'Date': fileDateC,
+				'Last-Modified': fileDateM,
+				'Cache-Control': "public, max-age=604800",
+				'server': 'gatejs'
+			});
+			response.end();
+			
+			if(pipe.reverse === true)
+				pipe.root.lib.http.reverse.log(pipe, 304);
+			else
+				pipe.root.lib.http.forward.log(pipe, 304);
+			
+			return(true);
+		}
+			
 		response.writeHead(200, {
 			'Content-Type': littleFs.litteFsMimes[ext],
 			'Content-Length': sS.size,
+			'Date': fileDateC,
+			'Last-Modified': fileDateM,
+			'Cache-Control': "public, max-age=604800",
 			'server': 'gatejs'
 		});
 
 		var readStream = fs.createReadStream(filename);
 		
-		readStream.pipe(response);
+		if(pipe.reverse === true)
+			pipe.root.lib.http.reverse.logpipe(pipe, readStream);
+		else
+			pipe.root.lib.http.forward.logpipe(pipe, readStream);
 		
 		return(true);
 	}
