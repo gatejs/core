@@ -139,6 +139,14 @@ forward.loader = function(gjs) {
 	
 	var processRequest = function(server, request, response) {
 		request.remoteAddress = request.connection.remoteAddress;
+
+		/* resolv pipeline */
+		server.pipeline = gjs.lib.core.pipeline.getGlobalPipe(server.config.pipeline); 
+		if(!server.pipeline) {
+			gjs.lib.core.logger.error('Enable to locate pipeline '+server.config.pipeline);
+			response.end();
+			return(false);
+		}
 		
 		var pipe = gjs.lib.core.pipeline.create(forward.opcodes, server.pipeline, function() {
 			gjs.lib.http.error.renderArray({
@@ -299,13 +307,6 @@ forward.loader = function(gjs) {
 				iface.on('connect', processConnectRequest);
 		}
 		
-		
-		/* resolv pipeline */
-		iface.pipeline = gjs.lib.core.pipeline.getGlobalPipe(sc.pipeline); 
-		if(!iface.pipeline) {
-			gjs.lib.core.logger.error('Enable to locate pipeline'+sc.pipeline);
-			return(false);
-		}
 		
 		iface.config = sc;
 		

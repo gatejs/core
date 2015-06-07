@@ -162,14 +162,14 @@ pipeline.scanOpcodes = function(scanDir, name) {
 }
 
 pipeline.getGlobalPipe = function(name) {
+	if(globalLines[name])
+		return(globalLines[name]);
+	
 	if(!pipeline.gjs.serverConfig.pipeline)
 		return(false);
 	
 	if(!pipeline.gjs.serverConfig.pipeline[name])
 		return(false);
-	
-	if(globalLines[name])
-		return(globalLines[name]);
 	
 	globalLines[name] = {
 		resolved: false,
@@ -177,7 +177,13 @@ pipeline.getGlobalPipe = function(name) {
 	};
 
 	return(globalLines[name]);
-	
+}
+
+pipeline.setGlobalPipe = function(name, items) {
+	globalLines[name] = {
+		resolved: false,
+		items: items
+	};
 }
 
 pipeline.loader = function(gjs) { 
