@@ -129,12 +129,8 @@ reverse.loader = function(gjs) {
 			};
 			
 			var flowSelect = http;
-			if(node.https == true) {
+			if(node.https == true)
 				flowSelect = https;
-				if(node.portSSL)
-					options.port = node.portSSL; 
-			}
-			
 			
 			var context = reverse.sitesFaulty[input.hash];
 			var subHash = input.site.confName+node._name+node._key+node._index;
