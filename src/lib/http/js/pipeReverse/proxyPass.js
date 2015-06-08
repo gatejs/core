@@ -192,13 +192,13 @@ proxyPass.request = function(pipe, proxyname) {
 		else if(proxyStream.hybrid == true) {
 			if(pipe.server.config.ssl == true) {
 				flowSelect = https;
-				options.port = pipe.server.config.portSSL ? pipe.server.config.portSSL : 443;
+				options.port = nodePtr.portSSL ? nodePtr.portSSL : 443;
 			}
 			else
-				options.port = pipe.server.config.port ? pipe.server.config.port : 80;
+				options.port = nodePtr.port ? nodePtr.port : 80;
 		}
 		else
-			options.port = pipe.server.config.port ? pipe.server.config.port : 80;
+			options.port = nodePtr.port ? nodePtr.port : 80;
 
 		
 		var req = flowSelect.request(options, function(res) {
