@@ -83,11 +83,9 @@ littleFs.process = function(pipe) {
 		
 		var noBody = false;
 		var inputDate = false;
-		if(pipe.request.headers["if-modified-since"]) {
+		if(pipe.request.headers["if-modified-since"])
 			inputDate = new Date(pipe.request.headers["if-modified-since"]);
-		}
 		
-		console.log(inputDate, fileDateM);
 		if(inputDate && inputDate.getTime() == fileDateM.getTime()) {
 			response.writeHead(304, {
 				'Content-Type': littleFs.litteFsMimes[ext],

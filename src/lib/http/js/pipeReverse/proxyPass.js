@@ -190,9 +190,12 @@ proxyPass.request = function(pipe, proxyname) {
 		if(nodePtr.https == true)
 			flowSelect = https;
 		else if(proxyStream.hybrid == true) {
-			if(pipe.server.config.ssl == true)
+			if(pipe.server.config.ssl == true) {
 				flowSelect = https;
-			options.port = pipe.server.config.port ? pipe.server.config.port : 443;
+				options.port = pipe.server.config.portSSL ? pipe.server.config.portSSL : 443;
+			}
+			else
+				options.port = pipe.server.config.port ? pipe.server.config.port : 80;
 		}
 
 		
