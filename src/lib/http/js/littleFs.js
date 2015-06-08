@@ -81,7 +81,6 @@ littleFs.process = function(pipe) {
 		var fileDateC = new Date(sS.ctime);
 		var fileDateM = new Date(sS.ctime);
 		
-		
 		var noBody = false;
 		var inputDate = false;
 		if(pipe.request.headers["if-modified-since"]) {
@@ -127,7 +126,7 @@ littleFs.process = function(pipe) {
 		return(true);
 	}
 	
-	if(ret = request.urlParse.path.match('^'+littleFs.virtualDirectory+'(.*)'))
+	if(ret = request.urlParse.pathname.match('^'+littleFs.virtualDirectory+'(.*)'))
 		return(processRendering(ret));
 
 
