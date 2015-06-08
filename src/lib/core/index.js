@@ -105,7 +105,36 @@ core.lookupSSLFile = function(options) {
 	}
 	return(true);
 }
-	
+
+function generate(min, max) {
+	while(1) {
+		var c = Math.random();
+		while(1) {
+			var n = c*10;
+			if(n >= max)
+				break;			
+			c = n;
+		}
+		if(c >= min)
+			break;
+	}
+	return(Math.floor(c));
+}
+
+core.generatePassword = function(minLen, maxLen) {
+	var max = generate(minLen, maxLen);
+	var password = '';
+	for(var a=0; a<max; a++) {
+		var sw = generate(0, 999);
+		if(sw > 666)
+			password += String.fromCharCode(generate(0x30, 0x39));
+		else if(sw > 333)
+			password += String.fromCharCode(generate(0x41, 0x5a));
+		else if(sw > 0)
+			password += String.fromCharCode(generate(0x61, 0x7a));	
+	}
+	return(password);
+}
 	
 core.dateToStr = core.utils.dateToStr;
 core.cstrrev = core.utils.cstrrev;
