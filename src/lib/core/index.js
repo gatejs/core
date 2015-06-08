@@ -126,11 +126,11 @@ core.generatePassword = function(minLen, maxLen) {
 	var password = '';
 	for(var a=0; a<max; a++) {
 		var sw = generate(0, 999);
-		if(sw > 666)
+		if(sw >= 666)
 			password += String.fromCharCode(generate(0x30, 0x39));
-		else if(sw > 333)
+		else if(sw >= 333)
 			password += String.fromCharCode(generate(0x41, 0x5a));
-		else if(sw > 0)
+		else
 			password += String.fromCharCode(generate(0x61, 0x7a));	
 	}
 	return(password);
