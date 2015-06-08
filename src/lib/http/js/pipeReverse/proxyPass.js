@@ -197,6 +197,8 @@ proxyPass.request = function(pipe, proxyname) {
 			else
 				options.port = pipe.server.config.port ? pipe.server.config.port : 80;
 		}
+		else
+			options.port = pipe.server.config.port ? pipe.server.config.port : 80;
 
 		
 		var req = flowSelect.request(options, function(res) {

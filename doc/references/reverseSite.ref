@@ -186,6 +186,7 @@ see: reverseSite
 
 param-host: IP address of the source server  
 param-port: TCP port of the source server, default to 80
+param-portSSL: Specify destination port for SSL when using hybrid mode
 param-weight: The proxy node weight used in load sharing, default to 1.
 param-localAddress: Specify the IP to bind for network connections. NOTE: In the case of network interface alias don't forget to use a /32 mask
 param-https: true to force using HTTPS, default false (off)
