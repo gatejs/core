@@ -17,21 +17,46 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+var fs = require("fs");
+
 var error = function() { /* loader below */ };
 
+var roots = [];
+
+function fileExists(filename) {
+	try {
+		var sS = fs.statSync(filename);
+	} catch(e) {
+		return(false); 
+	}
+	return(sS);
+}
 
 error.renderArray = function(msg, file) {
 	var pipe = msg.pipe;
+	var filename;
 	
-	if(file)
+	if(file) {
 		filename = file;
-	else if(pipe.errorPagesDir)
-		filename = pipe.errorPagesDir+'/'+msg.tpl.replace(/\.\.\//, "/")+'.tpl';
-	else if(pipe.root.serverConfig.errorPagesDir)
-		filename = pipe.root.serverConfig.errorPagesDir+'/'+msg.tpl.replace(/\.\.\//, "/")+'.tpl';
-	else
-		filename = __dirname+'/errorPages/'+msg.tpl.replace(/\.\.\//, "/")+'.tpl';
-	
+	}
+	else {
+		var found = false;
+		for(var a in roots) {
+			var filename = roots[a]+"/"+msg.tpl+".tpl";
+			var r = fileExists(filename);
+			if(r != false) {
+				found = true;
+				break;
+			}
+		}
+		if(found == false) {
+			pipe.response.writeHead(500);
+			pipe.response.write("Can not find template "+msg.tpl);
+			pipe.response.end();
+			return(false);
+		}
+	}
+
 	/* internal log */
 	if(msg.log == true) {
 		if(msg.pipe.forward)
@@ -60,7 +85,14 @@ error.renderArray = function(msg, file) {
 	stream.pipe(pipe.response);
 }
 
-error.loader = function(gjs) { }
+error.loader = function(gjs) {
+	/* register local files */
+	error.register(__dirname+"/errorPages");
+};
+
+error.register = function(dir) {
+	roots.unshift(dir);
+};
 
 module.exports = error;
 
