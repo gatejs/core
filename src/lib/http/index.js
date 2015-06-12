@@ -87,20 +87,35 @@ http.server = require(__dirname+'/js/server');
 http.lookupSSLFile = function(options) {
 	var root = http.gjs.serverConfig.confDir+'/ssl';
 	var keyLookup = ['cert', 'ca', 'pfx', 'key'];
+	
+	function readFile(name) {
+		var ret;
+		var file = root+'/'+name;
+		try {
+			var fss = fs.statSync(file);
+			ret = fs.readFileSync(file);
+		} catch(e) {
+			console.log("Error load "+file);
+			return(false);
+		}
+		return(ret);
+	}
+	
 	for(var a in keyLookup) {
 		var z = keyLookup[a];
 		if(options[z]) {
-			var file = root+'/'+options[z];
-			try {
-				var fss = fs.statSync(file);
-				options[z] = fs.readFileSync(file);
-				
-			} catch(e) {
-				console.log('Can not open '+file+' '+e);
-				return(false);
-			}
+			var r = options[z];
+			if(typeof r === "string") 
+				options[z] = readFile(options[z]);
+			else if(typeof r === "object") {
+				var p = [];
+				for(var b in r)
+					p.push(readFile(r[b]));
+				options[z] = p;
+			} 
 		}
 	}
+
 	return(true);
 }
 
