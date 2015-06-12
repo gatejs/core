@@ -121,7 +121,7 @@ http.lookupSSLFile = function(options) {
 
 http.hardeningSSL = function(conf) {
 	if(!conf.ciphers)
-		conf.ciphers = '!SSLv2:ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS';
+		conf.ciphers = '!SSLv2:ECDH+AESGCM:EECDH+AESGCM:DH+AESGCM:EECDH+AES256:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS';
 	if(!conf.honorCipherOrder)
 		conf.honorCipherOrder = true;
 	

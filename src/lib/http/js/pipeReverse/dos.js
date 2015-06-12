@@ -41,6 +41,9 @@ dos.request = function(pipe, options) {
 	/* log for the IP */
 	var selectedIP = selectIP(selectedZone, pipe.request.connection.remoteAddress, now);
 	
+	if(!options)
+		options = {};
+	
 	/* default options  */
 	if(!options.markPoints)
 		options.markPoints = 250;
