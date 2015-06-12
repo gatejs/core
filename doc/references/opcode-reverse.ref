@@ -58,3 +58,28 @@ example {{
 }}
 
 }}
+
+
+opcode:reverse:realIp {{
+
+extends: http:reverse:opcodes
+scope: reverseSite:locations
+type: object-opt
+description: Real IP operand
+
+mark {{
+Set the real user IP address into the request header.
+
+**realIp** operand takes an optionnal argument used to set the headername.
+
+By default is has been set to **X-Real-Ip**  
+
+}}
+
+example {{
+['realIp', "X-Real-Ip"],
+}}
+
+}}
+
+

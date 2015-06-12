@@ -184,7 +184,6 @@ proxyPass.request = function(pipe, proxyname) {
 		/* emit the preProxyPass */
 		pipe.response.emit("rvProxyPassPassConnection", options, req);
 		
-		
 		/* select flow control */
 		var flowSelect = http;
 		if(nodePtr.https == true)
