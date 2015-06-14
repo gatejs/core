@@ -19,6 +19,7 @@
  */
 
 var fs = require('fs');
+var crypto = require("crypto");
 
 var core = function() { /* loader below */ };
 
@@ -135,7 +136,76 @@ core.generatePassword = function(minLen, maxLen) {
 	}
 	return(password);
 }
+
+
+core.decipherPayload = function(payload, cryptoKey) {
 	
+	/* convert to binary */
+	if(typeof cryptoKey === "string") {
+		var c = crypto.createHash("sha256");
+		c.update(cryptoKey, "utf8");
+		cryptoKey = c.digest("binary");
+	}
+	
+	/* inputs */
+	var t = payload.split(",");
+	var C = t[0], 
+		IV = t[1], 
+		Hm = t[2];
+	
+	/* compute hmac */
+	var c = crypto.createHmac("sha256", cryptoKey);
+	c.update(C, "ascii");
+	c.update(IV, "ascii");
+	c.update(cryptoKey, 'binary');
+	var hmac = c.digest("hex");
+
+	/* integrity control */
+	if(hmac !== Hm)
+		return({ error: true, message: "Bad HMAC control" });
+
+	try {
+		var dcp = crypto.createDecipheriv("aes-256-cbc", cryptoKey, new Buffer(IV, "hex"));
+		var pl = dcp.update(payload, 'hex');
+		pl += dcp.final("ascii");
+	} catch(e) {
+		return({ error: true, message: "Decipher: "+e.message });
+	}
+
+	try {
+		js = JSON.parse(pl);
+	} catch(e) {
+		return({ error: true, message: "JSON error: "+e.message });
+	}
+	
+	return({ error: false, data: js });
+}
+
+core.cipherPayload = function(data, cryptoKey) {
+	/* convert to binary */
+	if(typeof cryptoKey === "string") {
+		var c = crypto.createHash("sha256");
+		c.update(cryptoKey, "utf8");
+		cryptoKey = c.digest("binary");
+	}
+	
+	var iv = crypto.randomBytes(16);
+	
+	var c = crypto.createCipheriv("aes-256-cbc", cryptoKey, iv);
+	var pl = c.update(JSON.stringify(data), 'utf8', "hex");
+	pl += c.final("hex");
+	iv = iv.toString("hex");
+	
+	c = crypto.createHmac("sha256", cryptoKey);
+	c.update(pl, "ascii");
+	c.update(iv, "ascii");
+	c.update(cryptoKey, 'binary');
+	var hmac = c.digest("hex");
+
+	return(pl+","+iv+","+hmac);
+}
+
+
 core.dateToStr = core.utils.dateToStr;
 core.cstrrev = core.utils.cstrrev;
 core.nreg = core.utils.nreg;
