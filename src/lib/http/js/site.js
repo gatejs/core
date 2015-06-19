@@ -44,6 +44,10 @@ var site = function(gjs, channel, configuration) {
 						if(!obj.name)
 							throw('No site configuration name');
 						
+						var key = gjs.lib.core.utils.cstrrev(obj.name);
+						dst.rules.add(key);
+						dst.sites[key] = obj;
+						
 						/* inject nreg server name rules */
 						if(obj.serverName) {
 							
