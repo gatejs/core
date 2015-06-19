@@ -153,6 +153,9 @@ core.decipherPayload = function(payload, cryptoKey) {
 		IV = t[1], 
 		Hm = t[2];
 	
+	if(typeof C !== "string" || typeof IV !== "string" || typeof Hm !== "string")
+		return({ error: true, message: "Input problem" });
+
 	/* compute hmac */
 	var c = crypto.createHmac("sha256", cryptoKey);
 	c.update(C, "ascii");
