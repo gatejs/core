@@ -31,6 +31,7 @@ dos.request = function(pipe, options) {
 	var date = new Date;
 	var now = date.getTime();
 	
+	
 	/* select the zone */
 	var selectedZone = false;
 	if(pipe.reverse == true)
@@ -105,6 +106,8 @@ dos.request = function(pipe, options) {
 			/* send IPC message to tell banned IP */
 			pipe.root.lib.core.ipc.send('FFW', 'DOS', {
 				serverName: pipe.site.name,
+				rps: selectedIP._count,
+				limit: options.rps,
 				ip: pipe.request.connection.remoteAddress
 			});
 			
@@ -146,6 +149,11 @@ function bsBwsDosBackground(bs) {
 
 			if(ip._banned && (ip._banTime-((now-ip._stopTime))) <= 0) {
 
+				bs.lib.core.ipc.send('FFW', 'DOSUNBAN', {
+					serverName: zoneName,
+					ip: ip._address
+				});
+				
 // 				bs.lib.bsCore.logger.siteInfo(
 // 					zoneName, 
 // 					"Release IP address "+ip._address+" from application layer ban"
@@ -162,7 +170,7 @@ function bsBwsDosBackground(bs) {
 }
 
 dos.ctor = function(gjs) {
-
+	
 	/* start background process */
 	setInterval(bsBwsDosBackground, 10000, gjs);
 

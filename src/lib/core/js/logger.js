@@ -122,6 +122,15 @@ logger.spawnMaster = function(gjs) {
 		processLine(data.msg);
 	});
 	
+	/* master common log */
+	logger.commonLogger = function(cmd, data) {
+		var msg = {
+			type: cmd,
+			msg: data
+		};
+		processLine(msg);
+	}
+	
 	logger.system = function(data) {
 		var msg = {
 			type: 'SYS',
