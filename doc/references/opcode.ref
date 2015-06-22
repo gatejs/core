@@ -229,4 +229,23 @@ example {{
 }}
 }}
 
+opcode:bandwidth {{
+
+extends: http:forward:opcodes http:reverse:opcodes
+scope: pipeline
+type: object-opt
+description: bandwidth - Traffic limiter
+since: 1.6
+
+mark {{
+Limit response speed even on cache output.
+}}
+
+example {{
+/* limite reponse speed to 1000 bits/second */
+['bandwidth', 1000],
+}}
+
+}}
+
 
