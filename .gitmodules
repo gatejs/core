@@ -7,7 +7,3 @@
 [submodule "src/lib/http/js/node-spdy"]
 	path = src/lib/http/js/node-spdy
 	url = https://github.com/indutny/node-spdy.git
-[submodule "deps/nodejs"]
-	path = deps/nodejs
-	url = https://github.com/joyent/node.git
-	branch = v0.10.37
