@@ -52,11 +52,6 @@ var blacklistDrvLinux = function(gjs) {
 }
 
 
-/*
- * si le poids dépasse 1000 points à 60 secondes 
- * l'ip est bannie par une regle L3
- */
-
 var blacklist = function(gjs) { /* loader below */ };
 
 blacklist.spawnMaster = function(gjs) {

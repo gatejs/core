@@ -165,10 +165,10 @@ description: dos - Denial of service prevention
 see: blacklist
 since: 1.4
 
-param-rps: number of accepted requests per second (default: 100)
+param-rps: number of accepted requests per second (default: 25)
 param-banTime: the ban time while a HTTP 429 error is sent to the client. (default: 60 seconds)
 param-disableBlacklist: set to **true** to disable Dynamic Blacklist (default: false)
-param-markPoints: corresponds to the points added into the Dynamic Blacklist (default 250 points per limit reached)
+param-markPoints: corresponds to the points added into the Dynamic Blacklist (default 1000 points per limit reached)
 
 mark {{
 The **dos** opcode is used to control the requests flow sent by users to gatejs. 

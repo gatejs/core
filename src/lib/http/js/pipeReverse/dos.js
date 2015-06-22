@@ -46,9 +46,9 @@ dos.request = function(pipe, options) {
 	
 	/* default options  */
 	if(!options.markPoints)
-		options.markPoints = 250;
+		options.markPoints = 1000;
 	if(!options.rps)
-		options.rps = 100;
+		options.rps = 25;
 	if(!options.banTime)
 		options.banTime = 60;
 	if(!options.disableBlacklist)
@@ -98,18 +98,10 @@ dos.request = function(pipe, options) {
 	}
 	
 	if(diff > 1000) {
-
+		
 		if(selectedIP._count > options.rps) {
 			/* ban for 60 seconds */
 
-// 			/* ok IP will be bannd for 60 seconds */
-// 			if(selectedIP._hit > 0) {
-// 				pipe.root.lib.core.logger.siteInfo(
-// 					pipe.site.serverName[0], 
-// 					"DOS attempt from address "+
-// 						pipe.request.connection.remoteAddress+" which has been bannned for 60secs"
-// 				);
-				
 			/* send IPC message to tell banned IP */
 			pipe.root.lib.core.ipc.send('FFW', 'DOS', {
 				serverName: pipe.site.name,
