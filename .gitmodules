@@ -1,10 +1,6 @@
 [submodule "src/lib/mu2"]
 	path = src/lib/mu2
 	url = git://github.com/raycmorgan/Mu
-[submodule "deps/nodejs"]
-	path = deps/nodejs
-	url = git://github.com/joyent/node.git
-	branch = 0.10.32-release
 [submodule "src/lib/ipaddr"]
 	path = src/lib/ipaddr
 	url = http://github.com/binarysec/node-ipaddr.git
