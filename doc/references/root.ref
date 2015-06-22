@@ -23,6 +23,7 @@ param-plugins: An array defined in ::plugins
 param-agent: An object defined in ::agent
 param-acn: An object defined in ::acn
 param-pipeline: An object defines **pipelines** for forward proxy explained in ::pipeline:forward
+param-sharedKey: An string defines a shared key used for different cryptographic operations
 
 mark {{
 Global server configuration is used to be in the directory **/etc/gatejs/config.js**.
