@@ -88,6 +88,7 @@ extends: http:reverse:opcodes
 scope: pipeline
 type: object-kv
 description: hsts - HTTP Strict Transport Security
+since: 1.7
 
 param-age: HSTS Maximum age (default 10512000)
 param-subDomain: Include subdomains, true or false (default true)

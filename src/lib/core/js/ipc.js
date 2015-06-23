@@ -46,6 +46,7 @@ ipc.spawnMaster = function(gjs) {
 	 */
 	var service = net.Server();
 	ipc.userCast = {};
+	ipc.monitorCast = {};
 	
 	/* bind Events */
 	for(var a in eventEmitter)
@@ -56,20 +57,38 @@ ipc.spawnMaster = function(gjs) {
 	}
 	
 	ipc.send = function(type, cmd, msg) {
-		ipc.broadcast(JSON.stringify({
+		var data = JSON.stringify({
+			server: gjs.serverConfig.hostname,
 			from: 'root',
 			type: type,
 			cmd: cmd,
 			msg: msg
-		}), false);
+		});
+		
+		/* cast monitor */
+		ipc.moncast(data);
+		
+		ipc.broadcast(data, false);
 	}
 	
 	ipc.broadcast = function(msg, exclude) {
 		for(var a in ipc.userCast) {
+			var u = ipc.userCast[a];
 			if(exclude != false && a != exclude)
-				ipc.userCast[a].write(msg+"\r\n");
+				u.write(msg+"\r\n");
 			else if(exclude == false)
-				ipc.userCast[a].write(msg+"\r\n");
+				u.write(msg+"\r\n");
+		}
+	}
+	
+	ipc.moncast = function(msg, exclude) {
+		
+		for(var a in ipc.monitorCast) {
+			var u = ipc.monitorCast[a];
+			if(exclude != false && a != exclude)
+				u.write(msg+"\r\n");
+			else if(exclude == false)
+				u.write(msg+"\r\n");
 		}
 	}
 	
@@ -103,7 +122,17 @@ ipc.spawnMaster = function(gjs) {
 				/* local forward */
 				ipc.broadcast(data, client.fd);
 			}
-
+			/* Activate IPC monitor */
+			else if(jdata.type == 'MON') {
+				ipc.monitorCast[client._handle.fd] = client;
+				delete ipc.userCast[client.fd];
+				console.log("Activate monitor cast");
+				return;
+			}
+			
+			/* cast monitor */
+			ipc.moncast(data, client.fd);
+			
 			/* emit myself the event */
 			if(jdata.cmd)
 				ipc.emit(jdata.cmd, gjs, jdata);
@@ -111,6 +140,7 @@ ipc.spawnMaster = function(gjs) {
 		
 		client.on('end', function() {
 			delete ipc.userCast[client.fd];
+			delete ipc.monitorCast[client.fd];
 		});
 		
 	});
@@ -164,6 +194,7 @@ ipc.spawnSlave = function(gjs) {
 	// RFW = root forward
 	ipc.send = function(type, cmd, msg) {
 		client.write(JSON.stringify({
+			server: gjs.serverConfig.hostname,
 			from: cluster.worker.process.pid,
 			type: type,
 			cmd: cmd,

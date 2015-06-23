@@ -126,6 +126,7 @@ logger.spawnMaster = function(gjs) {
 	logger.commonLogger = function(cmd, data) {
 		var msg = {
 			type: cmd,
+			date: Date.now(),
 			msg: data
 		};
 		processLine(msg);
@@ -134,6 +135,7 @@ logger.spawnMaster = function(gjs) {
 	logger.system = function(data) {
 		var msg = {
 			type: 'SYS',
+			date: Date.now(),
 			msg: data
 		};
 		processSystem(msg);
@@ -142,6 +144,7 @@ logger.spawnMaster = function(gjs) {
 	logger.error = function(data) {
 		var msg = {
 			type: 'ERR',
+			date: Date.now(),
 			msg: data
 		};
 		processSystem(msg);
@@ -184,6 +187,7 @@ logger.spawnSlave = function(gjs) {
 	logger.commonLogger = function(cmd, data) {
 		var msg = {
 			type: cmd,
+			date: Date.now(),
 			msg: data
 		};
 		gjs.lib.core.ipc.send('RFW', 'log', msg);
