@@ -18,8 +18,8 @@ You can use **default** as object key to define the default policy. true all acc
 example {{
 /* set & hide request headers */
 ['acl', { 
-	'127.0.0.1' => true,
-	'192.168.0.0/24' => true,
+	'127.0.0.1': true,
+	'192.168.0.0/24': true,
 }],
 }}
 

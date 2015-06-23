@@ -82,4 +82,38 @@ example {{
 
 }}
 
+opcode:hsts {{
+
+extends: http:reverse:opcodes
+scope: pipeline
+type: object-kv
+description: hsts - HTTP Strict Transport Security
+
+param-age: HSTS Maximum age (default 10512000)
+param-subDomain: Include subdomains, true or false (default true)
+param-preload: Activate preload, true or false (default true)
+
+mark {{
+HTTP Strict Transport Security (HSTS) is a web security policy mechanism which is necessary 
+to protect secure HTTPS websites against downgrade attacks, and which greatly simplifies 
+protection against cookie hijacking. It allows web servers to declare that web browsers 
+(or other complying user agents) should only interact with it using secure HTTPS connections, 
+and never via the insecure HTTP protocol. 
+
+HSTS is an IETF standards track protocol and is specified in RFC 6797.
+
+The HSTS Policy is communicated by the server to the user agent via a HTTP response header 
+field named "Strict-Transport-Security". HSTS Policy specifies a period of time during which 
+the user agent shall access the server in a secure-only fashion.
+}}
+
+example {{
+['hsts', { 
+	age: 10512000,
+	subDomain: true,
+	preload: true,
+}],
+}}
+
+}}
 
