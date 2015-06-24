@@ -26,6 +26,15 @@ String.dirname = (function(path) {
 	return path.replace(/\\/g, '/').replace(/\/[^\/]*\/?$/, '');
 });
 
+String.prototype.safe = function() {
+	var s = this.toString().split("../"),
+		r = s.join(""),
+		i = r.indexOf("\0");
+	if(i)
+		r = r.substr(0, i);
+	return(r);
+};
+
 var cluster = require('cluster');
 var url = require("url");
 var fs = require("fs");
