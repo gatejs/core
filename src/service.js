@@ -27,10 +27,14 @@ String.dirname = (function(path) {
 });
 
 String.prototype.safe = function() {
-	var s = this.toString().split("../"),
-		r = s.join(""),
-		i = r.indexOf("\0");
-	if(i)
+	var s = this.toString().split("/"), r = [];
+	for(var a in s) {
+		if(s[a] != "..")
+			r.push(s[a]);
+	}
+	r = r.join("/");
+	var i = r.indexOf("\0");
+	if(i > 0)
 		r = r.substr(0, i);
 	return(r);
 };
