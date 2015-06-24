@@ -138,7 +138,12 @@ ipc.spawnMaster = function(gjs) {
 				ipc.emit(jdata.cmd, gjs, jdata);
 		});
 		
-		client.on('end', function() {
+		client.on('close', function() {
+			delete ipc.userCast[client.fd];
+			delete ipc.monitorCast[client.fd];
+		});
+		
+		client.on('error', function() {
 			delete ipc.userCast[client.fd];
 			delete ipc.monitorCast[client.fd];
 		});
