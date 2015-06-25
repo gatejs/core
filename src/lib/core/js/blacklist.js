@@ -130,7 +130,7 @@ blacklist.spawnMaster = function(gjs) {
 			
 		gjs.lib.core.logger.system(
 			"IP "+ip.ip+' has been blacklisted on layer 3 within '+
-			gjs.serverConfig.blacklist.l3BanTime/1000+' seconds because '+
+			gjs.serverConfig.blacklist.l3BanTime+' seconds because '+
 			why
 		);
 		
@@ -161,7 +161,7 @@ blacklist.spawnMaster = function(gjs) {
 			if(el.banned == false)
 				el.points -= gjs.serverConfig.blacklist.reducePoint;
 			else {
-				if(now-el.banTime > gjs.serverConfig.blacklist.l3BanTime) {
+				if(now-el.banTime > gjs.serverConfig.blacklist.l3BanTime*1000) {
 					blacklist.engine.unBan(el.ip);
 					
 					gjs.lib.core.logger.system(
