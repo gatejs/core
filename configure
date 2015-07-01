@@ -92,6 +92,9 @@ install:
 	+make -C ./deps/nodejs install
 	$PREFIX_SHARE/gatejs/node/bin/npm install -g node-gyp
 	
+	if ! grep -qFe '$PREFIX_SHARE/gatejs/node/include' src/lib/ipaddr/binding.gyp; then\
+		sed -i -e "s~\([\"']target_name[\"']\)~'include_dirs': ['$PREFIX_SHARE/gatejs/node/include'],\1~" src/lib/ipaddr/binding.gyp;\
+	fi
 	+make -C src/lib/ipaddr/ rebuild NODE_GYP="$PREFIX_SHARE/gatejs/node/bin/node-gyp"
 	+make -C src/lib/core/ rebuild NODE_GYP="$PREFIX_SHARE/gatejs/node/bin/node-gyp"
 	+make -C src/lib/tproxy/ rebuild NODE_GYP="$PREFIX_SHARE/gatejs/node/bin/node-gyp"
