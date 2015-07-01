@@ -48,10 +48,11 @@ function removeHeader(name) {
 
 /* patch to accept sensitve headers by hooking node.js header addition */
 httpPlug.IncomingMessage.prototype._addHeaderLineOld = httpPlug.IncomingMessage.prototype._addHeaderLine;
-httpPlug.IncomingMessage.prototype._addHeaderLine = function(field, value) {
+httpPlug.IncomingMessage.prototype._addHeaderLine = function(field, value, dst) {
 	fixHeaders.apply(this, arguments);
-	return(this._addHeaderLineOld(field, value));
+	return(this._addHeaderLineOld(field, value, dst));
 }
+
 httpPlug.IncomingMessage.prototype.gjsSetHeader = function(name, value) {
 	return(setHeader.apply(this, arguments));
 }
