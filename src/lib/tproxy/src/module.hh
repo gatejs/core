@@ -22,6 +22,9 @@
 #define _H_TPROXY_MODULE
 
 #include <node.h>
+#include <node_object_wrap.h>
+
+#include <node/uv.h>
 
 #include <string>
 
@@ -42,6 +45,8 @@
 #include <endian.h>
 #include <limits.h>
 #include <linux/netfilter_ipv4.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
 
 #ifndef IP_TRANSPARENT
 #define IP_TRANSPARENT 19
@@ -50,10 +55,10 @@
 #include "tproxy.hh"
 
 #define THROW(str) \
-	ThrowException(Exception::Error(String::New(str)))
+	isolate->ThrowException(Exception::Error(String::NewFromUtf8(isolate, str)))
 
 #define THROW_TYPE(str) \
-	ThrowException(Exception::TypeError(String::New(str)))
+	isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, str)))
 
 #endif
 

@@ -23,15 +23,15 @@
 
 class Tproxy : public node::ObjectWrap {
 	public:
-		static void Init(v8::Handle<v8::Object> exports);
+		static void Init(v8::Handle<v8::Object> module);
 		
 	private:
-		static v8::Handle<v8::Value> setTproxyFD(const v8::Arguments& args);
-		static v8::Handle<v8::Value> newTproxyFD(const v8::Arguments& args);
-		static v8::Handle<v8::Value> newTproxyClientFD(const v8::Arguments& args);
-		static v8::Handle<v8::Value> newTproxyServerFD(const v8::Arguments& args);
-		static v8::Handle<v8::Value> getTproxyRealDest(const v8::Arguments& args);
-		static v8::Handle<v8::Value> debugCheckFD(const v8::Arguments& args);
+		static void setTproxyFD(const v8::FunctionCallbackInfo<v8::Value>& args);
+		static void newTproxyFD(const v8::FunctionCallbackInfo<v8::Value>& args);
+		static void newTproxyClientFD(const v8::FunctionCallbackInfo<v8::Value>& args);
+		static void newTproxyServerFD(const v8::FunctionCallbackInfo<v8::Value>& args);
+		static void getTproxyRealDest(const v8::FunctionCallbackInfo<v8::Value>& args);
+		static void debugCheckFD(const v8::FunctionCallbackInfo<v8::Value>& args);
 		
 		static int getIpType(const char *ip);
 };

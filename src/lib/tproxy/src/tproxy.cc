@@ -22,10 +22,9 @@
 
 using namespace v8;
 
-void Tproxy::Init(Handle<Object> exports) {
+void Tproxy::Init(Handle<Object> module) {
 #define SETFUNC(_name_) \
-		exports->Set(String::NewSymbol(#_name_), \
-		FunctionTemplate::New(_name_)->GetFunction());
+		NODE_SET_METHOD(module, #_name_, _name_);
 	
 	SETFUNC(setTproxyFD)
 	SETFUNC(newTproxyFD)
@@ -37,34 +36,42 @@ void Tproxy::Init(Handle<Object> exports) {
 #undef SETFUNC
 }
 
-Handle<Value> Tproxy::setTproxyFD(const v8::Arguments& args) {
-	HandleScope scope;
+void Tproxy::setTproxyFD(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	Isolate* isolate = Isolate::GetCurrent();
+	HandleScope scope(isolate);
 	int option = 1;
 	int fd;
 	int ret;
 	
-	if(!args[0]->IsNumber())
-		return(THROW_TYPE("Wrong argument type"));
+	if(!args[0]->IsNumber()) {
+		THROW_TYPE("Wrong argument type");
+		return;
+	}
 	
 	fd = args[0]->ToInteger()->Value();
 	
 	ret = setsockopt(fd, SOL_IP, IP_TRANSPARENT, &option, sizeof(option));
-	if(ret == -1)
-		return(THROW("Tproxy setup (setsockopt) failed"));
+	if(ret == -1) {
+		THROW("Tproxy setup (setsockopt) failed");
+		return;
+	}
 	
-	return(scope.Close(Boolean::New(true)));
+	args.GetReturnValue().Set(Boolean::New(isolate, true));
 }
 
-Handle<Value> Tproxy::newTproxyFD(const v8::Arguments& args) {
-	HandleScope scope;
+void Tproxy::newTproxyFD(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	Isolate* isolate = Isolate::GetCurrent();
+	HandleScope scope(isolate);
 	int option = 1;
 	int version;
 	int fd;
 	int ret;
 	int flags;
 	
-	if(!args[0]->IsNumber())
-		return(THROW_TYPE("Wrong argument type"));
+	if(!args[0]->IsNumber()) {
+		THROW_TYPE("Wrong argument type");
+		return;
+	}
 	
 	version = args[0]->ToInteger()->Value();
 	
@@ -83,36 +90,48 @@ Handle<Value> Tproxy::newTproxyFD(const v8::Arguments& args) {
 		);
 	}
 	else {
-		return(THROW("Invalid IP version (use 4 or 6)"));
+		THROW("Invalid IP version (use 4 or 6)");
+		return;
 	}
 	
-	if(fd < 0)
-		return(THROW("Call of socket() failed"));
+	if(fd < 0) {
+		THROW("Call of socket() failed");
+		return;
+	}
 	
 	option = 1;
 	ret = setsockopt(fd, SOL_IP, IP_TRANSPARENT, &option, sizeof(option));
-	if(ret == -1)
-		return(THROW("Tproxy setup (setsockopt) failed"));
+	if(ret == -1) {
+		THROW("Tproxy setup (setsockopt) failed");
+		return;
+	}
 	
 	option = 1;
 	ret = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
-	if(ret == -1)
-		return(THROW("Tproxy setup (setsockopt) failed"));
+	if(ret == -1) {
+		THROW("Tproxy setup (setsockopt) failed");
+		return;
+	}
 	
 	flags = fcntl(fd, F_GETFL, 0);
-	if(flags == -1)
-		return(THROW("Call of fcntl(F_GETFL) failed"));
+	if(flags == -1) {
+		THROW("Call of fcntl(F_GETFL) failed");
+		return;
+	}
 	
 	flags |= O_NONBLOCK;
 	ret = fcntl(fd, F_SETFL, flags);
-	if(ret == -1)
-		return(THROW("Call of fcntl(F_SETFL) failed"));
+	if(ret == -1) {
+		THROW("Call of fcntl(F_SETFL) failed");
+		return;
+	}
 	
-	return(scope.Close(Integer::New(fd)));
+	args.GetReturnValue().Set(Integer::New(isolate, fd));
 }
 
-Handle<Value> Tproxy::newTproxyClientFD(const Arguments& args) {
-	HandleScope scope;
+void Tproxy::newTproxyClientFD(const FunctionCallbackInfo<Value>& args) {
+	Isolate* isolate = Isolate::GetCurrent();
+	HandleScope scope(isolate);
 	struct sockaddr sa;
 	int sa_size;
 	std::string bind_addr;
@@ -123,14 +142,16 @@ Handle<Value> Tproxy::newTproxyClientFD(const Arguments& args) {
 	int fd;
 	int ret;
 	
-	if(!args[0]->IsString())
-		return(THROW_TYPE("Wrong argument type"));
+	if(!args[0]->IsString()) {
+		THROW_TYPE("Wrong argument type");
+		return;
+	}
 	if(args[1]->IsNumber())
 		bind_port = args[1]->ToInteger()->Value();
 	else
 		bind_port = 0;
 	
-	String::AsciiValue in_addr(args[0]->ToString());
+	String::Utf8Value in_addr(args[0]->ToString());
 	bind_addr = *in_addr;
 	
 	
@@ -145,7 +166,10 @@ Handle<Value> Tproxy::newTproxyClientFD(const Arguments& args) {
 			0
 		);
 		
-		sai = uv_ip4_addr(bind_addr.c_str(), bind_port);
+		if(uv_ip4_addr(bind_addr.c_str(), bind_port, &sai) != 0) {
+			THROW_TYPE("Invalid IPv4 address");
+			return;
+		}
 		sa_size = sizeof(sai);
 		memcpy(&sa, &sai, sa_size);
 	}
@@ -158,46 +182,63 @@ Handle<Value> Tproxy::newTproxyClientFD(const Arguments& args) {
 			0
 		);
 		
-		sai6 = uv_ip6_addr(bind_addr.c_str(), bind_port);
+		if(uv_ip6_addr(bind_addr.c_str(), bind_port, &sai6) != 0) {
+			THROW_TYPE("Invalid IPv6 address");
+			return;
+		}
 		sa_size = sizeof(sai6);
 		memcpy(&sa, &sai6, sa_size);
 	}
 	else {
-		return(THROW("IP version not found"));
+		THROW("IP version not found");
+		return;
 	}
 	
-	if(fd < 0)
-		return(THROW("Call of socket() failed"));
+	if(fd < 0) {
+		THROW("Call of socket() failed");
+		return;
+	}
 	
 	option = 1;
 	ret = setsockopt(fd, SOL_IP, IP_TRANSPARENT, &option, sizeof(option));
-	if(ret == -1)
-		return(THROW("Tproxy setup (setsockopt) failed"));
+	if(ret == -1) {
+		THROW("Tproxy setup (setsockopt) failed");
+		return;
+	}
 	
 	option = 1;
 	ret = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
-	if(ret == -1)
-		return(THROW("Tproxy setup (setsockopt) failed"));
+	if(ret == -1) {
+		THROW("Tproxy setup (setsockopt) failed");
+		return;
+	}
 	
 	ret = bind(fd, &sa, sa_size);
 	
-	if(ret == -1)
-		return(THROW("Call of bind() failed"));
+	if(ret == -1) {
+		THROW("Call of bind() failed");
+		return;
+	}
 	
 	flags = fcntl(fd, F_GETFL, 0);
-	if(flags == -1)
-		return(THROW("Call of fcntl(F_GETFL) failed"));
+	if(flags == -1) {
+		THROW("Call of fcntl(F_GETFL) failed");
+		return;
+	}
 	
 	flags |= O_NONBLOCK;
 	ret = fcntl(fd, F_SETFL, flags);
-	if(ret == -1)
-		return(THROW("Call of fcntl(F_SETFL) failed"));
+	if(ret == -1) {
+		THROW("Call of fcntl(F_SETFL) failed");
+		return;
+	}
 	
-	return(scope.Close(Integer::New(fd)));
+	args.GetReturnValue().Set(Integer::New(isolate, fd));
 }
 
-Handle<Value> Tproxy::newTproxyServerFD(const Arguments& args) {
-	HandleScope scope;
+void Tproxy::newTproxyServerFD(const FunctionCallbackInfo<Value>& args) {
+	Isolate* isolate = Isolate::GetCurrent();
+	HandleScope scope(isolate);
 	struct sockaddr sa;
 	int sa_size;
 	std::string bind_addr;
@@ -209,12 +250,16 @@ Handle<Value> Tproxy::newTproxyServerFD(const Arguments& args) {
 	int fd;
 	int ret;
 	
-	if(!args[0]->IsString())
-		return(THROW_TYPE("Wrong argument type"));
-	if(!args[1]->IsNumber())
-		return(THROW_TYPE("Wrong argument type"));
+	if(!args[0]->IsString()) {
+		THROW_TYPE("Wrong argument type");
+		return;
+	}
+	if(!args[1]->IsNumber()) {
+		THROW_TYPE("Wrong argument type");
+		return;
+	}
 	
-	String::AsciiValue in_addr(args[0]->ToString());
+	String::Utf8Value in_addr(args[0]->ToString());
 	bind_addr = *in_addr;
 	bind_port = args[1]->ToInteger()->Value();
 	if(!args[2]->IsNumber())
@@ -233,7 +278,10 @@ Handle<Value> Tproxy::newTproxyServerFD(const Arguments& args) {
 			0
 		);
 		
-		sai = uv_ip4_addr(bind_addr.c_str(), bind_port);
+		if(uv_ip4_addr(bind_addr.c_str(), bind_port, &sai) != 0) {
+			THROW_TYPE("Invalid IPv4 address");
+			return;
+		}
 		sa_size = sizeof(sai);
 		memcpy(&sa, &sai, sa_size);
 	}
@@ -246,51 +294,70 @@ Handle<Value> Tproxy::newTproxyServerFD(const Arguments& args) {
 			0
 		);
 		
-		sai6 = uv_ip6_addr(bind_addr.c_str(), bind_port);
+		if(uv_ip6_addr(bind_addr.c_str(), bind_port, &sai6) != 0) {
+			THROW_TYPE("Invalid IPv6 address");
+			return;
+		}
 		sa_size = sizeof(sai6);
 		memcpy(&sa, &sai6, sa_size);
 	}
 	else {
-		return(THROW("IP version not found"));
+		THROW("IP version not found");
+		return;
 	}
 	
-	if(fd < 0)
-		return(THROW("Call of socket() failed"));
+	if(fd < 0) {
+		THROW("Call of socket() failed");
+		return;
+	}
 	
 	option = 1;
 	ret = setsockopt(fd, SOL_IP, IP_TRANSPARENT, &option, sizeof(option));
-	if(ret == -1)
-		return(THROW("Tproxy setup (setsockopt) failed"));
+	if(ret == -1) {
+		THROW("Tproxy setup (setsockopt) failed");
+		return;
+	}
 	
 	option = 1;
 	ret = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
-	if(ret == -1)
-		return(THROW("Tproxy setup (setsockopt) failed"));
+	if(ret == -1) {
+		THROW("Tproxy setup (setsockopt) failed");
+		return;
+	}
 	
 	ret = bind(fd, &sa, sa_size);
 	
-	if(ret == -1)
-		return(THROW("Call of bind() failed"));
+	if(ret == -1) {
+		THROW("Call of bind() failed");
+		return;
+	}
 	
 	ret = listen(fd, backlog);
 	
-	if(ret == -1)
-		return(THROW("Call of listen() failed"));
+	if(ret == -1) {
+		THROW("Call of listen() failed");
+		return;
+	}
 	
 	flags = fcntl(fd, F_GETFL, 0);
-	if(flags == -1)
-		return(THROW("Call of fcntl(F_GETFL) failed"));
+	if(flags == -1) {
+		THROW("Call of fcntl(F_GETFL) failed");
+		return;
+	}
 	
 	flags |= O_NONBLOCK;
 	ret = fcntl(fd, F_SETFL, flags);
-	if(ret == -1)
-		return(THROW("Call of fcntl(F_SETFL) failed"));
+	if(ret == -1) {
+		THROW("Call of fcntl(F_SETFL) failed");
+		return;
+	}
 	
-	return(scope.Close(Integer::New(fd)));
+	args.GetReturnValue().Set(Integer::New(isolate, fd));
 }
 
-Handle<Value> Tproxy::getTproxyRealDest(const Arguments& args) {
-	HandleScope scope;
+void Tproxy::getTproxyRealDest(const FunctionCallbackInfo<Value>& args) {
+	Isolate* isolate = Isolate::GetCurrent();
+	HandleScope scope(isolate);
 	char dest_addr[INET6_ADDRSTRLEN];
 	int dest_port = 0;
 	struct sockaddr sa;
@@ -300,8 +367,10 @@ Handle<Value> Tproxy::getTproxyRealDest(const Arguments& args) {
 	const char *family_str;
 	socklen_t sa_size;
 	
-	if(!args[0]->IsNumber())
-		return(THROW_TYPE("Wrong argument type"));
+	if(!args[0]->IsNumber()) {
+		THROW_TYPE("Wrong argument type");
+		return;
+	}
 	
 	fd = args[0]->ToInteger()->Value();
 	
@@ -313,13 +382,16 @@ Handle<Value> Tproxy::getTproxyRealDest(const Arguments& args) {
 		std::string s;
 		s = strerror(errno);
 		s = std::string("getsockopt() call failed : ") + s;
-		return(THROW(s.c_str()));
+		THROW(s.c_str());
+		return;
 	}
 	
 	if(sa_size == sizeof(sockaddr_in)) {
 		pret = inet_ntop(AF_INET, &sa, dest_addr, sa_size);
-		if(pret == NULL)
-			return(THROW("inet_ntop() call failed"));
+		if(pret == NULL) {
+			THROW("inet_ntop() call failed");
+			return;
+		}
 		
 		dest_port = ((struct sockaddr_in*)&sa)->sin_port;
 		family_str = "IPv4";
@@ -327,26 +399,30 @@ Handle<Value> Tproxy::getTproxyRealDest(const Arguments& args) {
 	else if(sa_size == sizeof(sockaddr_in6)) {
 		pret = inet_ntop(AF_INET6, &sa, dest_addr, sa_size);
 		perror("inet_ntop");
-		if(pret == NULL)
-			return(THROW("inet_ntop() call failed"));
+		if(pret == NULL) {
+			THROW("inet_ntop() call failed");
+			return;
+		}
 		
 		family_str = "IPv6";
 		dest_port = ((struct sockaddr_in6*)&sa)->sin6_port;
 	}
 	else {
-		return(THROW("Unknown sockaddr size. It should not happen..."));
+		THROW("Unknown sockaddr size. It should not happen...");
+		return;
 	}
 	
-	Local<Object> ret_obj = Object::New();
-	ret_obj->Set(String::New("address"), String::New(dest_addr));
-	ret_obj->Set(String::New("family"),  String::New(family_str));
-	ret_obj->Set(String::New("port"),    Integer::New(htons(dest_port)));
+	Local<Object> ret_obj = Object::New(isolate);
+	ret_obj->Set(String::NewFromUtf8(isolate, "address"), String::NewFromUtf8(isolate, dest_addr));
+	ret_obj->Set(String::NewFromUtf8(isolate, "family"),  String::NewFromUtf8(isolate, family_str));
+	ret_obj->Set(String::NewFromUtf8(isolate, "port"),    Integer::New(isolate, htons(dest_port)));
 	
-	return(scope.Close(ret_obj));
+	args.GetReturnValue().Set(ret_obj);
 }
 
-Handle<Value> Tproxy::debugCheckFD(const Arguments& args) {
-	HandleScope scope;
+void Tproxy::debugCheckFD(const FunctionCallbackInfo<Value>& args) {
+	Isolate* isolate = Isolate::GetCurrent();
+	HandleScope scope(isolate);
 	int fd;
 	int ret;
 	int is_transparent = 0;
@@ -354,58 +430,66 @@ Handle<Value> Tproxy::debugCheckFD(const Arguments& args) {
 	int flags;
 	socklen_t sa_size;
 	
-	if(!args[0]->IsNumber())
-		return(scope.Close(String::New("Error parameter (not a number!)")));
+	if(!args[0]->IsNumber()) {
+		args.GetReturnValue().Set(String::NewFromUtf8(isolate, "Error parameter (not a number!)"));
+		return;
+	}
 	
 	fd = args[0]->ToInteger()->Value();
 	
 	is_transparent = 1;
 	sa_size = sizeof(is_transparent);
 	ret = getsockopt(fd, SOL_IP, IP_TRANSPARENT, &is_transparent, &sa_size);
-	if(ret == -1)
-		return(scope.Close(String::New("Error on IP_TRANSPARENT")));
+	if(ret == -1) {
+		args.GetReturnValue().Set(String::NewFromUtf8(isolate, "Error on IP_TRANSPARENT"));
+		return;
+	}
 	
 	is_reusable = 1;
 	sa_size = sizeof(is_reusable);
 	ret = getsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &is_reusable, &sa_size);
-	if(ret == -1)
-		return(scope.Close(String::New("Error on SO_REUSEADDR")));
+	if(ret == -1) {
+		args.GetReturnValue().Set(String::NewFromUtf8(isolate, "Error on SO_REUSEADDR"));
+		return;
+	}
 	
 	flags = fcntl(fd, F_GETFL, 0);
-	if(flags == -1)
-		return(scope.Close(String::New("Error on fcntl()")));
+	if(flags == -1) {
+		args.GetReturnValue().Set(String::NewFromUtf8(isolate, "Error on fcntl()"));
+		return;
+	}
 	
 	Local<Object> obj_ret;
 	
-	obj_ret = Object::New();
+	obj_ret = Object::New(isolate);
 	obj_ret->Set(
-		String::New("fd"),
-		Number::New(fd)
+		String::NewFromUtf8(isolate, "fd"),
+		Number::New(isolate, fd)
 	);
 	obj_ret->Set(
-		String::New("is_transparent"),
-		Number::New(is_transparent)
+		String::NewFromUtf8(isolate, "is_transparent"),
+		Number::New(isolate, is_transparent)
 	);
 	obj_ret->Set(
-		String::New("is_reusable"),
-		Number::New(is_reusable)
+		String::NewFromUtf8(isolate, "is_reusable"),
+		Number::New(isolate, is_reusable)
 	);
 	obj_ret->Set(
-		String::New("flags"),
-		Number::New(flags)
+		String::NewFromUtf8(isolate, "flags"),
+		Number::New(isolate, flags)
 	);
 	
-	return(scope.Close(obj_ret));
+	args.GetReturnValue().Set(obj_ret);
 }
 
 int Tproxy::getIpType(const char *ip) {
 	char address_buffer[sizeof(struct in6_addr)];
 	
-	if (uv_inet_pton(AF_INET, ip, &address_buffer).code == UV_OK) {
+	if(uv_inet_pton(AF_INET, ip, &address_buffer) == 0) {
 		return(4);
 	}
 	
-	if (uv_inet_pton(AF_INET6, ip, &address_buffer).code == UV_OK) {
+	if(uv_inet_pton(AF_INET6, ip, &address_buffer) == 0) {
 		return(6);
 	}
 	
