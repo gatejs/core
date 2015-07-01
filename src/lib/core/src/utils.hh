@@ -28,8 +28,8 @@ class CoreUtils {
 		static void Init(v8::Handle<v8::Object> exports);
 		
 	private:
-		static v8::Handle<v8::Value> dateToStr(const v8::Arguments& args);
-		static v8::Handle<v8::Value> cstrrev(const v8::Arguments& args);
+		static void dateToStr(const v8::FunctionCallbackInfo<v8::Value>& args);
+		static void cstrrev(const v8::FunctionCallbackInfo<v8::Value>& args);
 };
 
 #endif

@@ -38,17 +38,15 @@ CoreNregWrap::~CoreNregWrap() {
 }
 
 void CoreNregWrap::Init(Handle<Object> exports) {
+	Isolate* isolate = Isolate::GetCurrent();
 	// Prepare constructor template
-	Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
-	tpl->SetClassName(String::NewSymbol("nreg"));
+	Local<FunctionTemplate> tpl = FunctionTemplate::New(isolate, New);
+	tpl->SetClassName(String::NewFromUtf8(isolate, "nreg"));
 	tpl->InstanceTemplate()->SetInternalFieldCount(1);
 	
 	// Prototype
 #define SETFUNC(_name_) \
-	tpl->PrototypeTemplate()->Set( \
-		String::NewSymbol(#_name_), \
-		FunctionTemplate::New(_name_)->GetFunction() \
-	);
+	NODE_SET_PROTOTYPE_METHOD(tpl, #_name_, _name_);
 	SETFUNC(set)
 	SETFUNC(add)
 	SETFUNC(del)
@@ -58,32 +56,48 @@ void CoreNregWrap::Init(Handle<Object> exports) {
 	SETFUNC(matchAll)
 #undef SETFUNC
 	
-	CoreNregWrap::constructor = Persistent<Function>::New(tpl->GetFunction());
-	exports->Set(String::NewSymbol("nreg"), CoreNregWrap::constructor);
-}
-
-Handle<Value> CoreNregWrap::NewInstance(int argc, Handle<Value> argv[]) {
-	HandleScope scope;
-	Handle<Value> obj = CoreNregWrap::constructor->NewInstance(argc, argv);
+	constructor.Reset(isolate, tpl->GetFunction());
 	
-	return scope.Close(obj);
+	NODE_SET_METHOD(exports, "nreg", NewInstance);
 }
 
-Handle<Value> CoreNregWrap::New(const Arguments& args) {
-	HandleScope scope;
+void CoreNregWrap::NewInstance(const FunctionCallbackInfo<Value>& args) {
+	Isolate* isolate = Isolate::GetCurrent();
+	HandleScope scope(isolate);
+	
+	Local<Object> instance;
+	
+	if(args.Length() == 1) {
+		Handle<Value> argv[1] = { args[0] };
+		Local<Function> cons = Local<Function>::New(isolate, constructor);
+		instance = cons->NewInstance(1, argv);
+	}
+	else {
+		Handle<Value> argv[0] = { };
+		Local<Function> cons = Local<Function>::New(isolate, constructor);
+		instance = cons->NewInstance(0, argv);
+	}
+	
+	args.GetReturnValue().Set(instance);
+}
+
+void CoreNregWrap::New(const FunctionCallbackInfo<Value>& args) {
+	Isolate* isolate = Isolate::GetCurrent();
+	HandleScope scope(isolate);
 	CoreNregWrap* obj;
 	Local<Object> mainobj;
 	Local<Value> value;
 	bool is_insensitive;
 	std::string expr;
 	
-	if (args.Length() != 1) {
+	if(args.Length() != 1) {
 		obj = new CoreNregWrap(true);
 		
 		obj->obj_reload();
 		
 		obj->Wrap(args.This());
-		return(args.This());
+		args.GetReturnValue().Set(args.This());
+		return;
 	}
 	
 	if(args[0]->IsBoolean()) {
@@ -92,35 +106,36 @@ Handle<Value> CoreNregWrap::New(const Arguments& args) {
 		obj->obj_reload();
 		
 		obj->Wrap(args.This());
-		return(args.This());
+		args.GetReturnValue().Set(args.This());
+		return;
 	}
 	else if(!args[0]->IsObject()) {
-		ThrowException(Exception::TypeError(String::New("Wrong argument type (argument 1)")));
-		return scope.Close(Undefined());
+		isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong argument type (argument 1)")));
+		return;
 	}
 	
 	mainobj = args[0]->ToObject();
-	value = mainobj->Get(String::New("is_insensitive"));
+	value = mainobj->Get(String::NewFromUtf8(isolate, "is_insensitive"));
 	if(!value->IsBoolean()) {
-		ThrowException(Exception::TypeError(String::New("Wrong argument type (is_insensitive)")));
-		return scope.Close(Undefined());
+		isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong argument type (is_insensitive)")));
+		return;
 	}
 	is_insensitive = value->ToBoolean()->Value();
 	
 	obj = new CoreNregWrap(is_insensitive);
 	
-	value = mainobj->Get(String::New("expressions"));
+	value = mainobj->Get(String::NewFromUtf8(isolate, "expressions"));
 	if(!value->IsArray()) {
-		ThrowException(Exception::TypeError(String::New("Wrong argument type (expressions)")));
-		return scope.Close(Undefined());
+		isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong argument type (expressions)")));
+		return;
 	}
 	
-	Local<Array> fields = Array::Cast(*value);
+	Local<Array> fields = value.As<Array>();
 	for (unsigned int i = 0, limiti = fields->Length(); i < limiti; i++) {
 		if(!fields->Get(i)->IsString())
 			continue;
 		Local<String> argstr = fields->Get(i)->ToString();
-		String::AsciiValue tmp(argstr->ToString());
+		String::Utf8Value tmp(argstr->ToString());
 		expr = std::string(*tmp, tmp.length());
 		if(obj->is_insensitive)
 			std::transform(expr.begin(), expr.end(), expr.begin(), ::tolower);
@@ -130,51 +145,52 @@ Handle<Value> CoreNregWrap::New(const Arguments& args) {
 	obj->obj_reload();
 	
 	obj->Wrap(args.This());
-	return(args.This());
+	args.GetReturnValue().Set(args.This());
 }
 
-Handle<Value> CoreNregWrap::set(const Arguments& args) {
-	HandleScope scope;
-	CoreNregWrap* obj = ObjectWrap::Unwrap<CoreNregWrap>(args.This());
+void CoreNregWrap::set(const FunctionCallbackInfo<Value>& args) {
+	Isolate* isolate = Isolate::GetCurrent();
+	HandleScope scope(isolate);
+	CoreNregWrap* obj = ObjectWrap::Unwrap<CoreNregWrap>(args.Holder());
 	Local<Object> mainobj;
 	Local<Value> value;
 	bool is_insensitive;
 	std::string expr;
 	
 	if (args.Length() != 1) {
-		ThrowException(Exception::TypeError(String::New("Wrong number of arguments")));
-		return scope.Close(Undefined());
+		isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong number of arguments")));
+		return;
 	}
 	
 	if(!args[0]->IsObject()) {
-		ThrowException(Exception::TypeError(String::New("Wrong argument type (argument 1)")));
-		return scope.Close(Undefined());
+		isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong argument type (argument 1)")));
+		return;
 	}
 	
 	obj->exprs = std::set<CoreNregWrapExpr>();
 	
 	mainobj = args[0]->ToObject();
-	value = mainobj->Get(String::New("is_insensitive"));
+	value = mainobj->Get(String::NewFromUtf8(isolate, "is_insensitive"));
 	if(!value->IsBoolean()) {
-		ThrowException(Exception::TypeError(String::New("Wrong argument type (is_insensitive)")));
-		return scope.Close(Undefined());
+		isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong argument type (is_insensitive)")));
+		return;
 	}
 	is_insensitive = value->ToBoolean()->Value();
 	
 	obj->is_insensitive = is_insensitive;
 	
-	value = mainobj->Get(String::New("expressions"));
+	value = mainobj->Get(String::NewFromUtf8(isolate, "expressions"));
 	if(!value->IsArray()) {
-		ThrowException(Exception::TypeError(String::New("Wrong argument type (expressions)")));
-		return scope.Close(Undefined());
+		isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong argument type (expressions)")));
+		return;
 	}
 	
-	Local<Array> fields = Array::Cast(*value);
+	Local<Array> fields = value.As<Array>();
 	for (unsigned int i = 0, limiti = fields->Length(); i < limiti; i++) {
 		if(!fields->Get(i)->IsString())
 			continue;
 		Local<String> argstr = fields->Get(i)->ToString();
-		String::AsciiValue tmp(argstr->ToString());
+		String::Utf8Value tmp(argstr->ToString());
 		expr = std::string(*tmp, tmp.length());
 		if(obj->is_insensitive)
 			std::transform(expr.begin(), expr.end(), expr.begin(), ::tolower);
@@ -186,132 +202,138 @@ Handle<Value> CoreNregWrap::set(const Arguments& args) {
 	
 	obj->obj_reload();
 	
-	//obj->Wrap(args.This());
-	return(args.This());
+	args.GetReturnValue().Set(args.This());
 }
 
-Handle<Value> CoreNregWrap::add(const Arguments& args) {
-	HandleScope scope;
-	CoreNregWrap* obj = ObjectWrap::Unwrap<CoreNregWrap>(args.This());
+void CoreNregWrap::add(const FunctionCallbackInfo<Value>& args) {
+	Isolate* isolate = Isolate::GetCurrent();
+	HandleScope scope(isolate);
+	CoreNregWrap* obj = ObjectWrap::Unwrap<CoreNregWrap>(args.Holder());
 	std::string expr;
 	
 	if (args.Length() < 1) {
-		ThrowException(Exception::TypeError(String::New("Wrong number of arguments")));
-		return scope.Close(Undefined());
+		isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong number of arguments")));
+		return;
 	}
 	
 	for(int i = 0 ; i < args.Length() ; i++) {
 		if(!args[i]->IsString()) {
-			ThrowException(Exception::TypeError(String::New("Wrong argument type")));
-			return scope.Close(Undefined());
+			isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong argument type")));
+			return;
 		}
 		
-		String::AsciiValue tmp(args[i]->ToString());
+		String::Utf8Value tmp(args[i]->ToString());
 		expr = std::string(*tmp, tmp.length());
 		if(obj->is_insensitive)
 			std::transform(expr.begin(), expr.end(), expr.begin(), ::tolower);
 		obj->obj_add(expr.c_str(), expr.length());
 	}
 	
-	return(args.This());
+	args.GetReturnValue().Set(args.This());
 }
 
-Handle<Value> CoreNregWrap::del(const Arguments& args) {
-	HandleScope scope;
-	CoreNregWrap* obj = ObjectWrap::Unwrap<CoreNregWrap>(args.This());
+void CoreNregWrap::del(const FunctionCallbackInfo<Value>& args) {
+	Isolate* isolate = Isolate::GetCurrent();
+	HandleScope scope(isolate);
+	CoreNregWrap* obj = ObjectWrap::Unwrap<CoreNregWrap>(args.Holder());
 	
 	if (args.Length() < 1) {
-		ThrowException(Exception::TypeError(String::New("Wrong number of arguments")));
-		return scope.Close(Undefined());
+		isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong number of arguments")));
+		return;
 	}
 	
 	for(int i = 0 ; i < args.Length() ; i++) {
 		if(!args[i]->IsString()) {
-			ThrowException(Exception::TypeError(String::New("Wrong argument type")));
-			return scope.Close(Undefined());
+			isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong argument type")));
+			return;
 		}
 		
-		String::AsciiValue tmp(args[i]->ToString());
+		String::Utf8Value tmp(args[i]->ToString());
 		CoreNregWrapExpr nwe(*tmp, tmp.length());
 		
 		obj->exprs.erase(nwe);
 	}
 	
-	return(args.This());
+	args.GetReturnValue().Set(args.This());
 }
 
-Handle<Value> CoreNregWrap::getObj(const Arguments& args) {
-	HandleScope scope;
-	CoreNregWrap* obj = ObjectWrap::Unwrap<CoreNregWrap>(args.This());
+void CoreNregWrap::getObj(const FunctionCallbackInfo<Value>& args) {
+	Isolate* isolate = Isolate::GetCurrent();
+	HandleScope scope(isolate);
+	CoreNregWrap* obj = ObjectWrap::Unwrap<CoreNregWrap>(args.Holder());
 	Local<Object> ret;
 	
-	ret = Object::New();
-	ret->Set(String::New("is_insensitive"), Boolean::New(obj->is_insensitive));
+	ret = Object::New(isolate);
+	ret->Set(String::NewFromUtf8(isolate, "is_insensitive"), Boolean::New(isolate, obj->is_insensitive));
 	
 	std::set<CoreNregWrapExpr>::iterator itr = obj->exprs.begin();
-	Local<Array> ret_arr = Array::New(obj->exprs.size());
+	Local<Array> ret_arr = Array::New(isolate, obj->exprs.size());
 	Local<Object> ins_obj;
 	Local<Value> val;
 	
 	for(unsigned long i = 0; itr != obj->exprs.end(); itr++, i++) {
 		CoreNregWrapExpr expr = (*itr);
-		ret_arr->Set(i, String::New(expr.expr.c_str(), expr.expr.size()));
+		ret_arr->Set(i, String::NewFromUtf8(isolate, expr.expr.c_str()));
 	}
 	
-	ret->Set(String::New("expressions"), ret_arr);
+	ret->Set(String::NewFromUtf8(isolate, "expressions"), ret_arr);
 	
-	return(scope.Close(ret));
+	args.GetReturnValue().Set(ret);
 }
 
-Handle<Value> CoreNregWrap::reload(const Arguments& args) {
-	HandleScope scope;
-	CoreNregWrap* obj = ObjectWrap::Unwrap<CoreNregWrap>(args.This());
+void CoreNregWrap::reload(const FunctionCallbackInfo<Value>& args) {
+	Isolate* isolate = Isolate::GetCurrent();
+	HandleScope scope(isolate);
+	CoreNregWrap* obj = ObjectWrap::Unwrap<CoreNregWrap>(args.Holder());
 	
 	obj->obj_reload();
 	
-	return(scope.Close(args.This()));
+	args.GetReturnValue().Set(args.This());
 }
 
-Handle<Value> CoreNregWrap::match(const Arguments& args) {
-	HandleScope scope;
-	CoreNregWrap* obj = ObjectWrap::Unwrap<CoreNregWrap>(args.This());
+void CoreNregWrap::match(const FunctionCallbackInfo<Value>& args) {
+	Isolate* isolate = Isolate::GetCurrent();
+	HandleScope scope(isolate);
+	CoreNregWrap* obj = ObjectWrap::Unwrap<CoreNregWrap>(args.Holder());
 	std::string decoded;
 	std::string encoded;
 	CoreNregWrapExpr expr;
 	bool ret;
 	
 	if (args.Length() != 1) {
-		ThrowException(Exception::TypeError(String::New("Wrong number of arguments")));
-		return scope.Close(Undefined());
+		isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong number of arguments")));
+		return;
 	}
 	
-	String::AsciiValue tmp(args[0]->ToString());
+	String::Utf8Value tmp(args[0]->ToString());
 	
 	encoded = std::string(*tmp, tmp.length());
 	ret = obj->obj_match(encoded.c_str(), encoded.length(), &expr);
 	
 	if(ret) {
-		return(scope.Close(String::New(expr.expr.c_str(), expr.expr.size())));
+		args.GetReturnValue().Set(String::NewFromUtf8(isolate, expr.expr.c_str()));
+		return;
 	}
 	
-	return(scope.Close(Boolean::New(false)));
+	args.GetReturnValue().Set(Boolean::New(isolate, false));
 }
 
-Handle<Value> CoreNregWrap::matchAll(const Arguments& args) {
-	HandleScope scope;
-	CoreNregWrap* obj = ObjectWrap::Unwrap<CoreNregWrap>(args.This());
+void CoreNregWrap::matchAll(const FunctionCallbackInfo<Value>& args) {
+	Isolate* isolate = Isolate::GetCurrent();
+	HandleScope scope(isolate);
+	CoreNregWrap* obj = ObjectWrap::Unwrap<CoreNregWrap>(args.Holder());
 	int ret;
 	std::string decoded;
 	std::string encoded;
-	Local<Array> ret_arr = Array::New();
+	Local<Array> ret_arr = Array::New(isolate);
 	std::set<CoreNregWrapExpr> exprs;
 	
 	if (args.Length() != 1) {
-		ThrowException(Exception::TypeError(String::New("Wrong number of arguments")));
-		return scope.Close(Undefined());
+		isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong number of arguments")));
+		return;
 	}
 	
-	String::AsciiValue tmp(args[0]->ToString());
+	String::Utf8Value tmp(args[0]->ToString());
 	
 	encoded = std::string(*tmp, tmp.length());
 	ret = obj->obj_match_all(encoded.c_str(), encoded.length(), &exprs);
@@ -321,11 +343,11 @@ Handle<Value> CoreNregWrap::matchAll(const Arguments& args) {
 		
 		for(unsigned long i = 0; itr != exprs.end(); itr++, i++) {
 			CoreNregWrapExpr expr = (*itr);
-			ret_arr->Set(i, String::New(expr.expr.c_str(), expr.expr.size()));
+			ret_arr->Set(i, String::NewFromUtf8(isolate, expr.expr.c_str()));
 		}
 	}
 	
-	return(scope.Close(ret_arr));
+	args.GetReturnValue().Set(ret_arr);
 }
 
 bool CoreNregWrap::match_cb(CoreNregNode *node, void *usr) {

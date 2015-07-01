@@ -27,14 +27,13 @@
 using namespace v8;
 
 void CoreUtils::Init(Handle<Object> exports) {
-	exports->Set(String::NewSymbol("dateToStr"),
-      FunctionTemplate::New(dateToStr)->GetFunction());
-	exports->Set(String::NewSymbol("cstrrev"),
-      FunctionTemplate::New(cstrrev)->GetFunction());
+	NODE_SET_METHOD(exports, "dateToStr", dateToStr);
+	NODE_SET_METHOD(exports, "cstrrev", cstrrev);
 }
 
-v8::Handle<v8::Value> CoreUtils::dateToStr(const v8::Arguments& args) {
-	HandleScope scope;
+void CoreUtils::dateToStr(const FunctionCallbackInfo<Value>& args) {
+	Isolate* isolate = Isolate::GetCurrent();
+	HandleScope scope(isolate);
 	Local<Number> jsnum;
 	std::string fmt = "%d/%b/%Y:%H:%M:%S %z";
 	time_t unix_ts = time(NULL);
@@ -51,14 +50,14 @@ v8::Handle<v8::Value> CoreUtils::dateToStr(const v8::Arguments& args) {
 			}
 			else if(args[0]->IsString()) {
 				
-				String::AsciiValue tmp(args[0]->ToString());
+				String::Utf8Value tmp(args[0]->ToString());
 				fmt = *tmp;
 			}
 		}
 		else {
 			if(args[0]->IsNumber() && args[1]->IsString()) {
 				double tstamp = args[0]->ToNumber()->Value();
-				String::AsciiValue tmp(args[1]->ToString());
+				String::Utf8Value tmp(args[1]->ToString());
 				
 				unix_ts = tstamp / 1000;
 				fmt = *tmp;
@@ -69,23 +68,27 @@ v8::Handle<v8::Value> CoreUtils::dateToStr(const v8::Arguments& args) {
 	gmtime_r(&unix_ts, &toConvert);
 	ret = strftime(buffer, sizeof(buffer) - 1, fmt.c_str(), &toConvert);
 	if(ret <= 0) {
-		return(scope.Close(Undefined()));
+		args.GetReturnValue().Set(Undefined(isolate));
 	}
-	
-	return(scope.Close(String::New(buffer)));
+	else {
+		args.GetReturnValue().Set(String::NewFromUtf8(isolate, buffer));
+	}
 }
 
-v8::Handle<v8::Value> CoreUtils::cstrrev(const v8::Arguments& args) {
-	HandleScope scope;
+void CoreUtils::cstrrev(const FunctionCallbackInfo<Value>& args) {
+	Isolate* isolate = Isolate::GetCurrent();
+	HandleScope scope(isolate);
 	Local<String> input;
 	char *input_c;
 	char *buffer;
 	
 	input = args[0]->ToString();
-	String::AsciiValue tmp(input);
+	String::Utf8Value tmp(input);
 	
-	if(tmp.length() == 0)
-		return(scope.Close(String::New("")));
+	if(tmp.length() == 0) {
+		args.GetReturnValue().Set(String::NewFromUtf8(isolate, ""));
+		return;
+	}
 	
 	input_c = *tmp;
 	buffer = new char[tmp.length() + 1];
@@ -93,8 +96,8 @@ v8::Handle<v8::Value> CoreUtils::cstrrev(const v8::Arguments& args) {
 		buffer[l - i - 1] = input_c[i];
 	
 	buffer[tmp.length()] = '\0';
-	input = String::New(buffer, tmp.length());
+	input = String::NewFromUtf8(isolate, buffer);
 	delete[] buffer;
 	
-	return(scope.Close(input));
+	args.GetReturnValue().Set(input);
 }
