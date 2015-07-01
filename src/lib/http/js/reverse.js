@@ -24,6 +24,7 @@ var url = require("url");
 var cluster = require("cluster");
 var fs = require("fs");
 var crypto = require("crypto");
+var tls = require("tls");
 
 var spdy = require("./node-spdy/lib/spdy.js");
 
@@ -356,7 +357,6 @@ reverse.loader = function(gjs) {
 
 		pipe.update(reverse.sites.opcodes, pipe.location.pipeline);
 		
-		
 		/* execute pipeline */
 		pipe.resume();
 		pipe.execute();
@@ -423,8 +423,7 @@ reverse.loader = function(gjs) {
 		return(iface);
 	}
 	
-	
-	
+
 	var bindHttpsServer = function(key, sc) {
 		if(!gjs.lib.http.lookupSSLFile(sc)) {
 			console.log("Can not create HTTPS server on "+sc.address+':'+sc.port);
@@ -432,8 +431,9 @@ reverse.loader = function(gjs) {
 		}
 		
 		gjs.lib.http.hardeningSSL(sc);
-		
-		sc.SNICallback = function(hostname) {
+
+		sc.SNICallback = function(hostname, cb) {
+			
 			var site = reverse.sites.search(hostname);
 			
 			if(site && site.sslSNI) {
@@ -457,10 +457,15 @@ reverse.loader = function(gjs) {
 				gjs.lib.http.hardeningSSL(site.sslSNI);
 				
 				/* associate crypto Credentials */
-				site.sslSNI.crypto = crypto.createCredentials(site.sslSNI);
-				return(site.sslSNI.crypto.context);
+				site.sslSNI.crypto = tls.createSecureContext(site.sslSNI);
+				
+				/* set TLS context */ 
+				cb(null, site.sslSNI.crypto.context);
+				return(true);
 			}
 		}
+
+		sc.spdy = false;
 		
 		var int = https;
 		if(sc.spdy == true) 
