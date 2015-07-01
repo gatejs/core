@@ -118,3 +118,49 @@ example {{
 
 }}
 
+
+opcode:hsts {{
+
+extends: http:reverse:opcodes
+scope: pipeline
+type: object-kv
+description: hpkp - Public Key Pinning Extension for HTTP
+since: 1.7
+
+param-age: HSTS Maximum age (default 10512000)
+param-subDomain: Include subdomains, true or false (default false)
+param-report: HPKP report-uri
+
+mark {{
+The Public Key Pinning Extension for HTTP (HPKP) is a security feature that tells a 
+web client to associate a specific cryptographic public key with a certain web server 
+to prevent MITM attacks with forged certificates.
+
+To ensure the authenticity of a server's public key used in TLS sessions, this public 
+key is wrapped into a X.509 certificate which is usually signed by a certificate authority (CA). 
+Web clients such as browsers trust a lot of these CAs, which can all create certificates for 
+arbitrary domain names. If an attacker is able to compromise a single CA, he can perform MITM 
+attacks on various TLS connections. HPKP can circumvent this threat for the HTTPS protocol by 
+telling the client which public key belongs to a certain web server.
+
+HPKP is a Trust on First Use (TOFU) technique. The first time a web server tells a client via 
+a special HTTP header which public keys belong to it, the client stores this information for 
+a given period of time. When the client visits the server again, it expects a certificate 
+containing a public key whose fingerprint is already known via HPKP. If the server delivers 
+an unknown public key, the client should present a warning to the user.
+
+https://developer.mozilla.org/en-US/docs/Web/Security/Public_Key_Pinning
+
+Gate will automatically read the certificates fingerprints. 
+}}
+
+example {{
+['hpkp', { 
+	age: 10512000,
+	subDomain: true,
+	report: "http://www.reportabuse.com/",
+}],
+}}
+
+}}
+
