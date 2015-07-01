@@ -21,7 +21,8 @@
 var httpPlug = require('http');
 var fs = require('fs');
 var constants = require('constants');
-
+var child_process = require("child_process");
+var exec = child_process.exec;
 
 function fixHeaders(field, value) {
 	if(!this.orgHeaders)
@@ -85,13 +86,43 @@ http.forward = require(__dirname+'/js/forward');
 http.reverse = require(__dirname+'/js/reverse');
 http.server = require(__dirname+'/js/server');
 
+
+
 http.lookupSSLFile = function(options) {
 	var root = http.gjs.serverConfig.confDir+'/ssl';
 	var keyLookup = ['cert', 'ca', 'pfx', 'key'];
 	
-	function readFile(name) {
+	options.fingerprint = {};
+	
+	function readFingerPrint(file, key) {
+		var cmd = "openssl x509 -in "+file+" -noout -sha256 -fingerprint";
+		child_process.exec(cmd, function(error, stdout, stderr) {
+		    if (error !== null)
+		        return;
+
+		    var r = stdout.trim(), i = r.indexOf("=");
+		    if(i > 0) {
+		    	var nb = new Buffer(r.substr(i+1).split(':').join(""), "hex")
+		    	
+		    	if(!options.fingerprint[key])
+		    		options.fingerprint[key] = nb;
+		    		
+		    	else {
+		    		if(options.fingerprint[key] instanceof Array)
+		    			options.fingerprint[key].push(nb);
+		    		else { 
+		    			var n = [options.fingerprint[key], nb];
+		    			options.fingerprint[key] = n;
+		    		}
+		    	}
+		    }
+		});
+	}
+	
+	function readFile(name, key) {
 		var ret;
 		var file = root+'/'+name;
+		readFingerPrint(file, key);
 		try {
 			var fss = fs.statSync(file);
 			ret = fs.readFileSync(file);
@@ -107,11 +138,11 @@ http.lookupSSLFile = function(options) {
 		if(options[z]) {
 			var r = options[z];
 			if(typeof r === "string") 
-				options[z] = readFile(options[z]);
+				options[z] = readFile(options[z], z);
 			else if(typeof r === "object") {
 				var p = [];
 				for(var b in r)
-					p.push(readFile(r[b]));
+					p.push(readFile(r[b], z));
 				options[z] = p;
 			} 
 		}
@@ -119,6 +150,8 @@ http.lookupSSLFile = function(options) {
 
 	return(true);
 }
+
+
 
 http.hardeningSSL = function(conf) {
 	if(!conf.ciphers)
