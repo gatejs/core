@@ -96,9 +96,8 @@ acn.loadHeaderFile = function(file) {
 
 
 	} catch(e) {
-		if(e.errno != 34)
-		console.log(e);
-
+		if(e.errno != -2)
+			console.log(e);
 		return(false);
 	}
 	fs.closeSync(fd);

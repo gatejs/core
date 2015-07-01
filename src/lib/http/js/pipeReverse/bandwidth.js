@@ -9,6 +9,8 @@ bandwidth.request = function(pipe, speed) {
 		response.pipe(throttle);
 		pipe.subPipe = throttle;
 	});
+
+
 }
 
 bandwidth.ctor = function(gjs) { }

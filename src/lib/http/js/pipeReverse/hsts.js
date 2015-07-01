@@ -1,9 +1,6 @@
 var hsts = function(gjs) { }
 
 hsts.request = function(pipe, options) {
-	if(pipe.server.config.ssl != true)
-		return;
-	
 	if(!options)
 		options = {};
 	

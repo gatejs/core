@@ -46,7 +46,7 @@ cache.request = function(pipe, opts) {
 		var headers = pipe.root.lib.acn.loadHeaderFile(hash.file);
 		if(!headers)
 			return(false);
-
+		
 		/* check if the file must be dumped */
 		if(headers.needDump == false) {
 			/* check stale */
@@ -241,7 +241,7 @@ cache.request = function(pipe, opts) {
 			pipe.stop();
 			return;
 		}
-
+	
 		/*
 		 * Manage cache control
 		 */
@@ -263,7 +263,7 @@ cache.request = function(pipe, opts) {
 					cacheControlMaxAge = b[1];
 			}
 		}
-
+		
 		/* Create hash */
 		var date = new Date();
 		var input = '';
@@ -334,7 +334,7 @@ cache.request = function(pipe, opts) {
 
 			/* write stream */
 			var st = fs.createWriteStream(hash.tmpFile);
-			st.on('error', function(err) { console.log(err); });
+			st.on('error', function(err) { console.log(1, err); });
 			st.write(fileHdr);
 			pipe.response.fileIsCaching = st;
 			pipe.response.fileHash = hash;
