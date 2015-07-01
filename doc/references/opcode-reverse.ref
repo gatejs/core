@@ -127,7 +127,7 @@ type: object-kv
 description: hpkp - Public Key Pinning Extension for HTTP
 since: 1.7
 
-param-age: HSTS Maximum age (default 10512000)
+param-age: HPKP Maximum age (default 10512000)
 param-subDomain: Include subdomains, true or false (default false)
 param-report: HPKP report-uri
 
