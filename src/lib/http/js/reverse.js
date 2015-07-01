@@ -464,8 +464,6 @@ reverse.loader = function(gjs) {
 				return(true);
 			}
 		}
-
-		sc.spdy = false;
 		
 		var int = https;
 		if(sc.spdy == true) 
