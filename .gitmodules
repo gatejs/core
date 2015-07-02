@@ -1,9 +1,9 @@
 [submodule "src/lib/mu2"]
 	path = src/lib/mu2
-	url = git://github.com/raycmorgan/Mu
+	url = https://github.com/github.com/raycmorgan/Mu.git
 [submodule "src/lib/ipaddr"]
 	path = src/lib/ipaddr
-	url = http://github.com/binarysec/node-ipaddr.git
+	url = https://github.com/binarysec/node-ipaddr.git
 [submodule "src/lib/http/js/node-spdy"]
 	path = src/lib/http/js/node-spdy
 	url = https://github.com/indutny/node-spdy.git
@@ -13,4 +13,4 @@
 	branch = v0.12.4
 [submodule "src/lib/jen"]
 	path = src/lib/jen
-	url = git@github.com/mykiimike/jen.git
+	url = https://github.com/mykiimike/jen.git
