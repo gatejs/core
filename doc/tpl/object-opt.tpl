@@ -6,6 +6,7 @@
 {{#render.extends}}* A part of {{render.extends}}{{/render.extends}}
 {{#render.scope}}* Scope: {{render.scope}}{{/render.scope}}
 * Type: Object Options
+{{#render.since}}* Since: version {{render.since}}{{/render.since}}
 
 {{#render.params}}
 ## Parameters

@@ -6,6 +6,7 @@
 {{#render.extends}}* A part of {{render.extends}}{{/render.extends}}
 {{#render.scope}}* Scope: {{render.scope}}{{/render.scope}}
 * Type: Array string
+{{#render.since}}* Since: version {{render.since}}{{/render.since}}
 
 {{#render.content}}
 ## Information

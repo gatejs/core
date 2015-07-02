@@ -86,7 +86,7 @@ opcode:hsts {{
 
 extends: http:reverse:opcodes
 scope: pipeline
-type: object-kv
+type: object-opt
 description: hsts - HTTP Strict Transport Security
 since: 1.7
 
@@ -119,11 +119,11 @@ example {{
 }}
 
 
-opcode:hsts {{
+opcode:hpkp {{
 
 extends: http:reverse:opcodes
 scope: pipeline
-type: object-kv
+type: object-opt
 description: hpkp - Public Key Pinning Extension for HTTP
 since: 1.7
 

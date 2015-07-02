@@ -6,6 +6,7 @@
 {{#render.extends}}* A part of {{render.extends}}{{/render.extends}}
 {{#render.scope}}* Scope: {{render.scope}}{{/render.scope}}
 * Type: Object KV
+{{#render.since}}* Since: version {{render.since}}{{/render.since}}
 
 ## Paramaters
 

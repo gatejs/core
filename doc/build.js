@@ -2,9 +2,9 @@ var fs = require('fs');
 var mu = require('../src/lib/mu2/index.js');
 
 var build  = function() {
-	var version = "1.6";
+	var version = "1.7";
 	var vdf = "/index.php";
-	var vd = '/documentation/1-6/';
+	var vd = '/documentation/1-7/';
 	
 	console.log('gatejs documentation builder');
 	
@@ -228,6 +228,15 @@ var build  = function() {
 				el.render.scope = el.vars.scope;
 			else {
 				el.render.scope = res;
+			}
+		}
+		
+		if(el.vars.since) {
+			var res = el.vars.since;
+			if(!res)
+				el.render.since = el.vars.since;
+			else {
+				el.render.since = res;
 			}
 		}
 		
