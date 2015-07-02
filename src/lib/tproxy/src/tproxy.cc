@@ -132,7 +132,7 @@ void Tproxy::newTproxyFD(const v8::FunctionCallbackInfo<v8::Value>& args) {
 void Tproxy::newTproxyClientFD(const FunctionCallbackInfo<Value>& args) {
 	Isolate* isolate = Isolate::GetCurrent();
 	HandleScope scope(isolate);
-	struct sockaddr sa;
+	struct sockaddr *sa;
 	int sa_size;
 	std::string bind_addr;
 	int bind_port;
@@ -171,7 +171,7 @@ void Tproxy::newTproxyClientFD(const FunctionCallbackInfo<Value>& args) {
 			return;
 		}
 		sa_size = sizeof(sai);
-		memcpy(&sa, &sai, sa_size);
+		sa = reinterpret_cast<struct sockaddr*>(&sai);
 	}
 	else if(version == 6) {
 		struct sockaddr_in6 sai6;
@@ -187,7 +187,7 @@ void Tproxy::newTproxyClientFD(const FunctionCallbackInfo<Value>& args) {
 			return;
 		}
 		sa_size = sizeof(sai6);
-		memcpy(&sa, &sai6, sa_size);
+		sa = reinterpret_cast<struct sockaddr*>(&sai6);
 	}
 	else {
 		THROW("IP version not found");
@@ -213,7 +213,7 @@ void Tproxy::newTproxyClientFD(const FunctionCallbackInfo<Value>& args) {
 		return;
 	}
 	
-	ret = bind(fd, &sa, sa_size);
+	ret = bind(fd, sa, sa_size);
 	
 	if(ret == -1) {
 		THROW("Call of bind() failed");
@@ -239,7 +239,7 @@ void Tproxy::newTproxyClientFD(const FunctionCallbackInfo<Value>& args) {
 void Tproxy::newTproxyServerFD(const FunctionCallbackInfo<Value>& args) {
 	Isolate* isolate = Isolate::GetCurrent();
 	HandleScope scope(isolate);
-	struct sockaddr sa;
+	struct sockaddr *sa;
 	int sa_size;
 	std::string bind_addr;
 	int bind_port;
@@ -283,7 +283,7 @@ void Tproxy::newTproxyServerFD(const FunctionCallbackInfo<Value>& args) {
 			return;
 		}
 		sa_size = sizeof(sai);
-		memcpy(&sa, &sai, sa_size);
+		sa = reinterpret_cast<struct sockaddr*>(&sai);
 	}
 	else if(version == 6) {
 		struct sockaddr_in6 sai6;
@@ -299,7 +299,7 @@ void Tproxy::newTproxyServerFD(const FunctionCallbackInfo<Value>& args) {
 			return;
 		}
 		sa_size = sizeof(sai6);
-		memcpy(&sa, &sai6, sa_size);
+		sa = reinterpret_cast<struct sockaddr*>(&sai6);
 	}
 	else {
 		THROW("IP version not found");
@@ -325,7 +325,7 @@ void Tproxy::newTproxyServerFD(const FunctionCallbackInfo<Value>& args) {
 		return;
 	}
 	
-	ret = bind(fd, &sa, sa_size);
+	ret = bind(fd, sa, sa_size);
 	
 	if(ret == -1) {
 		THROW("Call of bind() failed");
