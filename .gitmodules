@@ -13,4 +13,4 @@
 	branch = v0.12.4
 [submodule "src/lib/jen"]
 	path = src/lib/jen
-	url = git@github.com:mykiimike/jen.git
+	url = git@github.com/mykiimike/jen.git
