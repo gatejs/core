@@ -1,16 +1,16 @@
 [submodule "src/lib/mu2"]
 	path = src/lib/mu2
-	url = https://github.com/github.com/raycmorgan/Mu.git
+	url = https://github.com/raycmorgan/Mu
 [submodule "src/lib/ipaddr"]
 	path = src/lib/ipaddr
-	url = https://github.com/binarysec/node-ipaddr.git
+	url = https://github.com/binarysec/node-ipaddr
 [submodule "src/lib/http/js/node-spdy"]
 	path = src/lib/http/js/node-spdy
-	url = https://github.com/indutny/node-spdy.git
+	url = https://github.com/indutny/node-spdy
 [submodule "deps/nodejs"]
 	path = deps/nodejs
 	url = https://github.com/joyent/node
 	branch = v0.12.4
 [submodule "src/lib/jen"]
 	path = src/lib/jen
-	url = https://github.com/mykiimike/jen.git
+	url = https://github.com/mykiimike/jen
