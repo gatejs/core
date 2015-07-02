@@ -129,6 +129,7 @@ since: 1.7
 
 param-age: HPKP Maximum age (default 10512000)
 param-subDomain: Include subdomains, true or false (default false)
+param-backup: Backup pin for recovering (SHA256 hexadecimal format)
 param-report: HPKP report-uri
 
 mark {{
@@ -149,7 +150,8 @@ a given period of time. When the client visits the server again, it expects a ce
 containing a public key whose fingerprint is already known via HPKP. If the server delivers 
 an unknown public key, the client should present a warning to the user.
 
-https://developer.mozilla.org/en-US/docs/Web/Security/Public_Key_Pinning
+* http://tools.ietf.org/html/rfc7469
+* https://developer.mozilla.org/en-US/docs/Web/Security/Public_Key_Pinning
 
 Gate will automatically read the certificates fingerprints. 
 }}
@@ -158,7 +160,8 @@ example {{
 ['hpkp', { 
 	age: 10512000,
 	subDomain: true,
-	report: "http://www.reportabuse.com/",
+	backup: "AB4C433C491EF5C5EF686E838E323E6FA089610D822CCC958FB545483E49A08F",
+	report: "http://example.com/pkp-report",
 }],
 }}
 

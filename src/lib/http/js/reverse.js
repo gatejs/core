@@ -438,17 +438,23 @@ reverse.loader = function(gjs) {
 			
 			if(site && site.sslSNI) {
 				/* can not use SNI  */
-				if(site.sslSNI.usable == false)
+				if(site.sslSNI.usable == false) {
+					cb(null, null);
 					return(false);
+				}
 		
 				/* SNI resolved */
-				if(site.sslSNI.resolv)
-					return(site.sslSNI.crypto.context);
+				if(site.sslSNI.resolv) {
+					console.log(site.sslSNI);
+					cb(null, site.sslSNI.crypto.context);
+					return(true);
+				}
 				
 				/* ok wegjsite has SNI certificate check files */
 				if(!gjs.lib.http.lookupSSLFile(site.sslSNI)) {
 					site.sslSNI.usable = false;
 					site.sslSNI.resolv = true;
+					cb(null, null);
 					return(false);
 				}
 				site.sslSNI.usable = true;
@@ -463,6 +469,8 @@ reverse.loader = function(gjs) {
 				cb(null, site.sslSNI.crypto.context);
 				return(true);
 			}
+			cb(null, null);
+			return(false);
 		}
 		
 		var int = https;
