@@ -98,7 +98,7 @@ cache.request = function(pipe, opts) {
 				var nHeaders = {};
 				for(var n in pipe.response.headers)
 					nHeaders[pipe.response.orgHeaders[n]] = pipe.response.headers[n];
-							
+						
 				if(pipe.reverse === true)
 					pipe.root.lib.http.reverse.log(pipe, 304);
 				else
@@ -157,15 +157,14 @@ cache.request = function(pipe, opts) {
 // 				});
 // 			});
 
-			/* lookup sub pipe */
-			var subPipe = st;
-			if(pipe.subPipe)
-				subPipe = pipe.subPipe;
+			/* actually we don't need subpipe anymore */
+			if(pipe.subPipe) 
+				pipe.subPipe.end();
 			
 			if(pipe.reverse === true)
-				pipe.root.lib.http.reverse.logpipe(pipe, subPipe);
+				pipe.root.lib.http.reverse.logpipe(pipe, st);
 			else
-				pipe.root.lib.http.forward.logpipe(pipe, subPipe);
+				pipe.root.lib.http.forward.logpipe(pipe, st);
 			/* check */
 			return(true);
 		}
@@ -377,8 +376,14 @@ cache.request = function(pipe, opts) {
 
 			
 			}));
-						
-			response.pipe(st);
+		
+			
+			/* determinate the source */
+			var from = response;
+			if(pipe.subPipe) 
+				from = pipe.subPipe;
+
+			from.pipe(st);
 
 // 			console.log('MISS: '+pipe.request.url);
 // 			pipe.response.gjsSetHeader('Via', 'gatejs MISS');

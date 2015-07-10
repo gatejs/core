@@ -37,9 +37,15 @@ injection.request = function(pipe, options) {
 	if(options.contentType !== undefined)
 		contentType = options.contentType;
 	
+	var event = "rvProxyPassPassRequest";
+	if(pipe.forward === true)
+		event = "fwProxyPassPassRequest";
+	
 	/* receive response */
-	pipe.response.on('response', function(res) {
+	pipe.response.on(event, function(pipe, req, res) {
 		var ctrl = false;
+		if(res.statusCode != 200)
+			return;
 		
 		if(res.headers['content-type'])
 			var iCt = res.headers['content-type'].split(';')[0];
@@ -49,11 +55,7 @@ injection.request = function(pipe, options) {
 				ctrl = true;
 		}
 		
-		
 		if(ctrl == true) {
-			pipe.cantCache = true;
-			
-			
 			function interpretation(dIn, dOut) {
 				
 				var token = 0;
@@ -110,7 +112,6 @@ injection.request = function(pipe, options) {
 				
 				/* derivate server output */
 				pipe.subPipe = dOut;
-				
 			}
 			
 			/* check for gzip content */
