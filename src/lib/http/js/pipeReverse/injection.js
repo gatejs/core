@@ -28,7 +28,6 @@ var injection = function() {}
 
 injection.request = function(pipe, options) {
 	
-	
 	if(options === undefined)
 		options = {};
 	
