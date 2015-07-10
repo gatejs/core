@@ -113,6 +113,8 @@ install:
 	sed -e "$SED_CMD" "./bin/$INIT_FILE" > "$PREFIX_CONF/init.d/gatejs"
 	chmod +x "$PREFIX_CONF/init.d/gatejs"
 	
+	if which systemctl > /dev/null 2>&1; then systemctl daemon-reload; fi
+	
 	@echo "Gatejs is installed."
 
 git-submodules-up:
