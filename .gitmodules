@@ -10,7 +10,6 @@
 [submodule "deps/nodejs"]
 	path = deps/nodejs
 	url = https://github.com/joyent/node
-	branch = v0.12.4
 [submodule "src/lib/jen"]
 	path = src/lib/jen
 	url = https://github.com/mykiimike/jen
