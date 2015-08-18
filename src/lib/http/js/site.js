@@ -105,6 +105,8 @@ var site = function(gjs, channel, configuration) {
 							
 							for(var a in obj.locations) {
 								var p = obj.locations[a];
+								if(typeof p.regex == 'string')
+									p.regex = new RegExp(p.regex);
 								if(p.userId)
 									p.userId = gjs.lib.core.getUser(p.userId);
 								if(p.groupId)
