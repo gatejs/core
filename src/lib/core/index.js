@@ -88,7 +88,7 @@ core.fixCamelLike = function(str) {
 
 core.lookupSSLFile = function(options) {
 	/* ca and crl as possible array */
-	var root = gjs.serverConfig.libDir+'/ssl';
+	var root = gjs.serverConfig.dataDir+'/ssl';
 	var keyLookup = ['cert', 'ca', 'pfx', 'key'];
 	for(var a in keyLookup) {
 		var z = keyLookup[a];
