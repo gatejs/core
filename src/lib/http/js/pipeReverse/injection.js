@@ -79,9 +79,18 @@ injection.request = function(pipe, options) {
 								
 								var pos = dataStr.indexOf('</body>'); // 7
 								if(pos >= 0) {
-									var newBody = dataStr.substr(0, pos)+
+									var newBody;
+									if(typeof options.func === 'function') {
+										newBody = dataStr.substr(0, pos)+
+										"\n"+options.func()+"\n\n</body>\n"+
+										dataStr.substr(pos+7);		
+									}
+									else {
+										newBody = dataStr.substr(0, pos)+
 										"\n"+options.code+"\n\n</body>\n"+
-										dataStr.substr(pos+7);
+										dataStr.substr(pos+7);									
+									}
+
 									dataRetrans = false;
 									dOut.write(newBody);
 									token = 2;

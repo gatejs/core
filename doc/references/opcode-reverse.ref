@@ -39,6 +39,7 @@ scope: reverseSite:locations
 type: object-opt
 description: injection - On-the-fly HTML code injection
 
+param-func: Execute a callback instead of inline code. Function must return the code to be embedded.
 param-code: HTML to be embedded in the page
 
 mark {{
