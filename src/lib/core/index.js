@@ -148,7 +148,7 @@ core.decipherPayload = function(payload, cryptoKey) {
 	}
 	
 	/* inputs */
-	var t = payload.split(",");
+	var t = payload.split('-');
 	var C = t[0], 
 		IV = t[1], 
 		Hm = t[2];
@@ -205,7 +205,7 @@ core.cipherPayload = function(data, cryptoKey) {
 	c.update(cryptoKey, 'binary');
 	var hmac = c.digest("hex");
 
-	return(pl+","+iv+","+hmac);
+	return(pl+"-"+iv+"-"+hmac);
 }
 
 
