@@ -3,7 +3,8 @@ compiler:
   - gcc
 before_script:
   - ./configure
-  - sudo apt-get install -y mawk
+  - sudo apt-get update -qq
+  - sudo apt-get install mawk
   - make | mawk -W interactive 'BEGIN{i=0} { if(i%20 == 0) { print("Building...", i, "files done"); }; i++; }'
 script:
   - sudo make install
