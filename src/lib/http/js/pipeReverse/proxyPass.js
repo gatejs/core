@@ -63,15 +63,6 @@ proxyPass.request = function(pipe, proxyname) {
 		
 		/* no more proxy up */
 		if(!reverse) {
-			pipe.root.lib.http.error.renderArray({
-				pipe: pipe, 
-				code: 504, 
-				tpl: "5xx", 
-				log: true,
-				title:  "Bad gateway",
-				explain: "Unable to establish connection to the backend server"
-			});
-			
 			return(false);
 		}
 		
@@ -79,15 +70,6 @@ proxyPass.request = function(pipe, proxyname) {
 		/* check current stream if we can use it */
 		nodePtr = reverse[base.currentStream];
 		if(!nodePtr) {
-			pipe.root.lib.http.error.renderArray({
-				pipe: pipe, 
-				code: 504, 
-				tpl: "5xx", 
-				log: true,
-				title:  "Unknown proxy stream",
-				explain: "No stream has been selected for "+proxyname
-			});
-		
 			return(false);
 		}
 		
