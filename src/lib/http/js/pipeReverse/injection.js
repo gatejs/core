@@ -40,14 +40,18 @@ injection.request = function(pipe, options) {
 	if(pipe.forward === true)
 		event = "fwProxyPassPassRequest";
 	
+	
 	/* receive response */
 	pipe.response.on(event, function(pipe, req, res) {
 		var ctrl = false;
+		
+		
 		if(res.statusCode != 200)
 			return;
 		
 		if(res.headers['content-type'])
 			var iCt = res.headers['content-type'].split(';')[0];
+		
 		
 		if(typeof contentType == "string") {
 			if(contentType == iCt)
@@ -55,6 +59,8 @@ injection.request = function(pipe, options) {
 		}
 		
 		if(ctrl == true) {
+			
+			
 			function interpretation(dIn, dOut) {
 				
 				var token = 0;
@@ -110,7 +116,7 @@ injection.request = function(pipe, options) {
 					
 				});
 				
-				dIn.on('finish', function() {
+				dIn.on('end', function() {
 					dOut.end();
 				});
 				
