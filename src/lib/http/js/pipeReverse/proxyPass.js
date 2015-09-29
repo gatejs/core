@@ -317,6 +317,13 @@ proxyPass.request = function(pipe, proxyname) {
 			if(!nodePtr.retry)
 				nodePtr.retry = 3;
 			
+			socket.on('error', function(e) {
+				pipe.root.lib.gateWaf.siteInfo(pipe.root,
+					pipe.site.name, 
+					'Server socket error (from '+pipe.request.connection.remoteAddress+') : '+e
+				);
+			});
+			
 			socket.timeoutId = setTimeout(
 				socketErrorDetection, 
 				nodePtr.timeout*1000, 
