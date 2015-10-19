@@ -354,7 +354,9 @@ reverse.loader = function(gjs) {
 			});
 			return;
 		}
-
+		
+		gjs.lib.http.postMgr.init(pipe);
+		
 		pipe.update(reverse.sites.opcodes, pipe.location.pipeline);
 		
 		/* execute pipeline */

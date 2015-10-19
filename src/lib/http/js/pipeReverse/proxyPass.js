@@ -327,12 +327,12 @@ proxyPass.request = function(pipe, proxyname) {
 				socket
 			);
 		});
-
+		
 		pipe.response.emit("rvProxyPassPassPrepare", req);
 		pipe.pause();
-		pipe.request.pipe(req);
+		pipe.root.lib.http.postMgr.register(pipe, req);
 	}
-
+	
 	/* select a destination */
 	var nodePtr = selectDestination('primary');
 	if(nodePtr == false) {

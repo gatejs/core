@@ -82,6 +82,7 @@ http.log = require(__dirname+'/js/log');
 http.littleFs = require(__dirname+'/js/littleFs');
 http.error = require(__dirname+'/js/error');
 http.site = require(__dirname+'/js/site');
+http.postMgr = require(__dirname+'/js/postMgr');
 http.forward = require(__dirname+'/js/forward');
 http.reverse = require(__dirname+'/js/reverse');
 http.server = require(__dirname+'/js/server');
