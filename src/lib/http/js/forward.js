@@ -288,7 +288,7 @@ forward.loader = function(gjs) {
 			gjs.lib.http.lookupSSLFile(sc);
 
 			iface = https.createServer(sc);
-			if(sc.isTproxy == true)
+			if(sc.isTproxy == true && gjs.lib.http.tproxy.enabled)
 				iface.agent = gjs.lib.http.agent.httpsTproxy;
 			else
 				iface.agent = gjs.lib.http.agent.https;
@@ -298,7 +298,7 @@ forward.loader = function(gjs) {
 		}
 		else {
 			iface = http.createServer();
-			if(sc.isTproxy == true)
+			if(sc.isTproxy == true && gjs.lib.http.tproxy.enabled)
 				iface.agent = gjs.lib.http.agent.httpTproxy;
 			else
 				iface.agent = gjs.lib.http.agent.http;
@@ -349,7 +349,7 @@ forward.loader = function(gjs) {
 		iface.allowHalfOpen = false;
 	
 		/* listen */
-		if(sc.isTproxy == true)
+		if(sc.isTproxy == true && gjs.lib.http.tproxy.enabled)
 			iface.listenTproxy(sc.port, sc.address);
 		else
 			iface.listen(sc.port, sc.address);

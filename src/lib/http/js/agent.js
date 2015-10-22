@@ -42,8 +42,10 @@ agent.loader = function(gjs) {
 	agent.spdyTproxy = new gjs.lib.tproxy.httpAgent;
 	agent.spdyTproxy.is = 'spdyTproxy';
 	
-	agent.httpTproxy.tproxy();
-	agent.httpsTproxy.tproxy();
+	if(gjs.lib.tproxy.enabled) {
+		agent.httpTproxy.tproxy();
+		agent.httpsTproxy.tproxy();
+	}
 	
 	if(gjs.serverConfig.agent) {
 		if(gjs.serverConfig.agent.http)

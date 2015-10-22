@@ -342,13 +342,22 @@ proxyPass.request = function(pipe, opts) {
 			modeHost(true);
 			break;
 		case 'tproxy-src-dst':
-			modeTproxy(true);
+			if(gjs.lib.tproxy.enabled)
+				modeTproxy(true);
+			else
+				modeHost(false);
 			break;
 		case 'tproxy-dst':
-			modeTproxy(false);
+			if(gjs.lib.tproxy.enabled)
+				modeTproxy(false);
+			else
+				modeHost(false);
 			break;
 		case 'tproxy-dst-woport':
-			modeTproxy(false, true);
+			if(gjs.lib.tproxy.enabled)
+				modeTproxy(false, true);
+			else
+				modeHost(false);
 			break;
 		default:
 			modeHost(false);

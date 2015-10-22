@@ -388,7 +388,7 @@ reverse.loader = function(gjs) {
 		iface.config = sc;
 		
 		/* select agent */
-		if(sc.isTproxy == true)
+		if(sc.isTproxy == true && gjs.lib.http.tproxy.enabled)
 			iface.agent = gjs.lib.http.agent.httpTproxy;
 		else
 			iface.agent = gjs.lib.http.agent.http;
@@ -417,7 +417,7 @@ reverse.loader = function(gjs) {
 		});
 		
 		/* listen */
-		if(sc.isTproxy == true)
+		if(sc.isTproxy == true && gjs.lib.http.tproxy.enabled)
 			iface.listenTproxy(sc.port, sc.address);
 		else
 			iface.listen(sc.port, sc.address);
@@ -497,12 +497,12 @@ reverse.loader = function(gjs) {
 		
 		/* select agent */
 		if(sc.spdy == true) {
-			if(sc.isTproxy == true)
+			if(sc.isTproxy == true && gjs.lib.http.tproxy.enabled)
 				iface.agent = gjs.lib.http.agent.spdyTproxy;
 			else
 				iface.agent = gjs.lib.http.agent.spdy;
 		}
-		else if(sc.isTproxy == true)
+		else if(sc.isTproxy == true && gjs.lib.http.tproxy.enabled)
 			iface.agent = gjs.lib.http.agent.httpsTproxy;
 		else
 			iface.agent = gjs.lib.http.agent.https;
@@ -529,7 +529,7 @@ reverse.loader = function(gjs) {
 		});
 	
 		/* listen */
-		if(sc.isTproxy == true)
+		if(sc.isTproxy == true && gjs.lib.http.tproxy.enabled)
 			iface.listenTproxy(sc.port, sc.address);
 		else
 			iface.listen(sc.port, sc.address);

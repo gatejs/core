@@ -19,9 +19,21 @@
  */
 
 var net = require('net');
+var http = require('http');
+var os = require('os');
 
 var tproxy = function() { /* loader below */ };
 
+if(os.platform() != 'linux') {
+	tproxy.enabled = false;
+	tproxy.node = false;
+	tproxy.net = net;
+	tproxy.httpAgent = http.Agent;
+	module.exports = tproxy;
+	return;
+}
+
+tproxy.enabled = true;
 tproxy.node = require('./build/Release/obj.target/tproxy.node');
 tproxy.net = require(__dirname+'/js/net');
 tproxy.httpAgent = require(__dirname+'/js/httpAgent');
