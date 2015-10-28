@@ -7,17 +7,40 @@ PREFIX_BIN=usr/local/sbin
 PREFIX_VAR=var
 PREFIX_DATA=home/gatejs-data
 
+INIT_FILE_SRC=gatejs.initd
+INIT_FILE_DIR=/etc/init.d
+INIT_FILE_DST=gatejs
+
+if [ -r /etc/redhat-release ]; then
+	INIT_FILE_SRC=gatejs.initd.redhat
+	INIT_FILE_DIR=/etc/init.d
+	INIT_FILE_DST=gatejs
+elif [ -r /etc/debian_version ]; then
+	INIT_FILE_SRC=gatejs.initd
+	INIT_FILE_DIR=/etc/init.d
+	INIT_FILE_DST=gatejs
+elif [ "$(uname -s)" = "Darwin" ]; then
+	INIT_FILE_SRC=gatejs.plist
+	INIT_FILE_DIR=/Library/LaunchDaemons
+	INIT_FILE_DST=com.gatejs.daemon.plist
+else
+	echo "Your operating system does not seems to be supported!"
+	exit 1
+fi
+
 while test "$#" -gt 0; do
 	case "$1" in
 		'--help'|'-h'|'-help')
 			echo "Available options :"
 			echo "--help"
-			echo "--prefix-root  ($PREFIX_ROOT)"
-			echo "--prefix-share ($PREFIX_SHARE)"
-			echo "--prefix-conf  ($PREFIX_CONF)"
-			echo "--prefix-bin   ($PREFIX_BIN)"
-			echo "--prefix-var   ($PREFIX_VAR)"
-			echo "--prefix-data  ($PREFIX_DATA)"
+			echo "--prefix-root   ($PREFIX_ROOT)"
+			echo "--prefix-share  ($PREFIX_SHARE)"
+			echo "--prefix-conf   ($PREFIX_CONF)"
+			echo "--prefix-bin    ($PREFIX_BIN)"
+			echo "--prefix-var    ($PREFIX_VAR)"
+			echo "--prefix-data   ($PREFIX_DATA)"
+			echo "--init-file     ($INIT_FILE_DST)"
+			echo "--init-file-dir ($INIT_FILE_DIR)"
 			exit 0
 			;;
 		'--prefix-root')
@@ -62,6 +85,20 @@ while test "$#" -gt 0; do
 		'--prefix-data='*)
 			PREFIX_DATA="`echo "$1" | cut -d= -f2-`"
 			;;
+		'--init-file')
+			INIT_FILE_DST="$2"
+			shift
+			;;
+		'--init-file='*)
+			INIT_FILE_DST="`echo "$1" | cut -d= -f2-`"
+			;;
+		'--init-file-dir')
+			INIT_FILE_DIR="$2"
+			shift
+			;;
+		'--init-file-dir='*)
+			INIT_FILE_DIR="`echo "$1" | cut -d= -f2-`"
+			;;
 	esac
 	shift
 done
@@ -78,7 +115,6 @@ PREFIX_BIN_SED=`echo "$PREFIX_BIN" | sed -e 's/~/\\~/g'`
 PREFIX_VAR_SED=`echo "$PREFIX_VAR" | sed -e 's/~/\\~/g'`
 PREFIX_DATA_SED=`echo "$PREFIX_DATA" | sed -e 's/~/\\~/g'`
 SED_CMD="s~%PREFIX_SHARE%~$PREFIX_SHARE_SED~g; s~%PREFIX_CONF%~$PREFIX_CONF_SED~g; s~%PREFIX_BIN%~$PREFIX_BIN_SED~g; s~%PREFIX_VAR%~$PREFIX_VAR_SED~g; s~%PREFIX_DATA%~$PREFIX_DATA_SED~g"
-[ -r /etc/redhat-release ] && INIT_FILE=gatejs.initd.redhat || INIT_FILE=gatejs.initd
 
 cat <<EOF > Makefile
 PATH := $PREFIX_SHARE/gatejs/node/bin:\${PATH}
@@ -109,11 +145,13 @@ install:
 	sed -e "$SED_CMD" "./bin/gatejs" > "$PREFIX_BIN/gatejs"
 	chmod +x "$PREFIX_BIN/gatejs"
 	
-	mkdir -p "$PREFIX_CONF/init.d"
-	sed -e "$SED_CMD" "./bin/$INIT_FILE" > "$PREFIX_CONF/init.d/gatejs"
-	chmod +x "$PREFIX_CONF/init.d/gatejs"
+	mkdir -p "$INIT_FILE_DIR"
+	sed -e "$SED_CMD" "./bin/$INIT_FILE_SRC" > "$INIT_FILE_DIR/$INIT_FILE_DST"
+	chmod +x "$INIT_FILE_DIR/$INIT_FILE_DST"
 	
 	if which systemctl > /dev/null 2>&1; then systemctl daemon-reload; fi
+	
+	if [ "$(uname -s)" = "Darwin" ] && which launchctl > /dev/null 2>&1; then launchctl load "$INIT_FILE_DIR/$INIT_FILE_DST"; fi
 	
 	@echo "Gatejs is installed."
 
@@ -134,3 +172,6 @@ printVar PREFIX_CONF
 printVar PREFIX_BIN
 printVar PREFIX_VAR
 printVar PREFIX_DATA
+printVar INIT_FILE_SRC
+printVar INIT_FILE_DIR
+printVar INIT_FILE_DST

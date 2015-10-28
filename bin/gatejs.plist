@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.gatejs.daemon</string>
+	
+	<key>ProgramArguments</key>
+	<array>
+		<string>%PREFIX_SHARE%/gatejs/node/bin/node</string>
+		<string>%PREFIX_SHARE%/gatejs/service.js</string>
+		<string>--config=%PREFIX_CONF%/gatejs/config.js</string>
+	</array>
+	
+	<key>RunAtLoad</key>
+	<true/>
+	
+	<key>KeepAlive</key>
+	<true/>
+	
+	<key>HardResourceLimits</key>
+	<dict>
+		<key>NumberOfFiles</key>
+		<integer>100000</integer>
+		
+		<key>MemoryLock</key>
+		<integer>82000</integer>
+	</dict>
+</dict>
+</plist>
