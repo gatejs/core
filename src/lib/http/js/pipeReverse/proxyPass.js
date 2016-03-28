@@ -42,7 +42,7 @@ proxyPass.request = function(pipe, proxyname) {
 		return(true);
 	}
 	var proxyStream = pipe.site.proxyStream[proxyname];
-	
+
 	/* 
 	 * select destination host by rr/iphash 
 	 */
@@ -162,7 +162,7 @@ proxyPass.request = function(pipe, proxyname) {
 		
 		for(var n in pipe.request.headers)
 			options.headers[pipe.request.orgHeaders[n]] = pipe.request.headers[n];
-		
+
 		/* emit the preProxyPass */
 		pipe.response.emit("rvProxyPassPassConnection", options, req);
 		
@@ -186,7 +186,7 @@ proxyPass.request = function(pipe, proxyname) {
 			/* remove request timeout */
 			req.connection.connected = true;
 			clearTimeout(req.connection.timeoutId); 
-				
+
 			nodePtr._retry = 0;
 			
 			/* abort connexion because someone is using it for a post response */
@@ -217,7 +217,7 @@ proxyPass.request = function(pipe, proxyname) {
 			pipe.request.on('close', function() {
 				res.destroy();
 			});
-			
+
 			pipe.response.writeHead(res.statusCode, nHeaders);
 			pipe.response.headerSent = true;
 			
@@ -328,30 +328,96 @@ proxyPass.request = function(pipe, proxyname) {
 			);
 		});
 		
+		/* check for connection upgrade */
+/*
+		if(pipe.request.headers.upgrade) {
+
+			req.on('upgrade', function(res, socket, upgradeHead) {
+				req.connection.connected = true;
+
+				clearTimeout(req.connection.timeoutId); 
+
+				nodePtr._retry = 0;
+
+				res.gjsSetHeader('Server', 'gatejs');
+	
+				if(pipe.server.isClosing == true) {
+					res.gjsSetHeader('Connection', 'Close');
+					delete res.headers['keep-alive'];
+				}
+		
+				if(!pipe.server.noVia)
+					res.gjsSetHeader('Via', 'gatejs MISS');
+			
+				var nHeaders = {};
+				for(var n in res.headers)
+					nHeaders[res.orgHeaders[n]] = res.headers[n];
+				
+				var buffer = "HTTP/"+res.httpVersion+" "+res.statusCode+" "+res.statusMessage+"\r\n";
+
+				for(var a in nHeaders)
+					buffer += a+": "+nHeaders[a]+"\r\n";
+			
+				buffer += "\r\n";
+				//pipe.response.writeHead(res.statusCode, nHeaders);
+				//pipe.response.headerSent = true;
+
+				req.socket.setTimeout(0);
+				
+				socket.on("data", function(buffer) {
+					console.log("destination data", buffer.toString());
+				});
+				pipe.request.socket.on("data", function(buffer) {
+					console.log("source data", buffer.toString());
+				});
+
+				pipe.request.socket.write(buffer);
+				socket.pipe(pipe.request.socket);
+				//req.socket.pipe(socket);
+
+
+				console.log(buffer);
+			});
+
+			//console.log("OK need to upgrade connection", pipe.request.httpVersion, options);
+
+
+			pipe.request.pipe(req);
+			pipe.response.emit("rvProxyPassPassPrepare", req);
+			pipe.stop();
+		
+			return;
+		}
+*/
 		pipe.response.emit("rvProxyPassPassPrepare", req);
 		pipe.pause();
 		pipe.root.lib.http.postMgr.register(pipe, req);
 	}
 	
-	/* select a destination */
-	var nodePtr = selectDestination('primary');
-	if(nodePtr == false) {
-		var nodePtr = selectDestination('secondary');
+
+	function globalSelector() {
+		var nodePtr = selectDestination('primary');
 		if(nodePtr == false) {
-			/** \todo check for continue options */
-			
-			/* for sure we can't deliver page */
-			pipe.root.lib.http.error.renderArray({
-				pipe: pipe, 
-				code: 504, 
-				tpl: "5xx", 
-				log: true,
-				title:  "Bad gateway",
-				explain: "Unable to establish connection to the backend server"
-			});
-			
-			return(false);
+			var nodePtr = selectDestination('secondary');
+			if(nodePtr == false)
+				return(false);
 		}
+		return(nodePtr);
+	}
+
+	/* select a destination */
+	var nodePtr = globalSelector();
+	if(nodePtr == false) {
+		pipe.root.lib.http.error.renderArray({
+			pipe: pipe, 
+			code: 504, 
+			tpl: "5xx", 
+			log: true,
+			title:  "Bad gateway",
+			explain: "Unable to establish connection to the backend server"
+		});
+		
+		return(false);
 	}
 	
 	/* emit connection */

@@ -25,7 +25,7 @@ var cluster = require("cluster");
 var fs = require("fs");
 var crypto = require("crypto");
 var tls = require("tls");
-
+var EventEmitter = require('events');
 var spdy = require("./node-spdy/lib/spdy.js");
 
 var reverse = function() { /* loader below */ };
@@ -249,6 +249,10 @@ reverse.loader = function(gjs) {
 	var processRequest = function(server, request, response) {
 		request.remoteAddress = request.connection.remoteAddress;
 		
+
+
+	//console.log(request.headers);
+
 		var pipe = gjs.lib.core.pipeline.create(null, null, function() {
 			gjs.lib.http.error.renderArray({
 				pipe: pipe, 
@@ -398,7 +402,7 @@ reverse.loader = function(gjs) {
 			gjs.lib.core.stats.diffuse('httpWaiting', gjs.lib.core.stats.action.add, 1);
 			
 			socket.setTimeout(60000);
-			
+
 			socket.on('close', function () {
 				socket.inUse = false;
 				gjs.lib.core.graceful.release(socket);
@@ -406,6 +410,9 @@ reverse.loader = function(gjs) {
 			});
 		}));
 		
+
+
+
 		iface.on('listening', function() {
 			gjs.lib.core.logger.system("Binding HTTP reverse proxy on "+sc.address+":"+sc.port);
 			iface.working = true;
@@ -507,11 +514,18 @@ reverse.loader = function(gjs) {
 		else
 			iface.agent = gjs.lib.http.agent.https;
 		
+		/* process upgrade request */
+/*
+		iface.on('upgrade', function(req, socket, head) {
+			processRequest(iface, req, new EventEmitter);
+		});
+*/
+
 		iface.on('connection', (function(socket) {
 			gjs.lib.core.graceful.push(socket);
 			
 			socket.setTimeout(60000);
-			
+		
 			socket.on('close', function () {
 				socket.inUse = false;
 				gjs.lib.core.graceful.release(socket);
