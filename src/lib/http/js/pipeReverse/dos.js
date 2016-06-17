@@ -2,7 +2,20 @@ var util = require("util");
 var http = require("http");
 var cluster = require("cluster");
 
-var dosTab = {}
+var dosTab = {};
+var builtWhiteLists = {};
+
+function loadWLZone(root, zone, addresses) {
+	var ret;
+	if(!builtWhiteLists.hasOwnProperty(zone)) {
+		builtWhiteLists[zone] = root.lib.ipaddr();
+		for(var i = 0 ; i < addresses.length ; i++) {
+			builtWhiteLists[zone].add(addresses[i]);
+		}
+	}
+	ret = builtWhiteLists[zone];
+	return(ret);
+}
 
 function selectZone(pipe, zone) {
 	var ret;
@@ -13,6 +26,7 @@ function selectZone(pipe, zone) {
 }
 
 function selectIP(szone, ip, time) {
+	var ret;
 	if(!szone.hasOwnProperty(ip)) 
 		ret = szone[ip] = {
 			_address: ip,
@@ -30,7 +44,7 @@ var dos = function(gjs) { }
 dos.request = function(pipe, options) {
 	var date = new Date;
 	var now = date.getTime();
-	
+	var remoteIP = pipe.request.connection.remoteAddress;
 	
 	/* select the zone */
 	var selectedZone = false;
@@ -39,11 +53,22 @@ dos.request = function(pipe, options) {
 	if(!selectedZone)
 		selectedZone = selectZone(pipe.root, 'global');
 	
-	/* log for the IP */
-	var selectedIP = selectIP(selectedZone, pipe.request.connection.remoteAddress, now);
-	
 	if(!options)
 		options = {};
+	
+	if(!options.whiteList)
+		options.whiteList = [];
+	
+	if(pipe.reverse == true)
+		var selectedWLZone = loadWLZone(pipe.root, pipe.site.name, options.whiteList);
+	if(!selectedWLZone)
+		selectedWLZone = loadWLZone(pipe.root, 'global', options.whiteList);
+	
+	if(selectedWLZone.search(remoteIP))
+		return(false);
+	
+	/* log for the IP */
+	var selectedIP = selectIP(selectedZone, remoteIP, now);
 	
 	/* default options  */
 	if(!options.markPoints)
@@ -66,7 +91,7 @@ dos.request = function(pipe, options) {
 			log: true,
 			title:  "Too Many Requests",
 			explain: "Too many requests received from your host "+
-				pipe.request.connection.remoteAddress+
+				remoteIP+
 				".",
 		});
 	};
@@ -82,7 +107,7 @@ dos.request = function(pipe, options) {
 		if(diff > 1000) {
 			if(options.disableBlacklist != true && selectedIP._count > options.rps) {
 				pipe.root.lib.core.blacklist.message(
-					pipe.request.connection.remoteAddress,
+					remoteIP,
 					'HTTP Denial of service',
 					options.markPoints
 				);
@@ -108,12 +133,12 @@ dos.request = function(pipe, options) {
 				serverName: pipe.site.name,
 				rps: selectedIP._count,
 				limit: options.rps,
-				ip: pipe.request.connection.remoteAddress
+				ip: remoteIP
 			});
 			
 			if(options.disableBlacklist != true)
 				pipe.root.lib.core.blacklist.message(
-					pipe.request.connection.remoteAddress,
+					remoteIP,
 					'HTTP Denial of service', 
 					options.markPoints
 				);
