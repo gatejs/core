@@ -140,6 +140,16 @@ var site = function(gjs, channel, configuration) {
 		
 	}
 
+	this.get = function(name) {
+		if(!name)
+			return(false);
+		var pos = gjs.lib.core.utils.cstrrev(name);
+		if(this.sites.hasOwnProperty(pos))
+			return(this.sites[pos]);
+		return(false);
+		
+	}
+
 	this.reload = function() {
 		/* reload pipeline */
 		for(var a in  this.sites)
