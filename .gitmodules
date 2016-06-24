@@ -1,3 +1,0 @@
-[submodule "src/lib/http/js/node-spdy"]
-	path = src/lib/http/js/node-spdy
-	url = https://github.com/indutny/node-spdy
