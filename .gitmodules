@@ -1,9 +1,6 @@
 [submodule "src/lib/mu2"]
 	path = src/lib/mu2
 	url = https://github.com/raycmorgan/Mu
-[submodule "src/lib/ipaddr"]
-	path = src/lib/ipaddr
-	url = https://github.com/binarysec/node-ipaddr
 [submodule "src/lib/http/js/node-spdy"]
 	path = src/lib/http/js/node-spdy
 	url = https://github.com/indutny/node-spdy
