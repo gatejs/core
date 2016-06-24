@@ -7,9 +7,6 @@
 [submodule "src/lib/http/js/node-spdy"]
 	path = src/lib/http/js/node-spdy
 	url = https://github.com/indutny/node-spdy
-[submodule "deps/nodejs"]
-	path = deps/nodejs
-	url = https://github.com/joyent/node
 [submodule "src/lib/jen"]
 	path = src/lib/jen
 	url = https://github.com/mykiimike/jen
