@@ -133,6 +133,7 @@ install:
 	fi
 	+make -C src/lib/ipaddr/ rebuild NODE_GYP="$PREFIX_SHARE/gatejs/node/bin/node-gyp"
 	+make -C src/lib/core/ rebuild NODE_GYP="$PREFIX_SHARE/gatejs/node/bin/node-gyp"
+	npm install src/lib/http/js/node-spdy/
 	if test $(uname -s) = "Linux"; then make -C src/lib/tproxy/ rebuild NODE_GYP="$PREFIX_SHARE/gatejs/node/bin/node-gyp"; fi
 	
 	mkdir -p "$PREFIX_SHARE/gatejs"

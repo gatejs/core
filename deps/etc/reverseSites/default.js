@@ -1,7 +1,8 @@
 {
+	name: 'default',
 	interfaces:  [ 'reverseInterface'], 
-	serverName: [ "_" ], // default site
-
+	serverName: ["_"], // default site
+	
 	proxyStream: {
 		nodeOne: {
 			type: "rr",
@@ -28,6 +29,4 @@
 			]
 		}
 	],
-	
-
 }
