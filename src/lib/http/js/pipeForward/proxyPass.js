@@ -48,6 +48,11 @@ proxyPass.request = function(pipe, opts) {
 	if(reqPort <= 0 || reqPort >= 65535)
 		reqHost = 80;
 	
+	/* select upgrade HTTP if necessary */
+	var emitDestination = emitDestinationRequest;
+	if(pipe.upgrade)
+		emitDestination = emitDestinationUpgrade;
+
 	/* check for local address */
 	if(opts.localAddress) 
 		reqLocalAddress = opts.localAddress;
@@ -150,8 +155,10 @@ proxyPass.request = function(pipe, opts) {
 				res.destroy();
 			});
 			
-			pipe.response.writeHead(res.statusCode, nHeaders);
-			pipe.response.headerSent = true;
+			if(!pipe.upgrade) {
+				pipe.response.writeHead(res.statusCode, nHeaders);
+				pipe.response.headerSent = true;
+			}
 
 			/* lookup sub pipe */
 			var subPipe = res;
@@ -222,6 +229,71 @@ proxyPass.request = function(pipe, opts) {
 		pipe.request.pipe(req);
 	}
 	
+	function emitDestinationUpgrade(ip, port, from, localAddress) {
+		
+		pipe.response.on('error', function(err) {
+			pipe.response.emit("fwProxyPassClientClose"); 
+		});
+		
+		pipe.response.on('finish', function() {
+			pipe.response.emit("fwProxyPassClientFinish"); 
+		});
+		
+		/*
+		* Prepare and emit the request
+		*/
+		var options = {
+			host: ip,
+			port: port,
+			url: pipe.request.urlParse.path,
+			method: pipe.request.method,
+			headers: {},
+			rejectUnauthorized: false,
+			agent: pipe.server.agent
+		};
+	
+		/* from is used by tproxy when source is translated */
+		if(from != undefined)
+			options.localAddress = from;
+
+		/* administrator can specify source address */
+		else if(reqLocalAddress)
+			options.localAddress = reqLocalAddress;
+
+		pipe.response.connector = ip+":"+port;
+
+		for(var n in pipe.request.headers)
+			options.headers[pipe.request.orgHeaders[n]] = pipe.request.headers[n];
+		
+		/* build header packet */
+		var h = options.method+' '+options.url+' HTTP/'+pipe.request.httpVersion+'\r\n';
+		for(var a in options.headers) 
+			h += a+": "+options.headers[a]+"\r\n";
+		h += "\r\n";
+
+		/* emit net socket */
+		const client = net.createConnection(options, () => {
+			client.pipe(pipe.response);
+			pipe.response.pipe(client);
+			client.write(h);
+		});
+		client.on('close', () => {
+			pipe.response.destroy();
+			//console.log('disconnected from server');
+		});
+		client.on('error', () => {
+			pipe.response.destroy();
+			//console.log('error from server');
+		});
+		pipe.response.on("close", () => {
+			//console.log('disconnected from client');
+			client.end();
+		});
+
+		pipe.stop();
+		pipe.root.lib.http.forward.log(pipe, 101);
+	}
+
 	/* 
 	 * tproxy source destination routing
 	 */
@@ -248,7 +320,7 @@ proxyPass.request = function(pipe, opts) {
 		spoof = spoof == true ? pipe.request.client._peername.address : undefined;
 		woport = woport == true ? reqPort : realDst.port;
 		
-		emitDestinationRequest(realDst.address, woport, spoof);
+		emitDestination(realDst.address, woport, spoof);
 	}
 	
 	/* 
@@ -272,7 +344,7 @@ proxyPass.request = function(pipe, opts) {
 		if(net.isIP(reqHost)) {
 			pipe.pause();
 			spoof = spoof == true ? pipe.request.client._peername.address : undefined;
-			emitDestinationRequest(reqHost, reqPort, spoof);
+			emitDestination(reqHost, reqPort, spoof);
 			return(true);
 		}
 		
@@ -322,14 +394,14 @@ proxyPass.request = function(pipe, opts) {
 				}
 				
 				spoof = spoof == true ? pipe.request.client._peername.address : undefined;
-				emitDestinationRequest(addresses[0], reqPort, spoof, reqLocalAddress);
+				emitDestination(addresses[0], reqPort, spoof, reqLocalAddress);
 			});
 		}
 		
 		var ip = pipe.root.lib.core.hosts.resolve(reqHost);
 		if(ip) {
 			spoof = spoof == true ? pipe.request.client._peername.address : undefined;
-			emitDestinationRequest(ip, reqPort, spoof, reqLocalAddress);
+			emitDestination(ip, reqPort, spoof, reqLocalAddress);
 		}
 		else
 			runDNS();
@@ -367,6 +439,11 @@ proxyPass.request = function(pipe, opts) {
 	return(false);
 	
 }
+
+proxyPass.upgrade = function(pipe, opts) {
+	proxyPass.request(pipe, opts);
+}
+
 
 proxyPass.ctor = function(bs) {
 

@@ -30,6 +30,7 @@ pipeline.status = {
 function pipelineObject(opcodes, line, errorFunc) {
 	this.pipe = [];
 	this.pipeIdx = 0;
+	this.caller = "request";
 	
 	if(line && opcodes && line.resolved != true) {
 		var lPipe = [];
@@ -106,10 +107,12 @@ function pipelineObject(opcodes, line, errorFunc) {
 			for(; this.pipeIdx < this.pipe.length;) {
 				var func = this.pipe[this.pipeIdx];
 				var arg = [this];
+				var cb = func[0][this.caller];
 				for(var a=1; a<func.length; a++)
 					arg.push(func[a]);
 				this.pipeIdx++;
-				func[0].request.apply(null, arg);
+				if(cb)
+				cb.apply(null, arg);
 				if(this.pipeStatus == pipeline.status.stop)
 					return(true);
 				else if(this.pipeStatus == pipeline.status.waiting)

@@ -75,14 +75,29 @@ error.renderArray = function(msg, file) {
 		'cache-control': 'max-age=0'
 	};
 	
+
 	pipe.stop();
-	pipe.response.writeHead(msg.code, msg.pipe.response.headers);
+
+	if(pipe.upgrade) {
+		var h = "";
+		for(var a in msg.pipe.response.headers) {
+			var p = msg.pipe.response.headers[a];
+			h += a+": "+p+"\r\n";
+		}
+		pipe.response.end(
+			'HTTP/'+pipe.request.httpVersion+' 500 Internal server error\r\n' +
+			h+
+			'\r\n');
+	}
+	else {
+		pipe.response.writeHead(msg.code, msg.pipe.response.headers);
 	
-	msg.vd = msg.pipe.root.lib.http.littleFs.virtualDirectory;
+		msg.vd = msg.pipe.root.lib.http.littleFs.virtualDirectory;
 	
-	var stream = msg.pipe.root.lib.mu2.compileAndRender(filename, msg);
+		var stream = msg.pipe.root.lib.mu2.compileAndRender(filename, msg);
 	
-	stream.pipe(pipe.response);
+		stream.pipe(pipe.response);
+	}
 }
 
 error.loader = function(gjs) {

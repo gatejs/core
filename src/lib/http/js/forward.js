@@ -200,7 +200,58 @@ forward.loader = function(gjs) {
 		pipe.resume();
 		pipe.execute();
 	};
+
+	var processUpgrade = function(server, request, socket) {
+		request.remoteAddress = request.connection.remoteAddress;
 	
+		/* resolv pipeline */
+		server.pipeline = gjs.lib.core.pipeline.getGlobalPipe(server.config.pipeline); 
+		if(!server.pipeline) {
+			gjs.lib.core.logger.error('Enable to locate pipeline '+server.config.pipeline);
+			socket.destroy();
+			return(false);
+		}
+
+		var pipe = gjs.lib.core.pipeline.create(forward.opcodes, server.pipeline, function() {
+			gjs.lib.core.logger.error('Pipeline error while HTTP Upgrade '+
+				server.config.pipeline+' from '+request.remoteAddress);
+			socket.end('HTTP/'+request.httpVersion+' 500 Internal server error\r\n' +
+			       '\r\n');
+			return(false);
+		});
+
+		pipe.forward = true;
+		pipe.root = gjs;
+		pipe.request = request;
+		pipe.response = socket;
+		pipe.server = server;
+		pipe.upgrade = true;
+		pipe.caller = "upgrade";
+
+		gjs.lib.core.stats.http(pipe);
+		
+		/* parse the URL */
+		try {
+			pipe.request.urlParse = url.parse(request.url, true);
+		} catch(e) {
+			gjs.lib.core.logger.error('URL Parse error on from '+request.remoteAddress);
+			socket.destroy();
+			return;
+		}
+		
+		/* get iface */
+		var iface = forward.list[server.gjsKey];
+		if(!iface) {
+			gjs.lib.core.logger.error('No interface found for key '+server.gjsKey+' from '+request.remoteAddress);
+			socket.destroy();
+			return;
+		}
+
+		/* execute pipeline */
+		pipe.resume();
+		pipe.execute();
+	};
+
 
 // 	var slowLoris = function(socket) {
 // 		console.log("Probable SlowLoris attack from "+socket.remoteAddress+", closing.");
@@ -334,6 +385,18 @@ forward.loader = function(gjs) {
 			processRequest(this, request, response);
 		});
 		
+
+		iface.on('upgrade', function(request, socket, head) {
+			request.connection.inUse = true;
+
+			socket.on('close', function() {
+				if(request.connection._handle)
+					request.connection.inUse = false;
+			});
+
+			processUpgrade(this, request, socket);
+		});
+
 		iface.on('listening', function() {
 			gjs.lib.core.logger.system("Binding forward HTTP proxy on "+sc.address+":"+sc.port);
 			iface.working = true;
