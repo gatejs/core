@@ -272,7 +272,7 @@ proxyPass.request = function(pipe, opts) {
 		h += "\r\n";
 
 		/* emit net socket */
-		const client = net.createConnection(options, () => {
+		var client = net.createConnection(options, () => {
 			client.pipe(pipe.response);
 			pipe.response.pipe(client);
 			client.write(h);
