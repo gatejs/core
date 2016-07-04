@@ -34,6 +34,10 @@ headers.request = function(pipe, headerName) {
 	return(false);
 };
 
+headers.upgrade = function(gjs, options) {
+	return(headers.request(gjs, options));
+}
+
 headers.ctor = function(gjs) {
 
 };

@@ -194,6 +194,10 @@ function bsBwsDosBackground(bs) {
 	}
 }
 
+dos.upgrade = function(gjs, options) {
+	return(dos.request(gjs, options));
+}
+
 dos.ctor = function(gjs) {
 	
 	/* start background process */

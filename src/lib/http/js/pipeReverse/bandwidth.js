@@ -13,6 +13,10 @@ bandwidth.request = function(pipe, speed) {
 
 }
 
+bandwidth.upgrade = function(gjs, options) {
+	return(bandwidth.request(gjs, options));
+}
+
 bandwidth.ctor = function(gjs) { }
 
 module.exports = bandwidth; 

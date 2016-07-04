@@ -44,7 +44,10 @@ acl.request = function(gjs, options) {
 		return(true);
 	}
 	
-	
+}
+
+acl.upgrade = function(gjs, options) {
+	return(acl.request(gjs, options));
 }
 
 acl.ctor = function(gjs) {

@@ -25,6 +25,11 @@ executer.request = function(gjs, callback) {
 	callback(gjs);
 }
 
+executer.upgrade = function(gjs, callback) {
+	callback(gjs);
+}
+
+
 executer.ctor = function(gjs) {
 }
 
