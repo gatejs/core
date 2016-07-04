@@ -155,7 +155,7 @@ proxyPass.request = function(pipe, proxyname) {
 		};
 		pipe.response.connector = nodePtr.host+":"+nodePtr.port;
 		pipe.request.gjsOptions = options;
-
+		
 		/* use local address to emit network tcp connection */
 		if(nodePtr.localAddress)
 			options.localAddress = nodePtr.localAddress;
@@ -180,9 +180,11 @@ proxyPass.request = function(pipe, proxyname) {
 		}
 		else
 			options.port = nodePtr.port ? nodePtr.port : 80;
-
 		
 		var req = flowSelect.request(options, function(res) {
+			if(pipe.upgrade)
+				return;
+			
 			/* remove request timeout */
 			req.connection.connected = true;
 			clearTimeout(req.connection.timeoutId); 
@@ -272,6 +274,52 @@ proxyPass.request = function(pipe, proxyname) {
 			emitDestinationRequest(subNodePtr);
 		}
 		
+		if(pipe.upgrade) {
+			req.on('upgrade', function(res, socket, upgradeHead) {
+				/* remove request timeout */
+				req.connection.connected = true;
+				clearTimeout(req.connection.timeoutId); 
+
+				pipe.response.emit("rvProxyPassPassRequest", pipe, req, res);
+				pipe.response.emit("response", res, "rvpass");
+				
+				res.gjsSetHeader('Server', 'gatejs');
+				
+				if(!pipe.server.noVia)
+					res.gjsSetHeader('Via', 'gatejs MISS');
+					
+				/* fix headers */
+				var nHeaders = {};
+				for(var n in res.headers)
+					nHeaders[res.orgHeaders[n]] = res.headers[n];
+
+				/* build header packet */
+				var h = 'HTTP/'+pipe.request.httpVersion+" "+res.statusCode+" "+res.statusMessage+
+					'\r\n';
+				for(var a in nHeaders) 
+					h += a+": "+nHeaders[a]+"\r\n";
+				h += "\r\n";
+				
+				pipe.root.lib.http.reverse.log(pipe, 101);
+		
+				pipe.stop();
+				
+				socket.on('close', function() {
+					//console.log("Remote disconnect");
+					pipe.response.destroy();
+				});
+				
+				pipe.response.on('close', function() {
+					//console.log("Client disconnect");
+					socket.destroy();
+				});
+				
+				pipe.response.pipe(socket);
+				socket.pipe(pipe.response);
+				pipe.response.write(h);
+			});
+		}
+		
 		req.on('error', function (error) {
 			pipe.response.emit("rvProxyPassSourceRequestError"); 
 
@@ -320,7 +368,7 @@ proxyPass.request = function(pipe, proxyname) {
 			socket.on('error', function(e) {
 				reverse.error(pipe, 'Server socket error (from '+pipe.request.connection.remoteAddress+') : '+e);
 			});
-			
+
 			socket.timeoutId = setTimeout(
 				socketErrorDetection, 
 				nodePtr.timeout*1000, 
@@ -328,70 +376,14 @@ proxyPass.request = function(pipe, proxyname) {
 			);
 		});
 		
-		/* check for connection upgrade */
-/*
-		if(pipe.request.headers.upgrade) {
 
-			req.on('upgrade', function(res, socket, upgradeHead) {
-				req.connection.connected = true;
-
-				clearTimeout(req.connection.timeoutId); 
-
-				nodePtr._retry = 0;
-
-				res.gjsSetHeader('Server', 'gatejs');
-	
-				if(pipe.server.isClosing == true) {
-					res.gjsSetHeader('Connection', 'Close');
-					delete res.headers['keep-alive'];
-				}
-		
-				if(!pipe.server.noVia)
-					res.gjsSetHeader('Via', 'gatejs MISS');
-			
-				var nHeaders = {};
-				for(var n in res.headers)
-					nHeaders[res.orgHeaders[n]] = res.headers[n];
-				
-				var buffer = "HTTP/"+res.httpVersion+" "+res.statusCode+" "+res.statusMessage+"\r\n";
-
-				for(var a in nHeaders)
-					buffer += a+": "+nHeaders[a]+"\r\n";
-			
-				buffer += "\r\n";
-				//pipe.response.writeHead(res.statusCode, nHeaders);
-				//pipe.response.headerSent = true;
-
-				req.socket.setTimeout(0);
-				
-				socket.on("data", function(buffer) {
-					console.log("destination data", buffer.toString());
-				});
-				pipe.request.socket.on("data", function(buffer) {
-					console.log("source data", buffer.toString());
-				});
-
-				pipe.request.socket.write(buffer);
-				socket.pipe(pipe.request.socket);
-				//req.socket.pipe(socket);
-
-
-				console.log(buffer);
-			});
-
-			//console.log("OK need to upgrade connection", pipe.request.httpVersion, options);
-
-
-			pipe.request.pipe(req);
-			pipe.response.emit("rvProxyPassPassPrepare", req);
-			pipe.stop();
-		
-			return;
-		}
-*/
 		pipe.response.emit("rvProxyPassPassPrepare", req);
 		pipe.pause();
-		pipe.root.lib.http.postMgr.register(pipe, req);
+		
+		if(!pipe.upgrade)
+			pipe.root.lib.http.postMgr.register(pipe, req);
+		else
+			req.end();
 	}
 	
 
@@ -422,6 +414,10 @@ proxyPass.request = function(pipe, proxyname) {
 	
 	/* emit connection */
 	var ret = emitDestinationRequest(nodePtr);
+}
+
+proxyPass.upgrade = function(pipe, proxyname) { 
+	return(proxyPass.request(pipe, proxyname));
 }
 
 proxyPass.ctor = function(gjs) {

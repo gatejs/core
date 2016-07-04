@@ -248,10 +248,6 @@ reverse.loader = function(gjs) {
 	
 	var processRequest = function(server, request, response) {
 		request.remoteAddress = request.connection.remoteAddress;
-		
-
-
-	//console.log(request.headers);
 
 		var pipe = gjs.lib.core.pipeline.create(null, null, function() {
 			gjs.lib.http.error.renderArray({
@@ -368,6 +364,107 @@ reverse.loader = function(gjs) {
 		pipe.execute();
 	};
 	
+	var processUpgrade = function(server, request, socket) {
+		request.remoteAddress = request.connection.remoteAddress;
+
+		var pipe = gjs.lib.core.pipeline.create(null, null, function() {
+			gjs.lib.core.logger.error('Pipeline error while HTTP Upgrade '+
+					server.config.pipeline+' from '+request.remoteAddress);
+			socket.end('HTTP/'+request.httpVersion+' 500 Internal server error\r\n' +
+			       '\r\n');
+			console.log('server error');
+			return(false);
+		});
+		
+		pipe.logAdd = '';
+		pipe.reverse = true;
+		pipe.root = gjs;
+		pipe.request = request;
+		pipe.response = socket;
+		pipe.server = server;
+		pipe.upgrade = true;
+		pipe.caller = "upgrade";
+		
+		gjs.lib.core.stats.http(pipe);
+		
+		/* parse the URL */
+		try {
+			pipe.request.urlParse = url.parse(request.url, true);
+		} catch(e) {
+			gjs.lib.core.logger.error('URL Parse error on from '+request.remoteAddress);
+			request.connection.destroy();
+			return;
+		}
+		
+		/* lookup website */
+		pipe.site = reverse.sites.search(request.headers.host);
+		if(!pipe.site) {
+			pipe.site = reverse.sites.search('_');
+			if(!pipe.site) {
+				pipe.response.destroy();
+				return;
+			}
+		}
+		
+		/* get iface */
+		var iface = reverse.list[server.gjsKey];
+		if(!iface) {
+			gjs.lib.http.error.renderArray({
+				pipe: pipe, 
+				code: 500, 
+				tpl: "5xx", 
+				log: false,
+				title:  "Internal server error",
+				explain: "no iface found, fatal error"
+			});
+			gjs.lib.core.logger.error('No interface found for key '+server.gjsKey+' from '+request.remoteAddress);
+			return;
+		}
+		pipe.iface = iface;
+		
+		/* scan regex */
+		pipe.location = false;
+		if(pipe.site.locations) {
+			for(var a in pipe.site.locations) {
+				var s = pipe.site.locations[a];
+				if(!s.regex)
+					s.regex = /.*/;
+				if(s.regex.test(request.url)) {
+					pipe.location = s;
+					break;
+				}
+			}
+		}
+		if(pipe.location == false) {
+			gjs.lib.http.error.renderArray({
+				pipe: pipe, 
+				code: 500, 
+				tpl: "5xx", 
+				log: false,
+				title:  "Internal server error",
+				explain: "No locations found for this website"
+			});
+			return;
+		}
+		if(!pipe.location.pipeline instanceof Array) {
+			gjs.lib.http.error.renderArray({
+				pipe: pipe, 
+				code: 500, 
+				tpl: "5xx", 
+				log: false,
+				title:  "Internal server error",
+				explain: "Invalid pipeline format for this website"
+			});
+			return;
+		}
+
+		pipe.update(reverse.sites.opcodes, pipe.location.pipeline);
+		
+		/* execute pipeline */
+		pipe.resume();
+		pipe.execute();
+	};
+	
 	var slowLoris = function(socket) {
 		console.log("Probable SlowLoris attack from "+socket.remoteAddress+", closing.");
 		clearInterval(socket.gjs.interval);
@@ -410,9 +507,23 @@ reverse.loader = function(gjs) {
 			});
 		}));
 		
+		iface.on('upgrade', function(request, socket, head) {
+			if(request.method != 'GET') {
+				gjs.lib.core.logger.error('Bad method while connection Upgrade from '+socket.remoteAddress);	
+				socket.destroy();
+				return;
+			}
+			
+			request.connection.inUse = true;
 
+			socket.on('close', function() {
+				if(request.connection._handle)
+					request.connection.inUse = false;
+			});
 
-
+			processUpgrade(this, request, socket);
+		});
+		
 		iface.on('listening', function() {
 			gjs.lib.core.logger.system("Binding HTTP reverse proxy on "+sc.address+":"+sc.port);
 			iface.working = true;
@@ -515,11 +626,22 @@ reverse.loader = function(gjs) {
 			iface.agent = gjs.lib.http.agent.https;
 		
 		/* process upgrade request */
-/*
-		iface.on('upgrade', function(req, socket, head) {
-			processRequest(iface, req, new EventEmitter);
+		iface.on('upgrade', function(request, socket, head) {
+			if(request.method != 'GET') {
+				gjs.lib.core.logger.error('Bad method while connection Upgrade from '+socket.remoteAddress);	
+				socket.destroy();
+				return;
+			}
+			
+			request.connection.inUse = true;
+
+			socket.on('close', function() {
+				if(request.connection._handle)
+					request.connection.inUse = false;
+			});
+
+			processUpgrade(this, request, socket);
 		});
-*/
 
 		iface.on('connection', (function(socket) {
 			gjs.lib.core.graceful.push(socket);
