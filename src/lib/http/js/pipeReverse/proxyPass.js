@@ -51,11 +51,12 @@ proxyPass.request = function(pipe, proxyname) {
 			node,
 			nodePtr, rkey;
 		
+		if(!proxyStream)
+			return(false);
+		
 		var rkey = key+'Ctx';
 		var reverse = proxyStream[key];
 		var base = proxyStream[rkey] ? proxyStream[rkey] : proxyStream[rkey] = {};
-		
-		
 		
 		/* no current stream */
 		if(!base.currentStream)

@@ -26,13 +26,14 @@ var localPlugins = {};
 
 plugin.loader = function(gjs) {
 	function loadModule(dir) {
+		
 		var filename = dir+'/index.js';
 		try {
 			var fss = fs.statSync(filename);
 
 			/* get plugin name */
 			var o = require(filename);
-		
+			
 			if(!o.getName) {
 				gjs.lib.core.logger.system('No name defined for plugin '+dir);
 				return(false);
@@ -46,6 +47,9 @@ plugin.loader = function(gjs) {
 			}
 			gjs.lib[name] = o;
 			localPlugins[name] = o;
+			
+			if(o.preLoader)
+				o.preLoader(gjs);
 		} catch(e) {
 			gjs.lib.core.logger.system('Can not load module in '+dir+': '+e);
 		}

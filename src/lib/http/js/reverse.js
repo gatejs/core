@@ -472,6 +472,8 @@ reverse.loader = function(gjs) {
 	}
 	
 	var bindHttpServer = function(key, sc) {
+		gjs.events.emit('rvInterfaceCreate', sc);
+		
 		var iface = http.createServer(function(request, response) {
 			request.connection.inUse = true;
 
@@ -533,6 +535,8 @@ reverse.loader = function(gjs) {
 			gjs.lib.core.logger.error('HTTP reverse error for instance '+key+': '+e);
 			console.log('* HTTP reverse error for instance '+key+': '+e);
 		});
+		
+		gjs.events.emit('rvInterfaceBinding', iface, sc);
 		
 		/* listen */
 		if(sc.isTproxy == true && gjs.lib.http.tproxy.enabled)
@@ -597,6 +601,8 @@ reverse.loader = function(gjs) {
 		if(sc.spdy == true) 
 			int = spdy;
 		
+		gjs.events.emit('rvInterfaceCreate', sc);
+		
 		var iface = int.createServer(sc, function(request, response) {
 			request.connection.inUse = true;
 
@@ -606,7 +612,6 @@ reverse.loader = function(gjs) {
 			});
 			
 			processRequest(this, request, response);
-			
 		});
 		
 		iface.gjsKey = key;
@@ -664,6 +669,8 @@ reverse.loader = function(gjs) {
 			console.log('* HTTPS reverse error for instance '+key+': '+e);
 		});
 	
+		gjs.events.emit('rvInterfaceBinding', iface, sc);
+
 		/* listen */
 		if(sc.isTproxy == true && gjs.lib.http.tproxy.enabled)
 			iface.listenTproxy(sc.port, sc.address);

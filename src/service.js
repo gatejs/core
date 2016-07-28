@@ -126,7 +126,7 @@ var gatejs = (function() {
 			'*  \\__, |\\__,_|\\__\\___(_)/ |___/'+"\n"+
 			'*  |___/               |__/     '+"\n"+
 			"* \n"+
-			"* gate.js (c) 2007-2015 v"+this.version+" on "+os.type()+'/'+os.arch()
+			"* gate.js (c) 2007-2016 v"+this.version+" on "+os.type()+'/'+os.arch()
 		);
 	}
 	
@@ -220,7 +220,7 @@ var gatejs = (function() {
 			}
 			else
 				continue;
-			
+
 			this.lib[d[a]] = require(file);
 		}
 		
@@ -228,6 +228,12 @@ var gatejs = (function() {
 		if(this.options['--spawner']) {
 			runSpawner(this);
 			return(true);
+		}
+		
+		/* pre load modules */
+		for(a in this.lib) {
+			if(this.lib[a].preLoader)
+				this.lib[a].preLoader(this);
 		}
 		
 		/* post load modules */
