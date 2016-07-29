@@ -111,8 +111,6 @@ logger.spawnMaster = function(gjs) {
 		var fct = logger.typeTab[req.type];
 		if(fct)
 			fct(req);
-		else
-			console.log("* Uncatchable log type "+fct);
 	}
 	
 	/*
