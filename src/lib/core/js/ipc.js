@@ -178,21 +178,6 @@ ipc.spawnSlave = function(gjs) {
 
 	var client = net.connect(socketFile);
 	
-	client.on('connect', function() {
-		client.readline = readline.createInterface({
-			terminal: false,
-			input: client
-		});
-		
-		client.readline.on('line', function(data) {
-			var jdata = JSON.parse(data);
-		
-			/* emit myself the event */
-			if(jdata.cmd)
-				ipc.emit(jdata.cmd, gjs, jdata);
-		});
-	});
-
 	// type :
 	// FFW = far forward
 	// LFW = local forward
@@ -206,6 +191,32 @@ ipc.spawnSlave = function(gjs) {
 			msg: msg
 		})+'\n');
 	}
+	
+	client.on('connect', function() {
+		client.readline = readline.createInterface({
+			terminal: false,
+			input: client
+		});
+		
+		setTimeout(function() {
+			ipc.send('RFW', 'ping', {});
+		}, 500);
+		
+		
+		client.readline.on('line', function(data) {
+			var jdata = JSON.parse(data);
+		
+			/* emit myself the event */
+			if(jdata.cmd)
+				ipc.emit(jdata.cmd, gjs, jdata);
+		});
+	});
+
+
+	
+	ipc.on('ping', function(socket, data) {
+		ipc.send('RFW', 'pong', data.msg);
+	});
 	
 	
 // 	/* in order to graceful restart we need to close IPC connection to exit */

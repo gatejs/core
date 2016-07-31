@@ -310,6 +310,13 @@ var gatejs = (function() {
 			localThis.spawned++;
 		}
 		
+		localThis.lib.core.ipc.send('LFW', 'system:cores', {cores: localThis.spawned});
+		
+		var initialCores = localThis.spawned;
+		this.lib.core.ipc.on('system:howManyCores', function() {
+			localThis.lib.core.ipc.send('LFW', 'system:cores', {cores: initialCores});
+		});
+		
 		cluster.on('death', function(worker) {
 			this.events.emit("clusterDeath", this, worker);
 			localThis.spawned--;
