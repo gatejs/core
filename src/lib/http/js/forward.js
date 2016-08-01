@@ -140,6 +140,8 @@ forward.loader = function(gjs) {
 	var processRequest = function(server, request, response) {
 		request.remoteAddress = request.connection.remoteAddress;
 
+		response.on('error', function(e) { });
+		
 		/* resolv pipeline */
 		server.pipeline = gjs.lib.core.pipeline.getGlobalPipe(server.config.pipeline); 
 		if(!server.pipeline) {
@@ -204,6 +206,8 @@ forward.loader = function(gjs) {
 	var processUpgrade = function(server, request, socket) {
 		request.remoteAddress = request.connection.remoteAddress;
 	
+		response.on('error', function(e) { });
+		
 		/* resolv pipeline */
 		server.pipeline = gjs.lib.core.pipeline.getGlobalPipe(server.config.pipeline); 
 		if(!server.pipeline) {

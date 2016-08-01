@@ -249,6 +249,8 @@ reverse.loader = function(gjs) {
 	var processRequest = function(server, request, response) {
 		request.remoteAddress = request.connection.remoteAddress;
 
+		response.on('error', function(e) { });
+		
 		var pipe = gjs.lib.core.pipeline.create(null, null, function() {
 			gjs.lib.http.error.renderArray({
 				pipe: pipe, 
@@ -367,6 +369,8 @@ reverse.loader = function(gjs) {
 	var processUpgrade = function(server, request, socket) {
 		request.remoteAddress = request.connection.remoteAddress;
 
+		response.on('error', function(e) { });
+		
 		var pipe = gjs.lib.core.pipeline.create(null, null, function() {
 			gjs.lib.core.logger.error('Pipeline error while HTTP Upgrade '+
 					server.config.pipeline+' from '+request.remoteAddress);
@@ -501,7 +505,7 @@ reverse.loader = function(gjs) {
 			gjs.lib.core.stats.diffuse('httpWaiting', gjs.lib.core.stats.action.add, 1);
 			
 			socket.setTimeout(60000);
-
+			
 			socket.on('close', function () {
 				socket.inUse = false;
 				gjs.lib.core.graceful.release(socket);
@@ -517,7 +521,7 @@ reverse.loader = function(gjs) {
 			}
 			
 			request.connection.inUse = true;
-
+			
 			socket.on('close', function() {
 				if(request.connection._handle)
 					request.connection.inUse = false;
