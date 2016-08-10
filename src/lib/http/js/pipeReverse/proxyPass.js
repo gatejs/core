@@ -429,6 +429,12 @@ proxyPass.ctor = function(gjs) {
 		var site = gjs.lib.http.reverse.sites.search(data.msg.site);
 		if(!site)
 			return;
+		if(!site.proxyStream[d._name])
+			return;
+		if(!site.proxyStream[d._name][d._key])
+			return;
+		if(!site.proxyStream[d._name][d._key][d._index])
+			return;
 		site.proxyStream[d._name][d._key][d._index].isFaulty = true;
 	});
 	
@@ -437,6 +443,12 @@ proxyPass.ctor = function(gjs) {
 		var d = data.msg.node;
 		var site = gjs.lib.http.reverse.sites.search(data.msg.site);
 		if(!site)
+			return;
+		if(!site.proxyStream[d._name])
+			return;
+		if(!site.proxyStream[d._name][d._key])
+			return;
+		if(!site.proxyStream[d._name][d._key][d._index])
 			return;
 		var node = site.proxyStream[d._name][d._key][d._index];
 		node.isFaulty = false;
