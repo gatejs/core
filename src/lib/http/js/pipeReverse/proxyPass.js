@@ -1,19 +1,19 @@
 /*
  * Copyright (c) 2010-2014 BinarySEC SAS
  * Reverse proxy proxyPass opcode [http://www.binarysec.com]
- * 
+ *
  * This file is part of Gate.js.
- * 
+ *
  * Gate.js is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -24,17 +24,17 @@ var https = require("https");
 var events = require('events');
 var cluster = require("cluster");
 
-var proxyPass = function() {} 
+var proxyPass = function() {}
 
 proxyPass.request = function(pipe, proxyname) {
 	var reverse = pipe.root.lib.http.reverse;
-	
+
 	/* lookup proxy stream */
 	if(!pipe.site.proxyStream && !pipe.site.proxyStream[proxyname]) {
 		pipe.root.lib.http.error.renderArray({
-			pipe: pipe, 
-			code: 500, 
-			tpl: "5xx", 
+			pipe: pipe,
+			code: 500,
+			tpl: "5xx",
 			log: false,
 			title:  "Internal server error",
 			explain: "No proxyStream defined for the website"
@@ -43,37 +43,37 @@ proxyPass.request = function(pipe, proxyname) {
 	}
 	var proxyStream = pipe.site.proxyStream[proxyname];
 
-	/* 
-	 * select destination host by rr/iphash 
+	/*
+	 * select destination host by rr/iphash
 	 */
 	function selectDestination(key) {
 		var ret,
 			node,
 			nodePtr, rkey;
-		
+
 		if(!proxyStream)
 			return(false);
-		
+
 		var rkey = key+'Ctx';
 		var reverse = proxyStream[key];
 		var base = proxyStream[rkey] ? proxyStream[rkey] : proxyStream[rkey] = {};
-		
+
 		/* no current stream */
 		if(!base.currentStream)
 			base.currentStream = 0;
-		
+
 		/* no more proxy up */
 		if(!reverse) {
 			return(false);
 		}
-		
-		
+
+
 		/* check current stream if we can use it */
 		nodePtr = reverse[base.currentStream];
 		if(!nodePtr) {
 			return(false);
 		}
-		
+
 		/* weight */
 		if(!nodePtr.currentWeight)
 			nodePtr.currentWeight = 0;
@@ -81,14 +81,14 @@ proxyPass.request = function(pipe, proxyname) {
 			nodePtr.currentWeight++;
 			return(nodePtr);
 		}
-			
+
 		if(proxyStream.type == "rr") {
 			/* check the nextone */
 			if(reverse[base.currentStream+1])
 				base.currentStream++;
 			else
 				base.currentStream = 0;
-			
+
 			/* check if the stream is usable */
 			nodePtr = reverse[base.currentStream];
 			if(nodePtr.isFaulty == true) {
@@ -101,10 +101,10 @@ proxyPass.request = function(pipe, proxyname) {
 						return(subNodePtr);
 					}
 				}
-				
+
 				return(false);
 			}
-			
+
 			nodePtr.currentWeight = 1;
 			return(nodePtr);
 		}
@@ -116,7 +116,7 @@ proxyPass.request = function(pipe, proxyname) {
 					id ^= ipNums[i];
 			}
 			base.currentStream = id % reverse.length;
-			
+
 			/* check if the stream is usable */
 			nodePtr = reverse[base.currentStream];
 			if(nodePtr.isFaulty == true) {
@@ -129,19 +129,19 @@ proxyPass.request = function(pipe, proxyname) {
 						return(subNodePtr);
 					}
 				}
-				
+
 				return(false);
 			}
-			
+
 			nodePtr.currentWeight = 1;
 			return(nodePtr);
 		}
 	}
-	
+
 	function emitDestinationRequest(nodePtr) {
 		if(!nodePtr.port)
 			nodePtr.port = 80;
-		
+
 		/*
 		* Prepare and emit the request
 		*/
@@ -156,17 +156,17 @@ proxyPass.request = function(pipe, proxyname) {
 		};
 		pipe.response.connector = nodePtr.host+":"+nodePtr.port;
 		pipe.request.gjsOptions = options;
-		
+
 		/* use local address to emit network tcp connection */
 		if(nodePtr.localAddress)
 			options.localAddress = nodePtr.localAddress;
-		
+
 		for(var n in pipe.request.headers)
 			options.headers[pipe.request.orgHeaders[n]] = pipe.request.headers[n];
 
 		/* emit the preProxyPass */
 		pipe.response.emit("rvProxyPassPassConnection", options, req);
-		
+
 		/* select flow control */
 		var flowSelect = http;
 		if(nodePtr.https == true)
@@ -181,17 +181,17 @@ proxyPass.request = function(pipe, proxyname) {
 		}
 		else
 			options.port = nodePtr.port ? nodePtr.port : 80;
-		
+
 		var req = flowSelect.request(options, function(res) {
 			if(pipe.upgrade)
 				return;
-			
+
 			/* remove request timeout */
 			req.connection.connected = true;
-			clearTimeout(req.connection.timeoutId); 
+			clearTimeout(req.connection.timeoutId);
 
 			nodePtr._retry = 0;
-			
+
 			/* abort connexion because someone is using it for a post response */
 			if(pipe.response.headerSent == true) {
 				req.abort();
@@ -200,71 +200,84 @@ proxyPass.request = function(pipe, proxyname) {
 
 			pipe.response.emit("rvProxyPassPassRequest", pipe, req, res);
 			pipe.response.emit("response", res, "rvpass");
-			
+
 			res.gjsSetHeader('Server', 'gatejs');
-			
+
 			if(pipe.server.isClosing == true) {
 				res.gjsSetHeader('Connection', 'Close');
 				delete res.headers['keep-alive'];
 			}
-			
+
 			if(!pipe.server.noVia)
 				res.gjsSetHeader('Via', 'gatejs MISS');
-				
+
 			/* fix headers */
 			var nHeaders = {};
 			for(var n in res.headers)
 				nHeaders[res.orgHeaders[n]] = res.headers[n];
-			
+
 			/* check for client close */
 			pipe.request.on('close', function() {
 				res.destroy();
 			});
 
-			pipe.response.writeHead(res.statusCode, nHeaders);
-			pipe.response.headerSent = true;
-			
+			/* check if there is bad chars in content header */
+			try {
+				pipe.response.writeHead(res.statusCode, nHeaders);
+				pipe.response.headerSent = true;
+			} catch(e) {
+				pipe.root.lib.http.error.renderArray({
+					pipe: pipe,
+					code: 500,
+					tpl: "5xx",
+					log: true,
+					title:  "Internal Server Error",
+					explain: e.message
+				});
+				return;
+			}
+
 			/* lookup sub pipe */
 			var subPipe = res;
 			if(pipe.subPipe)
 				subPipe = pipe.subPipe;
-			
+
 			pipe.root.lib.http.reverse.logpipe(pipe, subPipe);
 		});
-		
+
 		function computeRetry() {
 			/* retry computing */
 			if(!nodePtr._retry)
 				nodePtr._retry = 0;
 			nodePtr._retry++;
-			
+
 			if(nodePtr._retry >= nodePtr.retry) {
 				reverse.error(pipe, "Proxy stream "+
 					nodePtr.host+":"+nodePtr.port+" is DOWN");
-		
+
 				pipe.root.lib.core.ipc.send('LFW', 'proxyPassFaulty', {
 					site: pipe.request.headers.host,
 					node: nodePtr
 				});
-				
+
 				nodePtr.isFaulty = true;
 			}
 			else {
 				emitDestinationRequest(nodePtr);
 				return;
 			}
-			
+
 			req.abort();
 			/* check another server */
 			var subNodePtr = selectDestination('primary');
 			if(subNodePtr == false) {
 				subNodePtr = selectDestination('secondary');
 				if(subNodePtr == false) {
-					
+
 					pipe.root.lib.http.error.renderArray({
-						pipe: pipe, 
-						code: 504, 
-						tpl: "5xx", 
+						pipe: pipe,
+						code: 504,
+						tpl: "5xx",
 						log: true,
 						title:  "Bad gateway",
 						explain: "Unable to establish connection to the backend server"
@@ -274,21 +287,21 @@ proxyPass.request = function(pipe, proxyname) {
 			}
 			emitDestinationRequest(subNodePtr);
 		}
-		
+
 		if(pipe.upgrade) {
 			req.on('upgrade', function(res, socket, upgradeHead) {
 				/* remove request timeout */
 				req.connection.connected = true;
-				clearTimeout(req.connection.timeoutId); 
+				clearTimeout(req.connection.timeoutId);
 
 				pipe.response.emit("rvProxyPassPassRequest", pipe, req, res);
 				pipe.response.emit("response", res, "rvpass");
-				
+
 				res.gjsSetHeader('Server', 'gatejs');
-				
+
 				if(!pipe.server.noVia)
 					res.gjsSetHeader('Via', 'gatejs MISS');
-					
+
 				/* fix headers */
 				var nHeaders = {};
 				for(var n in res.headers)
@@ -297,42 +310,42 @@ proxyPass.request = function(pipe, proxyname) {
 				/* build header packet */
 				var h = 'HTTP/'+pipe.request.httpVersion+" "+res.statusCode+" "+res.statusMessage+
 					'\r\n';
-				for(var a in nHeaders) 
+				for(var a in nHeaders)
 					h += a+": "+nHeaders[a]+"\r\n";
 				h += "\r\n";
-				
+
 				pipe.root.lib.http.reverse.log(pipe, 101);
-		
+
 				pipe.stop();
-				
+
 				socket.on('close', function() {
 					//console.log("Remote disconnect");
 					pipe.response.destroy();
 				});
-				
+
 				pipe.response.on('close', function() {
 					//console.log("Client disconnect");
 					socket.destroy();
 				});
-				
+
 				pipe.response.pipe(socket);
 				socket.pipe(pipe.response);
 				pipe.response.write(h);
 			});
 		}
-		
+
 		req.on('error', function (error) {
-			pipe.response.emit("rvProxyPassSourceRequestError"); 
+			pipe.response.emit("rvProxyPassSourceRequestError");
 
 			if(pipe.response.headerSent == true) {
 				var connector = options.host+":"+options.port;
-				
+
 				// log error source closing connectio
 				reverse.error(pipe, "Proxy read error on "+
 					connector+" for "+
 					pipe.request.remoteAddress+
 					":"+pipe.request.connection.remotePort);
-			
+
 				pipe.response.destroy();
 				pipe.stop();
 				return;
@@ -342,9 +355,9 @@ proxyPass.request = function(pipe, proxyname) {
 		});
 
 		function socketErrorDetection(socket) {
-			
+
 			var connector = options.host+":"+options.port;
-			
+
 			reverse.error(pipe, "Proxy pass timeout on "+
 				connector+" from "+
 				pipe.request.remoteAddress+
@@ -352,41 +365,41 @@ proxyPass.request = function(pipe, proxyname) {
 			socket.destroy();
 			computeRetry();
 		}
-		
+
 		req.on('socket', function (socket) {
-			if(!socket.connected) 
+			if(!socket.connected)
 				socket.connected = false;
-			
+
 			if(socket.connected == true)
 				return;
-			
+
 			if(!nodePtr.timeout)
 				nodePtr.timeout = 3;
-			
+
 			if(!nodePtr.retry)
 				nodePtr.retry = 3;
-			
+
 			socket.on('error', function(e) {
 				reverse.error(pipe, 'Server socket error (from '+pipe.request.connection.remoteAddress+') : '+e);
 			});
 
 			socket.timeoutId = setTimeout(
-				socketErrorDetection, 
-				nodePtr.timeout*1000, 
+				socketErrorDetection,
+				nodePtr.timeout*1000,
 				socket
 			);
 		});
-		
+
 
 		pipe.response.emit("rvProxyPassPassPrepare", req);
 		pipe.pause();
-		
+
 		if(!pipe.upgrade)
 			pipe.root.lib.http.postMgr.register(pipe, req);
 		else
 			req.end();
 	}
-	
+
 
 	function globalSelector() {
 		var nodePtr = selectDestination('primary');
@@ -402,27 +415,27 @@ proxyPass.request = function(pipe, proxyname) {
 	var nodePtr = globalSelector();
 	if(nodePtr == false) {
 		pipe.root.lib.http.error.renderArray({
-			pipe: pipe, 
-			code: 504, 
-			tpl: "5xx", 
+			pipe: pipe,
+			code: 504,
+			tpl: "5xx",
 			log: true,
 			title:  "Bad gateway",
 			explain: "Unable to establish connection to the backend server"
 		});
-		
+
 		return(false);
 	}
-	
+
 	/* emit connection */
 	var ret = emitDestinationRequest(nodePtr);
 }
 
-proxyPass.upgrade = function(pipe, proxyname) { 
+proxyPass.upgrade = function(pipe, proxyname) {
 	return(proxyPass.request(pipe, proxyname));
 }
 
 proxyPass.ctor = function(gjs) {
-	
+
 	/* receive mutual faulty */
 	gjs.lib.core.ipc.on('proxyPassFaulty', function(gjs, data) {
 		var d = data.msg.node;
@@ -437,7 +450,7 @@ proxyPass.ctor = function(gjs) {
 			return;
 		site.proxyStream[d._name][d._key][d._index].isFaulty = true;
 	});
-	
+
 	/* receive mutual solution */
 	gjs.lib.core.ipc.on('proxyPassWork', function(gjs, data) {
 		var d = data.msg.node;
@@ -458,5 +471,3 @@ proxyPass.ctor = function(gjs) {
 }
 
 module.exports = proxyPass;
-
-
