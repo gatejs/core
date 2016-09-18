@@ -68,7 +68,7 @@ cache.request = function(pipe, opts) {
 		/* check if the file must be dumped */
 		if(headers.needDump == false) {
 			/* check stale */
-			var isF = pipe.root.lib.acn.isFresh(headers, opts);
+			var isF = pipe.root.lib.acn.isFresh(headers);
 			if(isF == false)
 				return(false);
 
