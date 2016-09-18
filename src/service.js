@@ -1,19 +1,19 @@
 /*
  * Copyright (c) 2010-2014 BinarySEC SAS
  * Service [http://www.binarysec.com]
- * 
+ *
  * This file is part of Gate.js.
- * 
+ *
  * Gate.js is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -69,12 +69,12 @@ function runDaemon(opt) {
 
 function runSpawner(gjs) {
 	gjs.lib.core.loader(gjs);
-	
-	
+
+
 	gjs.lib.core.ipc.on('requestSpawn', function() {
-		
+
 	});
-	
+
 	console.log('spawner');
 }
 
@@ -102,7 +102,7 @@ var gatejs = (function() {
 		else
 			this.options[el] = true;
 	}
-	
+
 	/* check version */
 	if(this.options['--version']) {
 		console.log(
@@ -115,7 +115,7 @@ var gatejs = (function() {
 		);
 		process.exit(0);
 	}
-	
+
 	/* Print print */
 	if(cluster.isMaster) {
 		console.log(
@@ -129,7 +129,7 @@ var gatejs = (function() {
 			"* gate.js (c) 2007-2016 v"+this.version+" on "+os.type()+'/'+os.arch()
 		);
 	}
-	
+
 	/* check configuration options */
 	var confFile = "./config.js";
 	if(this.options['--config'])
@@ -138,7 +138,7 @@ var gatejs = (function() {
 	/* enable daemon mode */
 	if(this.options['--daemon'])
 		runDaemon();
-	
+
 	var loadGeneric = function(dir, dst) {
 		try {
 			var d = fs.readdirSync(dir), a;
@@ -155,7 +155,7 @@ var gatejs = (function() {
 		}
 		return(true);
 	}
-	
+
 	/* Load server configuration */
 	var path = require("path");
 	this.confFile = path.resolve(confFile);
@@ -167,7 +167,7 @@ var gatejs = (function() {
 		console.log("Could not open configuration file "+confFile);
 		return(false);
 	}
-	
+
 	this.mkdirDeep = function(dir) {
 		var stage = '';
 		var tab = dir.split("/");
@@ -191,11 +191,11 @@ var gatejs = (function() {
 
 	/* local events */
 	this.events = eventEmitter;
-	
+
 //   if (process.env.NODE_ENV == 'DEVELOPMENT') {
 //     mu.clearCache();
 //   }
-	
+
 	/* load libraries */
 	this.lib = {};
 	function tryLoadLib(dir, file) {
@@ -223,42 +223,42 @@ var gatejs = (function() {
 
 			this.lib[d[a]] = require(file);
 		}
-		
+
 		/* check for spawner */
 		if(this.options['--spawner']) {
 			runSpawner(this);
 			return(true);
 		}
-		
+
 		/* pre load modules */
 		for(a in this.lib) {
 			if(this.lib[a].preLoader)
 				this.lib[a].preLoader(this);
 		}
-		
+
 		/* post load modules */
 		for(a in this.lib) {
 			if(this.lib[a].loader)
 				this.lib[a].loader(this);
 		}
-		
+
 	} catch(e) {
 		console.log("Can not read directory with error code #"+e);
 		return(false);
 	}
-	
+
 	/* post loading of pipelines */
 	for(a in this.pipeline) {
 		var b = this.pipeline[a];
 		if(b.ctor)
 			b.ctor(this);
 	}
-	
+
 	if(!this.serverConfig.runDir) {
 		console.log('Please define a runDir');
 		process.exit(0);
 	}
-	
+
 	/* defaulting server processes */
 	this.serverConfig.serverProcess = parseInt(this.serverConfig.serverProcess);
 	if(!this.serverConfig.serverProcess) {
@@ -267,11 +267,11 @@ var gatejs = (function() {
 		if(this.serverConfig.serverProcess > 1)
 			this.serverConfig.serverProcess--;
 	}
-	
+
 	/* running cluster */
 	this.events.emit("clusterPreInit", this);
 	this.cluster = cluster;
-	if(cluster.isMaster) {	
+	if(cluster.isMaster) {
 		var pidFile = this.serverConfig.runDir+'/master.pid';
 		fs.writeFile(pidFile, process.pid+"\n", function (err) {
 			if (err) {
@@ -282,69 +282,69 @@ var gatejs = (function() {
 	
 		process.title = 'gate.js Master process';
 		var localThis = this;
-		
+
 		localThis.spawned = 0;
-		
+
 		function processGraceful() {
 			if(localThis.spawned != localThis.serverConfig.serverProcess)
 				return(false);
-			
+
 			localThis.lib.core.logger.system('Receive graceful rotation');
-			
+
 			/* tel processes to stop accepting connection */
 			localThis.lib.core.ipc.send('LFW', 'system:graceful:process', false);
-			
+
 			/* spawn processes */
 			for (var i = 0; i < localThis.serverConfig.serverProcess; i++) {
 				cluster.fork();
 				localThis.spawned++;
 			}
-			
+
 			return(true);
 		}
-		
+
 		this.lib.core.ipc.on('system:graceful', processGraceful);
-		
+
 		for (var i = 0; i < this.serverConfig.serverProcess; i++) {
 			cluster.fork();
 			localThis.spawned++;
 		}
-		
+
 		localThis.lib.core.ipc.send('LFW', 'system:cores', {cores: localThis.spawned});
-		
+
 		var initialCores = localThis.spawned;
 		this.lib.core.ipc.on('system:howManyCores', function() {
 			localThis.lib.core.ipc.send('LFW', 'system:cores', {cores: initialCores});
 		});
-		
+
 		cluster.on('death', function(worker) {
 			this.events.emit("clusterDeath", this, worker);
 			localThis.spawned--;
 		});
-		
+
 		cluster.on('exit', function(worker) {
 			localThis.spawned--;
 		});
-		
+
 		this.events.emit("clusterMasterInit", this);
-	} 
+	}
 	else {
 		/* check for setgid & setuid */
 		if(this.serverConfig.groupId) {
 			var u = this.lib.core.getGroup(this.serverConfig.groupId);
 			if(!u)
 				this.lib.core.logger.error('Can find group for setgid() "'+this.serverConfig.userId+'"');
-			else 
+			else
 				process.setgid(parseInt(u[2]));
 		}
 		if(this.serverConfig.userId) {
 			var u = this.lib.core.getUser(this.serverConfig.userId);
 			if(!u)
 				this.lib.core.logger.error('Can find user for setuid() "'+this.serverConfig.userId+'"');
-			else 
+			else
 				process.setuid(parseInt(u[2]));
 		}
-	
+
 		process.title = 'gate.js Slave process';
 		/* receive IPC to for shuting down the process */
 // 		this.lib.core.ipc.on('system:kill', function() {
@@ -352,10 +352,9 @@ var gatejs = (function() {
 // 		});
 		this.events.emit("clusterSlaveInit", this);
 	}
-	
+
 	this.events.emit("clusterPostInit", this);
 
 });
 
 new gatejs();
-

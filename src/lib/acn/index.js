@@ -1,19 +1,19 @@
 /*
  * Copyright (c) 2010-2014 BinarySEC SAS
  * Associative Cache Network [http://www.binarysec.com]
- * 
+ *
  * This file is part of Gate.js.
- * 
+ *
  * Gate.js is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -35,11 +35,15 @@ acn.loader = function(gjs) {
 	cleaner.loader(gjs);
 }
 
-acn.divideHash = function(d, hash) {
-	var fileHash = acn.cacheDir;
-// 	if(!d || d <= 0 || d >= 10)
-		d = 8;
-	
+acn.divideHash = function(d, hash, cacheDir) {
+	if(cacheDir)
+		var fileHash = cacheDir;
+	else {
+		var fileHash = acn.cacheDir;
+		cacheDir = acn.cacheDir;
+	}
+
+	d = 8;
 	var dig = hash;
 	var div = (dig.length-1) / d + 1;
 	div = div|0;
@@ -49,15 +53,15 @@ acn.divideHash = function(d, hash) {
 	return({
 		file: fileHash,
 		hash: hash,
-		tmpFile: acn.cacheDir + '/' + dig.substr(0, 1) + '/proxy/' + Math.random()
+		tmpFile: cacheDir + '/proxy/' + Math.random()
 	});
 }
 
-acn.generateInHash = function(division, input) {
+acn.generateInHash = function(division, input, cacheDir) {
 	var hash = crypto.createHash('md5');
 	hash.update(input, 'ascii');
 	var h = hash.digest('hex');
-	return(acn.divideHash(division, h));
+	return(acn.divideHash(division, h, cacheDir));
 }
 
 acn.loadHeaderFile = function(file) {
@@ -102,7 +106,7 @@ acn.loadHeaderFile = function(file) {
 	}
 	fs.closeSync(fd);
 
-	
+
 	try {
 		var headers = JSON.parse(headerSerial.toString('utf-8', 0, headerSerialPos));
 		headers.headerSerialPos = headerSerialPos;
@@ -116,33 +120,61 @@ acn.loadHeaderFile = function(file) {
 acn.isFresh = function(hdr, maxAge) {
 	if(!hdr)
 		return(false);
-	
-	var date = new Date;
-	if(!hdr.ccMaxAge) {
-		if(hdr.headers['content-type']) {
-			if(hdr.headers['content-type'].match(/text/))
-				maxAge = 0;
-			else if(hdr.headers['content-type'].match(/javascript/))
-				maxAge = 800;
-			else
-				maxAge = 120000;
-		}
-		else
-			maxAge = 120000;
-	}
-	else if(hdr.ccMaxAge > 0)
-		maxAge = hdr.ccMaxAge;
-	else
-		return(false);
-	
-	var currentAge = (date.getTime()-hdr.cacheTimer)/1000;
-	if(currentAge > maxAge)
+	var ph = hdr.headers;
+	if(!ph)
 		return(false);
 
-	return(true);
+	var cc = {};
+	if(ph['Cache-Control']) {
+		var tmp = ph['Cache-Control'].split(',');
+		for(var a in tmp) {
+			var p = tmp[a].trim();
+			var s = p.indexOf('=');
+
+			if(s > -1) {
+				var key = p.substr(0, s);
+				var val = p.substr(s+1);
+				cc[key] = val;
+			}
+			else
+				cc[p] = true;
+		}
+	}
+
+	/* check if there is a no-cache */
+	if(cc['no-cache'])
+		return(false);
+
+	/* using date and max age */
+	if(ph.Date && cc['max-age'] && parseInt(cc['max-age']) > 0) {
+		var now = new Date().getTime();
+		var sDate = new Date(ph.Date).getTime();
+		var sExpires = new Date(ph.Date).getTime()+(parseInt(cc['max-age'])*1000);
+
+		if(now-sDate <= sExpires)
+			return(true);
+	}
+
+	/* using date and expires */
+	else if(ph.Date && ph.Expires) {
+		var now = new Date().getTime();
+		var sDate = new Date(ph.Date).getTime();
+		var sExpires = new Date(ph.Expires).getTime();
+		if(now-sDate <= sExpires)
+			return(true);
+	}
+	/* using date and Age header */
+	else if(ph.Date && ph.Age) {
+		var now = new Date().getTime();
+		var sDate = new Date(ph.Date).getTime();
+		var sExpires = new Date(ph.Date).getTime()+(parseInt(ph.Age)*1000);
+
+		if(now-sDate <= sExpires)
+			return(true);
+	}
+
+	return(false);
 }
 
 
 module.exports = acn;
-
-
