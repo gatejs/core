@@ -1,19 +1,19 @@
 /*
  * Copyright (c) 2010-2014 BinarySEC SAS
  * Core engine [http://www.binarysec.com]
- * 
+ *
  * This file is part of Gate.js.
- * 
+ *
  * Gate.js is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -31,7 +31,7 @@ function pipelineObject(opcodes, line, errorFunc) {
 	this.pipe = [];
 	this.pipeIdx = 0;
 	this.caller = "request";
-	
+
 	if(line && opcodes && line.resolved != true) {
 		var lPipe = [];
 		for(var a in line) {
@@ -46,7 +46,7 @@ function pipelineObject(opcodes, line, errorFunc) {
 				insert[0] = opcodes[op[0]];
 				for(var c=1; c<op.length; c++)
 					insert.push(op[c]);
-				
+
 				if(insert.length > 0)
 					lPipe.push(insert);
 			}
@@ -57,7 +57,7 @@ function pipelineObject(opcodes, line, errorFunc) {
 
 	if(line && line.solved)
 		this.pipe = line.solved;
-	
+
 	this.update = function(opcodes, line) {
 		if(!line || !opcodes)
 			return(false);
@@ -77,7 +77,7 @@ function pipelineObject(opcodes, line, errorFunc) {
 			insert[0] = opcodes[op[0]];
 			for(var c=1; c<op.length; c++)
 				insert.push(op[c]);
-			
+
 			if(insert.length > 0)
 				lPipe.push(insert);
 		}
@@ -85,23 +85,23 @@ function pipelineObject(opcodes, line, errorFunc) {
 		line.resolved = true;
 		this.pipe = line.solved;
 	}
-	
+
 	this.stop = function() {
 		/* stop execution */
 		this.pipeStatus = pipeline.status.stop;
 // 		this.execute();
 	}
-	
+
 	this.pause = function() {
 		/* wait for non blocking operation */
 		this.pipeStatus = pipeline.status.waiting;
 	}
-	
+
 	this.resume = function() {
 		/* continue to execute pipeline */
 		this.pipeStatus = pipeline.status.execute;
 	}
-	
+
 	this.execute = function() {
 		if(this.pipe) {
 			for(; this.pipeIdx < this.pipe.length;) {
@@ -121,7 +121,7 @@ function pipelineObject(opcodes, line, errorFunc) {
 		}
 		if(errorFunc)
 			errorFunc.apply(null, this);
-		
+
 		return(false);
 	}
 }
@@ -139,10 +139,10 @@ pipeline.scanOpcodes = function(scanDir, name) {
 	/* get configuration pipeline */
 	if(!opcodes[name])
 		opcodes[name] = {};
-	
+
 	if(!name)
 		return(opcodes[scanDir]);
-	
+
 	try {
 		var d = fs.readdirSync(scanDir), a;
 		for(a in d) {
@@ -160,20 +160,20 @@ pipeline.scanOpcodes = function(scanDir, name) {
 		pipeline.gjs.lib.core.logger.error("Can not read directory "+e.path+" with error code #"+e);
 		return(false);
 	}
-	
+
 	return(opcodes[name]);
 }
 
 pipeline.getGlobalPipe = function(name) {
 	if(globalLines[name])
 		return(globalLines[name]);
-	
+
 	if(!pipeline.gjs.serverConfig.pipeline)
 		return(false);
-	
+
 	if(!pipeline.gjs.serverConfig.pipeline[name])
 		return(false);
-	
+
 	globalLines[name] = {
 		resolved: false,
 		items: pipeline.gjs.serverConfig.pipeline[name]
@@ -189,10 +189,8 @@ pipeline.setGlobalPipe = function(name, items) {
 	};
 }
 
-pipeline.loader = function(gjs) { 
+pipeline.loader = function(gjs) {
 	pipeline.gjs = gjs;
 }
 
 module.exports = pipeline;
-
-
