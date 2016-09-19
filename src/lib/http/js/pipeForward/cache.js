@@ -34,15 +34,14 @@ cache.request = function(pipe, opts) {
 	var cacheDir = pipe.root.serverConfig.dataDir+"/cache/";
 	var tmpDir = pipe.root.serverConfig.dataDir+"/proxy/";
 
-	if(pipe.request.forceCache != true) {
-		if(pipe.request.method != 'GET')
-			return(false);
-		if(pipe.request.headers.range || pipe.request.headers['content-range'])
-			return(false);
-	}
-
 	/* application to deactivate cache */
 	if(pipe.request.noCache == true)
+		return(false);
+
+	/* no cache for range and get */
+	if(pipe.request.method != 'GET')
+		return(false);
+	if(pipe.request.headers.range || pipe.request.headers['content-range'])
 		return(false);
 
 	/* append site specific for website as reverse */
@@ -195,19 +194,38 @@ cache.request = function(pipe, opts) {
 		return(false);
 	}
 
-	/* sanatization */
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 *
+	 * sanatization
+	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	if(!pipe.root.serverConfig.dataDir) {
 		pipe.root.lib.core.logger.error('You need to provide dataDir in configuration');
 		return(false);
 	}
 	if(!opts.ignoreCache)
 		opts.ignoreCache = false;
+	if(!opts.clientIgnoreCache)
+		opts.clientIgnoreCache = false;
 	if(!opts.exclusive)
 		opts.exclusive = false;
 	if(!opts.feeding)
 		opts.feeding = true;
 
-	if(pipe.request.forceCache != true && pipe.request.headers.pragma != 'no-cache') {
+	var canRestoreCache = true;
+
+	/* determine whether the content is user cachable */
+	if(opts.clientIgnoreCache !== true) {
+		var h = pipe.request.headers;
+		if(h.pragma == 'no-cache' || h['cache-control'] == 'max-age=0')
+			canRestoreCache = false;
+		else {
+			delete pipe.request.gjsRemoveHeader('cache-control');
+			delete pipe.request.gjsRemoveHeader('pragma');
+		}
+	}
+
+	/* restore cache */
+	if(canRestoreCache == true) {
 		/*
 		 * Take encoding in case
 		 */
@@ -227,8 +245,11 @@ cache.request = function(pipe, opts) {
 		}
 	}
 
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 *
+	 * Intercept server response
+	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	var pipeProxyPassRequest = (function(pipe, request, response) {
-
 		/* check if application has to stop cache process */
 		if(pipe.cantCache == true)
 			return;
@@ -238,7 +259,7 @@ cache.request = function(pipe, opts) {
 		 */
 		if(opts.exclusive == true && pipe.pipeStoreHit != true)
 			return;
-		if(pipe.request.forceCache != true && response.headers.pragma == "no-cache")
+		if(response.headers.pragma == "no-cache")
 			return;
 		if(pipe.response.doNotUse == true) {
 			request.abort();
@@ -250,21 +271,17 @@ cache.request = function(pipe, opts) {
 		 * Manage cache control
 		 */
 		var cacheControl;
-		var cacheControlMaxAge = -1;
-		if(pipe.request.forceCache != true && response.headers['cache-control']) {
+		if(response.headers['cache-control']) {
 			var a, b;
-			cacheControl = response.headers['cache-control'].split(", ");
+			cacheControl = response.headers['cache-control'].split(",");
 			for(a in cacheControl) {
-				if(cacheControl[a] == "private" && opts.ignoreCache != true)
+				var scc = cacheControl[a].trim();
+				if(scc == "private" && opts.ignoreCache != true)
 					return;
-				else if(cacheControl[a] == "must-revalidate" && opts.ignoreCache != true)
+				else if(scc == "must-revalidate" && opts.ignoreCache != true)
 					return;
-				else if(cacheControl[a] == "no-cache" && opts.ignoreCache != true)
+				else if(scc == "no-cache" && opts.ignoreCache != true)
 					return;
-				else if(b = cacheControl[a].match(/max-age=(.*)/))
-					cacheControlMaxAge = b[1];
-				else if(b = cacheControl[a].match(/s-maxage=(.*)/))
-					cacheControlMaxAge = b[1];
 			}
 		}
 
@@ -330,8 +347,7 @@ cache.request = function(pipe, opts) {
 			}
 
 			/* check if we need to store the max age */
-			if(cacheControlMaxAge > 0)
-				header.ccMaxAge = cacheControlMaxAge;
+			header.create = new Date();
 
 			header.needDump = false;
 			var fileHdr = JSON.stringify(header)+"\n";
