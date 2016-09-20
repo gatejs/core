@@ -79,7 +79,7 @@ function runSpawner(gjs) {
 }
 
 var gatejs = (function() {
-	this.version = "1.9";
+	this.version = "1.10";
 	this.config = new Object;
 	this.pipeline = new Object;
 
@@ -279,7 +279,7 @@ var gatejs = (function() {
 				process.exit(0);
 			}
 		});
-	
+
 		process.title = 'gate.js Master process';
 		var localThis = this;
 
