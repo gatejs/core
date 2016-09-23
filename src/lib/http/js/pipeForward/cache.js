@@ -108,13 +108,14 @@ cache.request = function(pipe, opts) {
 					pipe.response.gjsRemoveHeader('keep-alive');
 				}
 
-				if(!pipe.server.config.noVia)
-					pipe.response.gjsSetHeader('Via', 'gatejs HITRMS');
+				if(opts.cacheInfo == true)
+					pipe.response.gjsSetHeader('X-Cache', 'HITRMS');
 
 				/* fix headers */
 				var nHeaders = {};
 				for(var n in pipe.response.headers)
 					nHeaders[pipe.response.orgHeaders[n]] = pipe.response.headers[n];
+				nHeaders['Server'] = 'gatejs';
 
 				if(pipe.reverse === true)
 					pipe.root.lib.http.reverse.log(pipe, 304);
@@ -144,13 +145,14 @@ cache.request = function(pipe, opts) {
 				pipe.response.gjsRemoveHeader('keep-alive');
 			}
 
-			if(!pipe.server.config.noVia)
-				pipe.response.gjsSetHeader('Via', 'gatejs HIT');
+			if(opts.cacheInfo == true)
+				pipe.response.gjsSetHeader('X-Cache', 'HIT');
 
 			/* fix headers */
 			var nHeaders = {};
 			for(var n in pipe.response.headers)
 				nHeaders[pipe.response.orgHeaders[n]] = pipe.response.headers[n];
+			nHeaders['Server'] = 'gatejs';
 
 			pipe.response.writeHead(200, nHeaders);
 			var st = fs.createReadStream(hash.file, {
@@ -208,8 +210,8 @@ cache.request = function(pipe, opts) {
 		opts.clientIgnoreCache = false;
 	if(!opts.exclusive)
 		opts.exclusive = false;
-	if(!opts.feeding)
-		opts.feeding = true;
+	//if(!opts.feeding)
+		opts.feeding = true; // force feeding
 
 	var canRestoreCache = true;
 
@@ -244,6 +246,10 @@ cache.request = function(pipe, opts) {
 			return(true);
 		}
 	}
+
+	/* cache missed */
+	if(opts.cacheInfo == true)
+		pipe.response.gjsSetHeader('X-Cache', 'MISS');
 
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	 *
@@ -337,6 +343,7 @@ cache.request = function(pipe, opts) {
 
 		/* here we store datas */
 		if(response.statusCode == 200 || response.statusCode == 206) {
+
 			/* create tempory files */
 			stage = '';
 			tab = hash.tmpFile.split("/");
@@ -362,8 +369,9 @@ cache.request = function(pipe, opts) {
 	// 	    pipe.root.lib.bwsFg.acn.pushDigest(pipe, hash);
 
 			/* normal source end */
-			pipe.response.on('finish', (function() {
+			response.on('end', (function() {
 	// 			pipe.root.lib.bwsFg.acn.popDigest(pipe);
+				st = null;
 
 				fs.rename(pipe.response.fileHash.tmpFile, pipe.response.fileHash.file, function (err) {
 					if (err) {
@@ -376,13 +384,14 @@ cache.request = function(pipe, opts) {
 						}
 					}
 				});
-				st = null;
-
 			}));
 
 			pipe.request.on('close', (function() {
 				if(st)
 					st.close();
+				else
+					return;
+
 				try {
 					fs.unlinkSync(pipe.response.fileHash.tmpFile);
 				} catch(e) {
@@ -412,8 +421,8 @@ cache.request = function(pipe, opts) {
 					return;
 				}
 			});
-
 		}
+
 // 		else
 // 			console.log('MISS '+response.statusCode, pipe.request.url);
 	});
