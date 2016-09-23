@@ -114,7 +114,7 @@ reverse.loader = function(gjs) {
 			var options = {
 				host: node.host,
 				port: node.port,
-				path: '/',
+				path: '/is-your-website-works',
 				method: 'GET',
 				headers: {
 					Host: input.msg.site,
@@ -172,8 +172,8 @@ reverse.loader = function(gjs) {
 					clearTimeout(socket.timeoutId);
 				});
 			});
-			req.end();
 
+			req.end();
 		}
 
 		gjs.lib.core.ipc.on('proxyPassFaulty', function(gjs, data) {
