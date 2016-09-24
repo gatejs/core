@@ -167,18 +167,20 @@ proxy.prototype.connect = function() {
 
 	/* select flow control */
 	var flowSelect = http;
-	if(nodePtr.https == true)
+	if(nodePtr.forceHttps == true) {
 		flowSelect = https;
+    options.port = nodePtr.httpsPort ? nodePtr.httpsPort : 443;
+  }
 	else if(self.stream.hybrid == true) {
 		if(pipe.server.config.ssl == true) {
 			flowSelect = https;
-			options.port = nodePtr.portSSL ? nodePtr.portSSL : 443;
+			options.port = nodePtr.httpsPort ? nodePtr.httpsPort : 443;
 		}
 		else
-			options.port = nodePtr.port ? nodePtr.port : 80;
+			options.port = nodePtr.httpPort ? nodePtr.httpPort : 80;
 	}
 	else
-		options.port = nodePtr.port ? nodePtr.port : 80;
+		options.port = nodePtr.httpPort ? nodePtr.httpPort : 80;
 
 	var req = flowSelect.request(options, function(res) {
 
@@ -259,7 +261,9 @@ proxy.prototype.connect = function() {
 
 			pipe.root.lib.core.ipc.send('LFW', 'proxyPassFaulty', {
 				site: pipe.request.headers.host,
-				node: nodePtr
+				node: nodePtr,
+        port: options.port,
+        https: flowSelect == https ? true : false
 			});
 
 			nodePtr.isFaulty = true;
@@ -303,8 +307,6 @@ proxy.prototype.connect = function() {
 
 			res.gjsSetHeader('Server', 'gatejs');
 
-			if(!pipe.server.noVia)
-				res.gjsSetHeader('Via', 'gatejs MISS');
 
 			/* fix headers */
 			var nHeaders = {};
@@ -403,6 +405,7 @@ proxy.prototype.connect = function() {
 }
 
 proxy.prototype.forward = function() {
+
   this.pipe.pause();
 
   /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -412,7 +415,7 @@ proxy.prototype.forward = function() {
    * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
   if(!this.pipe.site.proxyStream || !this.pipe.site.proxyStream[this.streamName]) {
     this.http.error.renderArray({
-      pipe: pipe,
+      pipe: this.pipe,
       code: 500,
       tpl: "5xx",
       log: false,
@@ -431,7 +434,7 @@ proxy.prototype.forward = function() {
 	this.node = this.select();
 	if(this.node == false) {
 		this.http.error.renderArray({
-			pipe: pipe,
+			pipe: this.pipe,
 			code: 504,
 			tpl: "5xx",
 			log: true,

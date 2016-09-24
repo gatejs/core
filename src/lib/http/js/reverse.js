@@ -110,10 +110,27 @@ reverse.loader = function(gjs) {
 		reverse.sitesFaulty = {};
 
 		function backgroundChecker(input) {
+			/* take the node */
 			var node = input.msg.node;
+
+			/* take the site */
+			var sNode = null;
+			var site = gjs.lib.http.reverse.sites.search(input.msg.site);
+			if(site)
+				if(site.proxyStream[node._name][node._key])
+					if(site.proxyStream[node._name][node._key][node._index])
+						sNode = site.proxyStream[node._name][node._key][node._index];
+
+			/* do not need more action */
+			if(!sNode || sNode.isFaulty != true) {
+				delete reverse.sitesFaulty[input.hash];
+				return;
+			}
+
+			/* create http req options */
 			var options = {
 				host: node.host,
-				port: node.port,
+				port: input.msg.port,
 				path: '/is-your-website-works',
 				method: 'GET',
 				headers: {
@@ -126,11 +143,10 @@ reverse.loader = function(gjs) {
 			};
 
 			var flowSelect = http;
-			if(node.https == true)
+			if(input.msg.https == true)
 				flowSelect = https;
 
 			var context = reverse.sitesFaulty[input.hash];
-			var subHash = input.site.confName+node._name+node._key+node._index;
 
 			var req = flowSelect.request(options, function(res) {
 
@@ -178,16 +194,17 @@ reverse.loader = function(gjs) {
 
 		gjs.lib.core.ipc.on('proxyPassFaulty', function(gjs, data) {
 			var d = data.msg.node;
-			var s = reverse.sites.search(data.msg.site);
+
+			var s = gjs.lib.http.reverse.sites.search(data.msg.site);
 			if(!s)
 				return;
 
 			/* group by ip and port */
-			var hash = d.host+':'+d.port;
+			var hash = s.name+':'+d.host+':'+data.msg.port;
 			if(!reverse.sitesFaulty[hash]) {
 				reverse.sitesFaulty[hash] = {
 					_host: d.host,
-					_port: d.port,
+					_port: data.msg.port,
 					_timer: setTimeout(
 						backgroundChecker,
 						2000,
@@ -195,13 +212,6 @@ reverse.loader = function(gjs) {
 					)
 				};
 			}
-			var context = reverse.sitesFaulty[hash];
-			var subHash = s.confName+d._name+d._key+d._index;
-			if(context[subHash])
-				return;
-			var siteHash = context[subHash] = d;
-
-			siteHash._site = data.msg.site;
 		});
 
 		/* Logging */
