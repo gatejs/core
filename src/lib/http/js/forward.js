@@ -1,19 +1,19 @@
 /*
  * Copyright (c) 2010-2014 BinarySEC SAS
  * Forward proxy [http://www.binarysec.com]
- * 
+ *
  * This file is part of Gate.js.
- * 
+ *
  * Gate.js is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -34,13 +34,13 @@ forward.sockets = [];
 forward.log = function(gjs, connClose) {
 	if(!connClose)
 		connClose = gjs.response.statusCode;
-	
+
 	var version;
 	if(gjs.request.spdyVersion)
 		version = "SPDY/"+gjs.request.spdyVersion;
 	else
 		version = "HTTP/"+gjs.request.httpVersion;
-	
+
 	gjs.root.lib.core.logger.commonLogger(
 		'FWLOG',
 		{
@@ -68,7 +68,7 @@ forward.logConnect = function(gjs, args) {
 forward.logpipe = function(gjs, src) {
 	if(!gjs.request.gjsWriteBytes)
 		gjs.request.gjsWriteBytes = 0;
-	
+
 	/* accumulate counter */
 	src.on('data', function(data) {
 		gjs.request.gjsWriteBytes += data.length;
@@ -78,7 +78,7 @@ forward.logpipe = function(gjs, src) {
 	gjs.request.on('close', function() {
 		forward.log(gjs, 499);
 	});
-	
+
 	/* on response sent to client */
 	gjs.response.on('finish', function() {
 		forward.log(gjs);
@@ -87,13 +87,13 @@ forward.logpipe = function(gjs, src) {
 }
 
 forward.loader = function(gjs) {
-	
+
 	if (cluster.isMaster) {
 		var logger = gjs.lib.core.logger;
-		
+
 		/* create logging receiver */
 		var processLog = function(req) {
-			var inline = 
+			var inline =
 				req.msg.site+' - '+
 				req.msg.ip+' '+
 				req.msg.version+' '+
@@ -105,51 +105,53 @@ forward.loader = function(gjs) {
 				req.msg.outBytes+' '+
 				req.msg.referer+' '
 			;
-			
+
 			/* write log */
 			var f = logger.selectFile(null, 'forward-access');
-			if(f) 
+			if(f)
 				f.write(inline);
 		}
-		
+
 		var processConnect = function(req) {
 
-			var inline = 
+			var inline =
 				req.msg.code.toUpperCase()+' on '+
 				req.msg.address+':'+
 				req.msg.port+
 				' from '+
 				req.msg.remote
 			;
-			
+
 			/* write log */
 			var f = logger.selectFile(null, 'forward-connect');
-			if(f) 
+			if(f)
 				f.write(inline);
 		}
-		
+
 		logger.typeTab['FWLOG'] = processLog;
 		logger.typeTab['FWLOGCONNECT'] = processConnect;
 		return;
 	}
-	
-// 	/* read configuration and bind servers */	
+
+// 	/* read configuration and bind servers */
 // 	http.globalAgent.maxSockets = 1000;
 // 	https.globalAgent.maxSockets = 1000;
-	
+
 	var processRequest = function(server, request, response) {
 		request.remoteAddress = request.connection.remoteAddress;
 
-		response.on('error', function(e) { });
-		
+		request.on('error', function(e) {
+			console.log('e', e);
+		});
+
 		/* resolv pipeline */
-		server.pipeline = gjs.lib.core.pipeline.getGlobalPipe(server.config.pipeline); 
+		server.pipeline = gjs.lib.core.pipeline.getGlobalPipe(server.config.pipeline);
 		if(!server.pipeline) {
 			gjs.lib.core.logger.error('Enable to locate pipeline '+server.config.pipeline);
 			response.end();
 			return(false);
 		}
-		
+
 		var pipe = gjs.lib.core.pipeline.create(forward.opcodes, server.pipeline, function() {
 			gjs.lib.http.error.renderArray({
 				pipe: pipe,
@@ -160,15 +162,15 @@ forward.loader = function(gjs) {
 				explain: "Pipeline did not execute a breaking opcode"
 			});
 		});
-		
+
 		pipe.forward = true;
 		pipe.root = gjs;
 		pipe.request = request;
 		pipe.response = response;
 		pipe.server = server;
-		
+
 		gjs.lib.core.stats.http(pipe);
-		
+
 		/* parse the URL */
 		try {
 			pipe.request.urlParse = url.parse(request.url, true);
@@ -177,19 +179,19 @@ forward.loader = function(gjs) {
 			request.connection.destroy();
 			return;
 		}
-		
+
 		/* lookup little FS */
 		var lfs = gjs.lib.http.littleFs.process(pipe);
 		if(lfs == true)
 			return;
-		
+
 		/* get iface */
 		var iface = forward.list[server.gjsKey];
 		if(!iface) {
 			gjs.lib.http.error.renderArray({
-				pipe: pipe, 
-				code: 500, 
-				tpl: "5xx", 
+				pipe: pipe,
+				code: 500,
+				tpl: "5xx",
 				log: false,
 				title:  "Internal server error",
 				explain: "no iface found, fatal error"
@@ -205,11 +207,13 @@ forward.loader = function(gjs) {
 
 	var processUpgrade = function(server, request, socket) {
 		request.remoteAddress = request.connection.remoteAddress;
-	
-		response.on('error', function(e) { });
-		
+
+		request.on('error', function(e) {
+			console.log('e', e);
+		});
+
 		/* resolv pipeline */
-		server.pipeline = gjs.lib.core.pipeline.getGlobalPipe(server.config.pipeline); 
+		server.pipeline = gjs.lib.core.pipeline.getGlobalPipe(server.config.pipeline);
 		if(!server.pipeline) {
 			gjs.lib.core.logger.error('Enable to locate pipeline '+server.config.pipeline);
 			socket.destroy();
@@ -233,7 +237,7 @@ forward.loader = function(gjs) {
 		pipe.caller = "upgrade";
 
 		gjs.lib.core.stats.http(pipe);
-		
+
 		/* parse the URL */
 		try {
 			pipe.request.urlParse = url.parse(request.url, true);
@@ -242,7 +246,7 @@ forward.loader = function(gjs) {
 			socket.destroy();
 			return;
 		}
-		
+
 		/* get iface */
 		var iface = forward.list[server.gjsKey];
 		if(!iface) {
@@ -262,7 +266,7 @@ forward.loader = function(gjs) {
 // 		clearInterval(socket.bwsFg.interval);
 // 		socket.destroy();
 // 	}
-	
+
 	var bindHttpServer = function(key, sc) {
 		/* sanatize */
 		if(!sc.pipeline) {
@@ -274,16 +278,16 @@ forward.loader = function(gjs) {
 			sc.port = sc.ssl == true ? 443 : 80;
 		if(!sc.timeout)
 			sc.timeout = 30;
-		
+
 		var processConnectRequest = function(request, socket, head) {
 			var s = request.url.split(':');
 			var ip = socket.remoteAddress;
-			
+
 			/* open raw stream */
 			var client = net.connect({
 				host: s[0],
 				port: s[1] ? s[1] : 80
-				
+
 			},
 			function() {
 				forward.logConnect(
@@ -323,22 +327,22 @@ forward.loader = function(gjs) {
 				});
 				client.destroy();
 			});
-			
+
 		}
-	
-		
+
+
 		/** \todo ssl needs file lookup */
-		
+
 		/* create network interface */
 		var iface;
 		if(sc.ssl == true) {
 			gjs.lib.http.hardeningSSL(sc);
-			
+
 			if(!sc.key || !sc.cert) {
 				gjs.lib.core.logger.error('HTTPS forward you need to set the key and cert for '+key);
 				return(false);
 			}
-			
+
 			/* get certs */
 			gjs.lib.http.lookupSSLFile(sc);
 
@@ -347,8 +351,8 @@ forward.loader = function(gjs) {
 				iface.agent = gjs.lib.http.agent.httpsTproxy;
 			else
 				iface.agent = gjs.lib.http.agent.https;
-			
-			if(sc.allowConnect == true) 
+
+			if(sc.allowConnect == true)
 				iface.on('connect', processConnectRequest);
 		}
 		else {
@@ -357,19 +361,19 @@ forward.loader = function(gjs) {
 				iface.agent = gjs.lib.http.agent.httpTproxy;
 			else
 				iface.agent = gjs.lib.http.agent.http;
-			
-			if(sc.allowConnect == true) 
+
+			if(sc.allowConnect == true)
 				iface.on('connect', processConnectRequest);
 		}
-		
-		
+
+
 		iface.config = sc;
-		
+
 		iface.on('connection', function (socket) {
 			gjs.lib.core.graceful.push(socket);
-			
+
 			gjs.lib.core.stats.diffuse('httpWaiting', gjs.lib.core.stats.action.add, 1);
-			
+
 			socket.setTimeout(60000);
 			socket.on('close', function () {
 				socket.inUse = false;
@@ -385,10 +389,10 @@ forward.loader = function(gjs) {
 				if(request.connection._handle)
 					request.connection.inUse = false;
 			});
-// 			
+//
 			processRequest(this, request, response);
 		});
-		
+
 
 		iface.on('upgrade', function(request, socket, head) {
 			request.connection.inUse = true;
@@ -405,16 +409,16 @@ forward.loader = function(gjs) {
 			gjs.lib.core.logger.system("Binding forward HTTP proxy on "+sc.address+":"+sc.port);
 			iface.working = true;
 		});
-		
+
 		iface.on('error', function(e) {
 			gjs.lib.core.logger.error('HTTP forward error for instance '+key+': '+e);
 			console.log('* HTTP forward error for instance '+key+': '+e);
 		});
-		
+
 		iface.gjsKey = key;
 
 		iface.allowHalfOpen = false;
-	
+
 		/* listen */
 		if(sc.isTproxy == true && gjs.lib.http.tproxy.enabled)
 			iface.listenTproxy(sc.port, sc.address);
@@ -434,7 +438,7 @@ forward.loader = function(gjs) {
 				forward.list[key] = r;
 		}
 	}
-	
+
 	/* Load opcode context */
 	forward.opcodes = gjs.lib.core.pipeline.scanOpcodes(
 		__dirname+'/pipeForward',
@@ -442,8 +446,8 @@ forward.loader = function(gjs) {
 	);
 	if(!forward.opcodes)
 		return(false);
-		
-	/* 
+
+	/*
 	 * Follow configuration
 	 */
 	for(var a in gjs.serverConfig.http) {
@@ -455,7 +459,7 @@ forward.loader = function(gjs) {
 		else if(sc instanceof Object)
 			processConfiguration(a, sc);
 	}
-	
+
 	function gracefulReceiver() {
 		for(var a in forward.list) {
 			var server = forward.list[a];
@@ -464,16 +468,15 @@ forward.loader = function(gjs) {
 				server.close(function() { });
 			}
 		}
-		
+
 		gjs.lib.core.ipc.removeListener('system:graceful:process', gracefulReceiver);
 	}
-	
+
 	/* add graceful receiver */
 	gjs.lib.core.ipc.on('system:graceful:process', gracefulReceiver);
-		
+
 	return(false);
-	
+
 }
 
 module.exports = forward;
-
