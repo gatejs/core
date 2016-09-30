@@ -88,6 +88,7 @@ reverse.logpipe = function(gjs, src) {
 	if(!gjs.request.gjsWriteBytes)
 		gjs.request.gjsWriteBytes = 0;
 
+
 	/* accumulate counter */
 	src.on('data', function(data) {
 		gjs.request.gjsWriteBytes += data.length;
@@ -95,6 +96,10 @@ reverse.logpipe = function(gjs, src) {
 
 	/* on client close connection */
 	gjs.request.on('close', function() {
+		reverse.log(gjs, 499);
+	});
+
+	gjs.response.on('finish', function() {
 		reverse.log(gjs);
 	});
 
