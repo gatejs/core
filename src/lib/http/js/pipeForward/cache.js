@@ -239,17 +239,11 @@ cache.request = function(pipe, opts) {
 		}
 	}
 
-	/* cache missed */
-	if(opts.cacheInfo == true)
-		pipe.response.gjsSetHeader('X-Cache', 'MISS');
-
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	 *
 	 * Intercept server response
 	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	var pipeProxyPassRequest = (function(pipe, request, response) {
-		if(opts.cacheInfo == true)
-			response.gjsSetHeader('X-Cache', 'MISS');
 
 		/* check if application has to stop cache process */
 		if(pipe.cantCache == true)
@@ -356,7 +350,7 @@ cache.request = function(pipe, opts) {
 
 			/* write stream */
 			var st = fs.createWriteStream(hash.tmpFile);
-			st.on('error', function(err) { console.log(1, err); });
+			st.on('error', function(err) { console.log(err); });
 			st.write(fileHdr);
 			pipe.response.fileIsCaching = st;
 			pipe.response.fileHash = hash;
@@ -401,9 +395,6 @@ cache.request = function(pipe, opts) {
 				from = pipe.subPipe;
 
 			from.pipe(st);
-
-// 			console.log('MISS: '+pipe.request.url);
-// 			pipe.response.gjsSetHeader('Via', 'gatejs MISS');
 		}
 		/* store partial data at lookup time remove cache headers */
 		else if(response.statusCode == 304 && opts.feeding == true) {
@@ -418,8 +409,9 @@ cache.request = function(pipe, opts) {
 			});
 		}
 
-// 		else
-// 			console.log('MISS '+response.statusCode, pipe.request.url);
+		/* cache missed */
+		if(opts.cacheInfo == true)
+			response.gjsSetHeader('X-Cache', 'MISS');
 	});
 
 	/*
