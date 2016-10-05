@@ -158,32 +158,24 @@ cache.request = function(pipe, opts) {
 			var st = fs.createReadStream(hash.file, {
 				start: headers.headerSerialPos
 			});
+			st.on('open', function() {
+				pipe.response.gjsCache = 'hit';
 
-// 			pipe.root.lib.core.ipc.send('LFW', 'pipeStatus', {
-// 				host: pipe.request.headers.host,
-// 				hits: true
-// 			});
+				/* actually we don't need subpipe anymore */
+				if(pipe.subPipe)
+					pipe.subPipe.end();
 
-			pipe.response.gjsCache = 'hit';
-// 			console.log('HIT 200', pipe.request.url);
+				if(pipe.reverse === true)
+					pipe.root.lib.http.reverse.logpipe(pipe, st);
+				else
+					pipe.root.lib.http.forward.logpipe(pipe, st);
 
-// 			var counter = 0;
-// 			st.on('data', function(data) { counter += data.length; });
-// 			pipe.response.on('finish', function() {
-// 				pipe.root.lib.core.ipc.send('LFW', 'pipeStatus', {
-// 					host: pipe.request.headers.host,
-// 					hitsBand: counter
-// 				});
-// 			});
+			});
+			st.on('error', function(err) {
+				pipe.resume();
+				pipe.execute();
+			});
 
-			/* actually we don't need subpipe anymore */
-			if(pipe.subPipe)
-				pipe.subPipe.end();
-
-			if(pipe.reverse === true)
-				pipe.root.lib.http.reverse.logpipe(pipe, st);
-			else
-				pipe.root.lib.http.forward.logpipe(pipe, st);
 			/* check */
 			return(true);
 		}
@@ -204,8 +196,8 @@ cache.request = function(pipe, opts) {
 		pipe.root.lib.core.logger.error('You need to provide dataDir in configuration');
 		return(false);
 	}
-	if(!opts.ignoreCache)
-		opts.ignoreCache = false;
+	if(!opts.ignoreRevalidate)
+		opts.ignoreRevalidate = false;
 	if(!opts.clientIgnoreCache)
 		opts.clientIgnoreCache = false;
 	if(!opts.exclusive)
@@ -256,6 +248,9 @@ cache.request = function(pipe, opts) {
 	 * Intercept server response
 	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	var pipeProxyPassRequest = (function(pipe, request, response) {
+		if(opts.cacheInfo == true)
+			response.gjsSetHeader('X-Cache', 'MISS');
+
 		/* check if application has to stop cache process */
 		if(pipe.cantCache == true)
 			return;
@@ -282,11 +277,11 @@ cache.request = function(pipe, opts) {
 			cacheControl = response.headers['cache-control'].split(",");
 			for(a in cacheControl) {
 				var scc = cacheControl[a].trim();
-				if(scc == "private" && opts.ignoreCache != true)
+				if(scc == "private")
 					return;
-				else if(scc == "must-revalidate" && opts.ignoreCache != true)
+				else if(scc == "no-cache")
 					return;
-				else if(scc == "no-cache" && opts.ignoreCache != true)
+				else if(scc == "must-revalidate" && opts.ignoreRevalidate != true)
 					return;
 			}
 		}

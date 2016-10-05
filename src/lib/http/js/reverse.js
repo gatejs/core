@@ -154,28 +154,47 @@ reverse.loader = function(gjs) {
 			var context = reverse.sitesFaulty[input.hash];
 
 			var req = flowSelect.request(options, function(res) {
+				var context = reverse.sitesFaulty[input.hash];
+				if(!context)
+					return;
 
-				for(var a in context) {
-					var b = context[a];
-					if(a.substr(0, 1) != '_') {
-						gjs.lib.core.ipc.send('LFW', 'proxyPassWork', {
-							site: b._site,
-							node: b
-						});
-					}
-				}
+				gjs.lib.core.ipc.send('LFW', 'proxyPassWork', {
+					site: context._site,
+					node: context._node
+				});
+
+				if(context._timer)
+					clearTimeout(context._timer);
 
 				clearTimeout(res.socket.timeoutId);
 				delete reverse.sitesFaulty[input.hash];
 			});
 
 			req.on('error', function (error) {
+				var context = reverse.sitesFaulty[input.hash];
+				if(!context)
+					return;
+
+				if(context._timer)
+					clearTimeout(context._timer);
+				context._timer = setTimeout(
+					backgroundChecker,
+					1000,
+					input
+				);
 			});
 
 			function socketErrorDetection(socket) {
 				req.abort();
 				socket.destroy();
+
+				var context = reverse.sitesFaulty[input.hash];
+				if(!context)
+					return;
+
 				clearTimeout(socket.timeoutId);
+				if(context._timer)
+					clearTimeout(context._timer);
 				context._timer = setTimeout(
 					backgroundChecker,
 					1000,
@@ -208,8 +227,10 @@ reverse.loader = function(gjs) {
 			var hash = s.name+':'+d.host+':'+data.msg.port;
 			if(!reverse.sitesFaulty[hash]) {
 				reverse.sitesFaulty[hash] = {
+					_site: data.msg.site,
 					_host: d.host,
 					_port: data.msg.port,
+					_node: data.msg.node,
 					_timer: setTimeout(
 						backgroundChecker,
 						2000,
@@ -387,7 +408,6 @@ reverse.loader = function(gjs) {
 					server.config.pipeline+' from '+request.remoteAddress);
 			socket.end('HTTP/'+request.httpVersion+' 500 Internal server error\r\n' +
 			       '\r\n');
-			console.log('server error');
 			return(false);
 		});
 
@@ -584,7 +604,6 @@ reverse.loader = function(gjs) {
 
 				/* SNI resolved */
 				if(site.sslSNI.resolv) {
-					console.log(site.sslSNI);
 					cb(null, site.sslSNI.crypto.context);
 					return(true);
 				}

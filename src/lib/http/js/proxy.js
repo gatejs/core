@@ -183,6 +183,7 @@ proxy.prototype.connect = function() {
 		options.port = nodePtr.httpPort ? nodePtr.httpPort : 80;
 
 	var req = flowSelect.request(options, function(res) {
+    req.ask = false;
 
 		if(req.connection.timeoutId) {
 			clearTimeout(req.connection.timeoutId);
@@ -219,7 +220,7 @@ proxy.prototype.connect = function() {
 
 		/* check for client close */
 		pipe.request.on('close', function() {
-			res.destroy();
+			req.destroy();
 		});
 
 		/* check if there is bad chars in content header */
@@ -268,11 +269,6 @@ proxy.prototype.connect = function() {
 
 			nodePtr.isFaulty = true;
 		}
-    else {
-      setTimeout(() => {
-        self.connect();
-      }, 50);
-    }
 
     if(nodePtr.isFaulty == true) {
       self.node = self.select();
@@ -289,10 +285,13 @@ proxy.prototype.connect = function() {
     		return(false);
     	}
       else {
-        setTimeout(() => {
-          self.connect();
-        }, 50);
+        self.connect();
+        return;
       }
+    }
+    else {
+      self.connect();
+      return;
     }
 	}
 
@@ -306,7 +305,6 @@ proxy.prototype.connect = function() {
 			pipe.response.emit("response", res, "rvpass");
 
 			res.gjsSetHeader('Server', 'gatejs');
-
 
 			/* fix headers */
 			var nHeaders = {};
@@ -359,12 +357,28 @@ proxy.prototype.connect = function() {
 
 			pipe.response.destroy();
 			pipe.stop();
+      req.ask = false;
 			return;
 		}
+    
+    if(error.code != 'ECONNRESET') {
+      self.http.error.renderArray({
+        pipe: pipe,
+        code: 504,
+        tpl: "5xx",
+        log: true,
+        title:  "Bad gateway",
+        explain: "Connection Error with code #"+error.code
+      });
+
+      if(!nodePtr._retry)
+        nodePtr._retry = 0;
+      nodePtr._retry++;
+    }
 	});
 
 	function socketErrorDetection(socket) {
-		var connector = options.host+":"+options.port;
+		var connector = nodePtr.host+":"+options.port;
 		self.http.reverse.error(pipe, "Proxy pass timeout on "+
 			connector+" from "+
 			pipe.request.remoteAddress+
@@ -399,7 +413,7 @@ proxy.prototype.connect = function() {
 
 	pipe.response.emit("rvProxyPassPassPrepare", req);
 	pipe.pause();
-
+  req.ask = true;
   /* integrate async post manager here */
 	req.end();
 }
