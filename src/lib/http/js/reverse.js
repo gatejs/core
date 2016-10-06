@@ -211,6 +211,7 @@ reverse.loader = function(gjs) {
 				socket.on('connect', function() {
 					clearTimeout(socket.timeoutId);
 				});
+
 			});
 
 			req.end();
@@ -391,6 +392,16 @@ reverse.loader = function(gjs) {
 
 		gjs.lib.http.postMgr.init(pipe);
 
+		/* add connection keep alive */
+		if(request.httpVersion != '1.0' && request.httpVersion != '0.9') {
+			pipe.response.on('response', function(res, from) {
+				res.gjsSetHeader('Connection', 'keep-alive');
+				res.gjsSetHeader('Keep-Alive', 'timeout=300, max=1000');
+			});
+		}
+		else
+				res.gjsSetHeader('Connection', 'close');
+		
 		pipe.update(reverse.sites.opcodes, pipe.location.pipeline);
 
 		/* execute pipeline */
@@ -535,7 +546,7 @@ reverse.loader = function(gjs) {
 			gjs.lib.core.graceful.push(socket);
 			gjs.lib.core.stats.diffuse('httpWaiting', gjs.lib.core.stats.action.add, 1);
 
-			socket.setTimeout(60000);
+			socket.setTimeout(300000);
 
 			socket.on('close', function () {
 				socket.inUse = false;
@@ -685,7 +696,7 @@ reverse.loader = function(gjs) {
 		iface.on('connection', (function(socket) {
 			gjs.lib.core.graceful.push(socket);
 
-			socket.setTimeout(60000);
+			socket.setTimeout(300000);
 
 			socket.on('close', function () {
 				socket.inUse = false;
