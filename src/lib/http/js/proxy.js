@@ -164,7 +164,7 @@ proxy.prototype.connect = function() {
 
 	/* emit the preProxyPass */
 	pipe.response.emit("rvProxyPassPassConnection", options, req);
-console.log(options);
+
 	/* select flow control */
 	var flowSelect = http;
 	if(nodePtr.forceHttps == true) {
@@ -414,7 +414,7 @@ console.log(options);
 	pipe.response.emit("rvProxyPassPassPrepare", req);
 	pipe.pause();
   req.ask = true;
-  
+
   /* integrate async post manager here */
 	pipe.request.pipe(req);
 }
