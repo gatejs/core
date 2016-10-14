@@ -164,7 +164,7 @@ proxy.prototype.connect = function() {
 
 	/* emit the preProxyPass */
 	pipe.response.emit("rvProxyPassPassConnection", options, req);
-
+console.log(options);
 	/* select flow control */
 	var flowSelect = http;
 	if(nodePtr.forceHttps == true) {
@@ -360,7 +360,7 @@ proxy.prototype.connect = function() {
       req.ask = false;
 			return;
 		}
-    
+
     if(error.code != 'ECONNRESET') {
       self.http.error.renderArray({
         pipe: pipe,
@@ -414,8 +414,9 @@ proxy.prototype.connect = function() {
 	pipe.response.emit("rvProxyPassPassPrepare", req);
 	pipe.pause();
   req.ask = true;
+  
   /* integrate async post manager here */
-	req.end();
+	pipe.request.pipe(req);
 }
 
 proxy.prototype.forward = function() {
