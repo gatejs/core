@@ -28,7 +28,8 @@ var tls = require("tls");
 var EventEmitter = require('events');
 var spdy = require("./node-spdy/lib/spdy.js");
 
-var reverse = function() { /* loader below */ };
+var reverse = function() {
+};
 
 reverse.list = {};
 
@@ -107,6 +108,7 @@ reverse.logpipe = function(gjs, src) {
 }
 
 reverse.loader = function(gjs) {
+	reverse.events = new EventEmitter;
 	reverse.sites = new gjs.lib.http.site(gjs, 'pipeReverse', 'reverseSites');
 	reverse.sites.reload();
 
@@ -302,13 +304,14 @@ reverse.loader = function(gjs) {
 		pipe.response = response;
 		pipe.server = server;
 
-		gjs.lib.core.stats.http(pipe);
+		//gjs.lib.core.stats.http(pipe);
 
 		/* parse the URL */
 		try {
 			pipe.request.urlParse = url.parse(request.url, true);
 		} catch(e) {
 			gjs.lib.core.logger.error('URL Parse error on from '+request.remoteAddress);
+			reverse.events.emit("urlError", pipe);
 			request.connection.destroy();
 			return;
 		}
@@ -333,6 +336,8 @@ reverse.loader = function(gjs) {
 			}
 		}
 
+		reverse.events.emit("request", pipe);
+		
 		/* lookup little FS */
 		var lfs = gjs.lib.http.littleFs.process(pipe);
 		if(lfs == true)
@@ -401,7 +406,7 @@ reverse.loader = function(gjs) {
 		}
 		else
 				res.gjsSetHeader('Connection', 'close');
-		
+
 		pipe.update(reverse.sites.opcodes, pipe.location.pipeline);
 
 		/* execute pipeline */

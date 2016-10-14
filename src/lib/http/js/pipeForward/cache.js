@@ -45,8 +45,10 @@ cache.request = function(pipe, opts) {
 		return(false);
 
 	/* append site specific for website as reverse */
-	if(pipe.reverse == true)
+	if(pipe.reverse == true) {
+		var reverse = pipe.root.lib.http.reverse;
 		cacheDir += pipe.site.name;
+	}
 
 	var tryToStream = function(input) {
 
@@ -90,7 +92,7 @@ cache.request = function(pipe, opts) {
 					host: pipe.request.headers.host,
 					hits: true
 				});
-//pipe.request.remoteAddress
+
 				pipe.response.gjsCache = 'hit_rms';
 
 				/* load headers */
@@ -98,7 +100,8 @@ cache.request = function(pipe, opts) {
 					pipe.response.gjsSetHeader(n, headers.headers[n]);
 
 				pipe.response.emit("response", pipe.response, 'cache304');
-				pipe.response.emit("cacheRms", pipe);
+				if(pipe.reverse)
+					reverse.events.emit("cacheRms", pipe);
 
 				if(
 					pipe.server.isClosing == true ||
@@ -136,7 +139,9 @@ cache.request = function(pipe, opts) {
 				pipe.response.gjsSetHeader(n, headers.headers[n]);
 
 			pipe.response.emit("response", pipe.response, 'cache200');
-			pipe.response.emit("cacheHit", pipe);
+
+			if(pipe.reverse)
+				reverse.events.emit("cacheHit", pipe);
 
 			if(
 				pipe.server.isClosing == true ||
@@ -334,7 +339,8 @@ cache.request = function(pipe, opts) {
 
 		/* here we store datas */
 		if(response.statusCode == 200 || response.statusCode == 206) {
-			pipe.response.emit("cacheFeed", pipe);
+			if(pipe.reverse)
+				reverse.events.emit("cacheFeed", pipe);
 
 			/* create tempory files */
 			stage = '';
