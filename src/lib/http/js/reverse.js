@@ -337,7 +337,7 @@ reverse.loader = function(gjs) {
 		}
 
 		reverse.events.emit("request", pipe);
-		
+
 		/* lookup little FS */
 		var lfs = gjs.lib.http.littleFs.process(pipe);
 		if(lfs == true)
@@ -417,7 +417,9 @@ reverse.loader = function(gjs) {
 	var processUpgrade = function(server, request, socket) {
 		request.remoteAddress = request.connection.remoteAddress;
 
-		response.on('error', function(e) { });
+		socket.on('error', function(e) {
+			console.log('wss', e);
+		});
 
 		var pipe = gjs.lib.core.pipeline.create(null, null, function() {
 			gjs.lib.core.logger.error('Pipeline error while HTTP Upgrade '+
@@ -456,6 +458,8 @@ reverse.loader = function(gjs) {
 				return;
 			}
 		}
+
+		reverse.events.emit("request", pipe);
 
 		/* get iface */
 		var iface = reverse.list[server.gjsKey];
