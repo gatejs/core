@@ -652,7 +652,7 @@ reverse.loader = function(gjs) {
 		}
 
 		var int = https;
-		if(sc.spdy == true)
+		if(sc.spdy)
 			int = spdy;
 
 		gjs.events.emit('rvInterfaceCreate', sc);

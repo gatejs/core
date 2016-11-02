@@ -146,7 +146,7 @@ acn.isFresh = function(hdr, maxAge) {
 		return(false);
 
 	/* find a good max age in cache control */
-	var maxAge = 0;
+	var maxAge = 3600;
 	if(cc['max-age'] && parseInt(cc['max-age']) > 0)
 		maxAge = parseInt(cc['max-age']);
 	else if(cc['maxage'] && parseInt(cc['maxage']) > 0)
