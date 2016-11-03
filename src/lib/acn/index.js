@@ -117,7 +117,7 @@ acn.loadHeaderFile = function(file) {
 	return(false);
 }
 
-acn.isFresh = function(hdr, maxAge) {
+acn.isFresh = function(hdr, maxAgeDefined) {
 	if(!hdr)
 		return(false);
 	var ph = hdr.headers;
@@ -146,23 +146,16 @@ acn.isFresh = function(hdr, maxAge) {
 		return(false);
 
 	/* find a good max age in cache control */
-	var maxAge = 3600;
+	var maxAge = maxAgeDefined;
+	if(Number.isInteger(maxAge) && maxAge <= 0)
+		maxAge = 0;
+
 	if(cc['max-age'] && parseInt(cc['max-age']) > 0)
 		maxAge = parseInt(cc['max-age']);
 	else if(cc['maxage'] && parseInt(cc['maxage']) > 0)
 		maxAge = parseInt(cc['maxage']);
 	else if(cc['s-maxage'] && parseInt(cc['s-maxage']) > 0)
 		maxAge = parseInt(cc['s-maxage']);
-
-	/* using date and max age */
-	if(ph.Date && maxAge > 0) {
-		var now = new Date().getTime();
-		var sDate = new Date(ph.Date).getTime();
-		var sExpires = new Date(ph.Date).getTime()+maxAge*1000;
-
-		if(now-sDate <= sExpires)
-			return(true);
-	}
 
 	/* using date and expires */
 	else if(ph.Date && ph.Expires) {
@@ -177,6 +170,16 @@ acn.isFresh = function(hdr, maxAge) {
 		var now = new Date().getTime();
 		var sDate = new Date(ph.Date).getTime();
 		var sExpires = new Date(ph.Date).getTime()+(parseInt(ph.Age)*1000);
+
+		if(now-sDate <= sExpires)
+			return(true);
+	}
+
+	/* using date and max age */
+	if(ph.Date && maxAge > 0) {
+		var now = new Date().getTime();
+		var sDate = new Date(ph.Date).getTime();
+		var sExpires = new Date(ph.Date).getTime()+maxAge*1000;
 
 		if(now-sDate <= sExpires)
 			return(true);
