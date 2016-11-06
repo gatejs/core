@@ -398,14 +398,12 @@ reverse.loader = function(gjs) {
 		gjs.lib.http.postMgr.init(pipe);
 
 		/* add connection keep alive */
-		if(request.httpVersion != '1.0' && request.httpVersion != '0.9') {
+		if(request.httpVersion == '1.1') {
 			pipe.response.on('response', function(res, from) {
 				res.gjsSetHeader('Connection', 'keep-alive');
 				res.gjsSetHeader('Keep-Alive', 'timeout=300, max=1000');
 			});
 		}
-		else
-				res.gjsSetHeader('Connection', 'close');
 
 		pipe.update(reverse.sites.opcodes, pipe.location.pipeline);
 
