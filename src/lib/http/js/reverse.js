@@ -415,6 +415,8 @@ reverse.loader = function(gjs) {
 	var processUpgrade = function(server, request, socket) {
 		request.remoteAddress = request.connection.remoteAddress;
 
+		socket.setTimeout(1000 * 60 * 300);
+		
 		socket.on('error', function(e) {
 			console.log('wss', e);
 		});
