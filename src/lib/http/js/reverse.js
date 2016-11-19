@@ -416,7 +416,7 @@ reverse.loader = function(gjs) {
 		request.remoteAddress = request.connection.remoteAddress;
 
 		socket.setTimeout(1000 * 60 * 300);
-		
+
 		socket.on('error', function(e) {
 			console.log('wss', e);
 		});
@@ -551,6 +551,7 @@ reverse.loader = function(gjs) {
 		else
 			iface.agent = gjs.lib.http.agent.http;
 
+/*
 		iface.on('connection', (function(socket) {
 			gjs.lib.core.graceful.push(socket);
 			gjs.lib.core.stats.diffuse('httpWaiting', gjs.lib.core.stats.action.add, 1);
@@ -563,6 +564,7 @@ reverse.loader = function(gjs) {
 				gjs.lib.core.stats.diffuse('httpWaiting', gjs.lib.core.stats.action.sub, 1);
 			});
 		}));
+*/
 
 		iface.on('upgrade', function(request, socket, head) {
 			if(request.method != 'GET') {
@@ -702,6 +704,7 @@ reverse.loader = function(gjs) {
 			processUpgrade(this, request, socket);
 		});
 
+/*
 		iface.on('connection', (function(socket) {
 			gjs.lib.core.graceful.push(socket);
 
@@ -712,6 +715,7 @@ reverse.loader = function(gjs) {
 				gjs.lib.core.graceful.release(socket);
 			});
 		}));
+*/
 
 		iface.on('listening', function() {
 			gjs.lib.core.logger.system("Binding HTTPS reverse proxy on "+sc.address+":"+sc.port);
