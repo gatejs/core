@@ -166,7 +166,7 @@ void CoreNregPrelearn::pre_learn(std::string &expr_in) {
 			else if(id == NREG_CHAR_UNICODE4)
 				id = NREG_NODE_UNICODE4;
 		}
-		if(id == NREG_CHAR_ESCAPE) {
+		else if(id == NREG_CHAR_ESCAPE) {
 			is_escape = true;
 			continue;
 		}
