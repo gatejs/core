@@ -178,10 +178,9 @@ acn.isFresh = function(hdr, maxAgeDefined) {
 	/* using date and max age */
 	if(ph.Date && maxAge > 0) {
 		var now = new Date().getTime();
-		var sDate = new Date(ph.Date).getTime();
 		var sExpires = new Date(ph.Date).getTime()+maxAge*1000;
 
-		if(now-sDate <= sExpires)
+		if(now <= sExpires)
 			return(true);
 	}
 
