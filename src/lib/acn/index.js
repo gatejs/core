@@ -159,25 +159,23 @@ acn.isFresh = function(hdr, maxAgeDefined) {
 
 	/* using date and expires */
 	else if(ph.Date && ph.Expires) {
-		var now = new Date().getTime();
-		var sDate = new Date(ph.Date).getTime();
+		var now = Date.now();
 		var sExpires = new Date(ph.Expires).getTime();
-		if(now-sDate <= sExpires)
+		if(now <= sExpires)
 			return(true);
 	}
 	/* using date and Age header */
 	else if(ph.Date && ph.Age) {
-		var now = new Date().getTime();
-		var sDate = new Date(ph.Date).getTime();
+		var now = Date.now();
 		var sExpires = new Date(ph.Date).getTime()+(parseInt(ph.Age)*1000);
 
-		if(now-sDate <= sExpires)
+		if(now <= sExpires)
 			return(true);
 	}
 
 	/* using date and max age */
 	if(ph.Date && maxAge > 0) {
-		var now = new Date().getTime();
+		var now = Date.now();
 		var sExpires = new Date(ph.Date).getTime()+maxAge*1000;
 
 		if(now <= sExpires)
