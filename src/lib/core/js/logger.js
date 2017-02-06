@@ -116,9 +116,11 @@ logger.spawnMaster = function(gjs) {
 	/*
 	 * Receiving log messages
 	 */
-	gjs.lib.core.ipc.on('log', function(sgjs, data) {
-		processLine(data.msg);
-	});
+	if(gjs.serverConfig.nologs) {
+		gjs.lib.core.ipc.on('log', function(sgjs, data) {
+			processLine(data.msg);
+		});
+	}
 	
 	/* master common log */
 	logger.commonLogger = function(cmd, data) {
@@ -212,5 +214,3 @@ logger.loader = function(gjs) {
 
 
 module.exports = logger;
-
-
