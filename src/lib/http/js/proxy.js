@@ -11,131 +11,131 @@
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program.	If not, see <http://www.gnu.org/licenses/>.
  */
 const http = require("http");
 const https = require("https");
 
 var proxy = function(pipe, stream) {
 
-  /* mini event emitter */
-  this.pipe = pipe;
-  this.streamName = stream;
-  this.http = pipe.root.lib.http;
+	/* mini event emitter */
+	this.pipe = pipe;
+	this.streamName = stream;
+	this.http = pipe.root.lib.http;
 
 };
 
 proxy.prototype.selectIn = function(key) {
-  var ret,
-    node,
-    nodePtr, rkey;
+	var ret,
+		node,
+		nodePtr, rkey;
 
-  if(!this.stream)
-    return(false);
+	if(!this.stream)
+		return(false);
 
-  var pipe = this.pipe;
+	var pipe = this.pipe;
 
-  var rkey = key+'Ctx';
-  var reverse = this.stream[key];
-  var base = this.stream[rkey] ? this.stream[rkey] : this.stream[rkey] = {};
+	var rkey = key+'Ctx';
+	var reverse = this.stream[key];
+	var base = this.stream[rkey] ? this.stream[rkey] : this.stream[rkey] = {};
 
-  /* no current stream */
-  if(!base.currentStream)
-    base.currentStream = 0;
+	/* no current stream */
+	if(!base.currentStream)
+		base.currentStream = 0;
 
-  /* no more proxy up */
-  if(!reverse)
-    return(false);
+	/* no more proxy up */
+	if(!reverse)
+		return(false);
 
-  /* check current stream if we can use it */
-  nodePtr = reverse[base.currentStream];
-  if(!nodePtr) {
-    return(false);
-  }
+	/* check current stream if we can use it */
+	nodePtr = reverse[base.currentStream];
+	if(!nodePtr) {
+		return(false);
+	}
 
-  /* weight */
-  if(!nodePtr.currentWeight)
-    nodePtr.currentWeight = 0;
-  if(nodePtr.weight > nodePtr.currentWeight && nodePtr.isFaulty != true) {
-    nodePtr.currentWeight++;
-    return(nodePtr);
-  }
+	/* weight */
+	if(!nodePtr.currentWeight)
+		nodePtr.currentWeight = 0;
+	if(nodePtr.weight > nodePtr.currentWeight && nodePtr.isFaulty != true) {
+		nodePtr.currentWeight++;
+		return(nodePtr);
+	}
 
-  if(this.stream.type == "rr") {
-    /* check the nextone */
-    if(reverse[base.currentStream+1])
-      base.currentStream++;
-    else
-      base.currentStream = 0;
+	if(this.stream.type == "rr") {
+		/* check the nextone */
+		if(reverse[base.currentStream+1])
+			base.currentStream++;
+		else
+			base.currentStream = 0;
 
-    /* check if the stream is usable */
-    nodePtr = reverse[base.currentStream];
-    if(nodePtr.isFaulty == true) {
-      /* select another one */
-      for(node in reverse) {
-        var subNodePtr = reverse[node];
-        if(subNodePtr.isFaulty != true) {
-          base.currentStream = node;
-          subNodePtr.currentWeight = 1;
-          return(subNodePtr);
-        }
-      }
+		/* check if the stream is usable */
+		nodePtr = reverse[base.currentStream];
+		if(nodePtr.isFaulty == true) {
+			/* select another one */
+			for(node in reverse) {
+				var subNodePtr = reverse[node];
+				if(subNodePtr.isFaulty != true) {
+					base.currentStream = node;
+					subNodePtr.currentWeight = 1;
+					return(subNodePtr);
+				}
+			}
 
-      return(false);
-    }
+			return(false);
+		}
 
-    nodePtr.currentWeight = 1;
-    return(nodePtr);
-  }
-  else if(this.stream.type == "iphash") {
-    var id = 0;
-    if(pipe.request.remoteAddress) {
-      var ipNums = pipe.request.remoteAddress.split(/[^0-9]+/).reverse();
-      for(var i in ipNums)
-        id ^= ipNums[i];
-    }
-    base.currentStream = id % reverse.length;
+		nodePtr.currentWeight = 1;
+		return(nodePtr);
+	}
+	else if(this.stream.type == "iphash") {
+		var id = 0;
+		if(pipe.request.remoteAddress) {
+			var ipNums = pipe.request.remoteAddress.split(/[^0-9]+/).reverse();
+			for(var i in ipNums)
+				id ^= ipNums[i];
+		}
+		base.currentStream = id % reverse.length;
 
-    /* check if the stream is usable */
-    nodePtr = reverse[base.currentStream];
-    if(nodePtr.isFaulty == true) {
-      /* select another one */
-      for(node in reverse) {
-        var subNodePtr = reverse[node];
-        if(subNodePtr.isFaulty != true) {
-          base.currentStream = node;
-          subNodePtr.currentWeight = 1;
-          return(subNodePtr);
-        }
-      }
+		/* check if the stream is usable */
+		nodePtr = reverse[base.currentStream];
+		if(nodePtr.isFaulty == true) {
+			/* select another one */
+			for(node in reverse) {
+				var subNodePtr = reverse[node];
+				if(subNodePtr.isFaulty != true) {
+					base.currentStream = node;
+					subNodePtr.currentWeight = 1;
+					return(subNodePtr);
+				}
+			}
 
-      return(false);
-    }
+			return(false);
+		}
 
-    nodePtr.currentWeight = 1;
-    return(nodePtr);
-  }
+		nodePtr.currentWeight = 1;
+		return(nodePtr);
+	}
 
 }
 
 proxy.prototype.select = function() {
-  var nodePtr = this.selectIn('primary');
-  if(nodePtr == false) {
-    var nodePtr = this.selectIn('secondary');
-    if(nodePtr == false)
-      return(false);
-  }
-  return(nodePtr);
+	var nodePtr = this.selectIn('primary');
+	if(nodePtr == false) {
+		var nodePtr = this.selectIn('secondary');
+		if(nodePtr == false)
+			return(false);
+	}
+	return(nodePtr);
 }
 
 proxy.prototype.connect = function() {
-  var self = this;
-  var nodePtr = this.node;
-  var pipe = this.pipe;
+	var self = this;
+	var nodePtr = this.node;
+	var pipe = this.pipe;
 
 	if(!nodePtr.port)
 		nodePtr.port = 80;
@@ -169,8 +169,8 @@ proxy.prototype.connect = function() {
 	var flowSelect = http;
 	if(nodePtr.forceHttps == true) {
 		flowSelect = https;
-    options.port = nodePtr.httpsPort ? nodePtr.httpsPort : 443;
-  }
+		options.port = nodePtr.httpsPort ? nodePtr.httpsPort : 443;
+	}
 	else if(self.stream.hybrid == true) {
 		if(pipe.server.config.ssl == true) {
 			flowSelect = https;
@@ -183,7 +183,7 @@ proxy.prototype.connect = function() {
 		options.port = nodePtr.httpPort ? nodePtr.httpPort : 80;
 
 	var req = flowSelect.request(options, function(res) {
-    req.ask = false;
+		req.ask = false;
 
 		if(req.connection.timeoutId) {
 			clearTimeout(req.connection.timeoutId);
@@ -233,7 +233,7 @@ proxy.prototype.connect = function() {
 				code: 500,
 				tpl: "5xx",
 				log: true,
-				title:  "Internal Server Error",
+				title:	"Internal Server Error",
 				explain: e.message
 			});
 			return;
@@ -248,14 +248,14 @@ proxy.prototype.connect = function() {
 	});
 
 	function computeRetry() {
-    req.abort();
+		req.abort();
 
-    /* retry computing */
+		/* retry computing */
 		if(!nodePtr._retry)
 			nodePtr._retry = 0;
 		nodePtr._retry++;
 
-    /* check if the server is down */
+		/* check if the server is down */
 		if(nodePtr._retry >= nodePtr.retry) {
 			self.http.reverse.error(pipe, "Proxy stream "+
 				nodePtr.host+":"+nodePtr.port+" is DOWN");
@@ -263,36 +263,36 @@ proxy.prototype.connect = function() {
 			pipe.root.lib.core.ipc.send('LFW', 'proxyPassFaulty', {
 				site: pipe.request.headers.host,
 				node: nodePtr,
-        port: options.port,
-        https: flowSelect == https ? true : false
+				port: options.port,
+				https: flowSelect == https ? true : false
 			});
 
 			nodePtr.isFaulty = true;
 		}
 
-    if(nodePtr.isFaulty == true) {
-      self.node = self.select();
-    	if(self.node == false) {
-    		self.http.error.renderArray({
-    			pipe: pipe,
-    			code: 504,
-    			tpl: "5xx",
-    			log: true,
-    			title:  "Bad gateway",
-    			explain: "Unable to establish connection to the backend server"
-    		});
+		if(nodePtr.isFaulty == true) {
+			self.node = self.select();
+			if(self.node == false) {
+				self.http.error.renderArray({
+					pipe: pipe,
+					code: 504,
+					tpl: "5xx",
+					log: true,
+					title:	"Bad gateway",
+					explain: "Unable to establish connection to the backend server"
+				});
 
-    		return(false);
-    	}
-      else {
-        self.connect();
-        return;
-      }
-    }
-    else {
-      self.connect();
-      return;
-    }
+				return(false);
+			}
+			else {
+				self.connect();
+				return;
+			}
+		}
+		else {
+			self.connect();
+			return;
+		}
 	}
 
 	if(pipe.upgrade) {
@@ -357,24 +357,24 @@ proxy.prototype.connect = function() {
 
 			pipe.response.destroy();
 			pipe.stop();
-      req.ask = false;
+			req.ask = false;
 			return;
 		}
 
-    if(error.code != 'ECONNRESET') {
-      self.http.error.renderArray({
-        pipe: pipe,
-        code: 504,
-        tpl: "5xx",
-        log: true,
-        title:  "Bad gateway",
-        explain: "Connection Error with code #"+error.code
-      });
+		if(error.code != 'ECONNRESET') {
+			self.http.error.renderArray({
+				pipe: pipe,
+				code: 504,
+				tpl: "5xx",
+				log: true,
+				title:	"Bad gateway",
+				explain: "Connection Error with code #"+error.code
+			});
 
-      if(!nodePtr._retry)
-        nodePtr._retry = 0;
-      nodePtr._retry++;
-    }
+			if(!nodePtr._retry)
+				nodePtr._retry = 0;
+			nodePtr._retry++;
+		}
 	});
 
 	function socketErrorDetection(socket) {
@@ -403,7 +403,9 @@ proxy.prototype.connect = function() {
 		socket.on('error', function(e) {
 			self.http.error(pipe, 'Server socket error (from '+pipe.request.connection.remoteAddress+') : '+e);
 		});
-
+		
+		if(socket.timeoutId)
+			clearTimeout(socket.timeoutId);
 		socket.timeoutId = setTimeout(
 			socketErrorDetection,
 			nodePtr.timeout*1000,
@@ -413,39 +415,49 @@ proxy.prototype.connect = function() {
 
 	pipe.response.emit("rvProxyPassPassPrepare", req);
 	pipe.pause();
-  req.ask = true;
+	req.ask = true;
 
-  /* integrate async post manager here */
+	/* integrate async post manager here */
+	pipe.request.on('data', function(buffer) {
+		/* Also check slowloris or equivalent here */
+		if(req.connection.timeoutId)
+			clearTimeout(req.connection.timeoutId);
+		req.connection.timeoutId = setTimeout(
+			socketErrorDetection,
+			nodePtr.timeout*1000,
+			req.connection
+		);
+	});
 	pipe.request.pipe(req);
 }
 
 proxy.prototype.forward = function() {
 
-  this.pipe.pause();
+	this.pipe.pause();
 
-  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   *
-   *
-   * lookup proxy stream
-   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-  if(!this.pipe.site.proxyStream || !this.pipe.site.proxyStream[this.streamName]) {
-    this.http.error.renderArray({
-      pipe: this.pipe,
-      code: 500,
-      tpl: "5xx",
-      log: false,
-      title:  "Internal server error",
-      explain: "No Proxy Stream defined for this website"
-    });
-    return(true);
-  }
-  this.stream = this.pipe.site.proxyStream[this.streamName];
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 *
+	 *
+	 * lookup proxy stream
+	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+	if(!this.pipe.site.proxyStream || !this.pipe.site.proxyStream[this.streamName]) {
+		this.http.error.renderArray({
+			pipe: this.pipe,
+			code: 500,
+			tpl: "5xx",
+			log: false,
+			title:	"Internal server error",
+			explain: "No Proxy Stream defined for this website"
+		});
+		return(true);
+	}
+	this.stream = this.pipe.site.proxyStream[this.streamName];
 
-  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   *
-   *
-   * Select a destination
-   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 *
+	 *
+	 * Select a destination
+	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 	this.node = this.select();
 	if(this.node == false) {
 		this.http.error.renderArray({
@@ -453,21 +465,21 @@ proxy.prototype.forward = function() {
 			code: 504,
 			tpl: "5xx",
 			log: true,
-			title:  "Bad gateway",
+			title:	"Bad gateway",
 			explain: "Unable to establish connection to the backend server"
 		});
 
 		return(false);
 	}
 
-  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   *
-   *
-   * Connection
-   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-  this.connect();
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 *
+	 *
+	 * Connection
+	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+	this.connect();
 
-  return(false);
+	return(false);
 
 }
 
