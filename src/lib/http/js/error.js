@@ -37,7 +37,7 @@ error.renderArray = function(msg, file) {
 	var filename;
 
 	if(msg.pipe.reverse)
-		pipe.root.lib.http.reverse.events.emit("error", pipe);
+		pipe.root.lib.http.reverse.events.emit("errorPage", pipe);
 
 	if(file) {
 		filename = file;
