@@ -182,13 +182,23 @@ proxy.prototype.connect = function() {
 	else
 		options.port = nodePtr.httpPort ? nodePtr.httpPort : 80;
 
-	var req = flowSelect.request(options, function(res) {
+	var req;
+	try {
+		req = flowSelect.request(options, onResponse);
+	}
+	catch(e) {
+		pipe.request.destroy();
+		console.log('Catched error on flowSelect.request', e);
+		return;
+	}
+	
+	function onResponse(res) {
 		req.ask = false;
 
-		if(req.connection.timeoutId) {
-			clearTimeout(req.connection.timeoutId);
-			req.connection.timeoutId = null;
-		}
+		// if(req.connection.timeoutId) {
+		// 	clearTimeout(req.connection.timeoutId);
+		// 	req.connection.timeoutId = null;
+		// }
 
 		if(pipe.upgrade)
 			return;
@@ -245,7 +255,7 @@ proxy.prototype.connect = function() {
 			subPipe = pipe.subPipe;
 
 		self.http.reverse.logpipe(pipe, subPipe);
-	});
+	}
 
 	function computeRetry() {
 		req.abort();
@@ -299,7 +309,7 @@ proxy.prototype.connect = function() {
 		req.on('upgrade', function(res, socket, upgradeHead) {
 			/* remove request timeout */
 			req.connection.connected = true;
-			clearTimeout(req.connection.timeoutId);
+			// clearTimeout(req.connection.timeoutId);
 
 			pipe.response.emit("rvProxyPassPassRequest", pipe, req, res);
 			pipe.response.emit("response", res, "rvpass");
@@ -341,10 +351,10 @@ proxy.prototype.connect = function() {
 	req.on('error', function (error) {
 		pipe.response.emit("rvProxyPassSourceRequestError");
 
-		if(req.connection.timeoutId) {
-			clearTimeout(req.connection.timeoutId);
-			req.connection.timeoutId = null;
-		}
+		// if(req.connection.timeoutId) {
+		// 	clearTimeout(req.connection.timeoutId);
+		// 	req.connection.timeoutId = null;
+		// }
 
 		if(pipe.response.headerSent == true) {
 			var connector = options.host+":"+options.port;
@@ -404,13 +414,13 @@ proxy.prototype.connect = function() {
 			self.http.error(pipe, 'Server socket error (from '+pipe.request.connection.remoteAddress+') : '+e);
 		});
 		
-		if(socket.timeoutId)
-			clearTimeout(socket.timeoutId);
-		socket.timeoutId = setTimeout(
-			socketErrorDetection,
-			nodePtr.timeout*1000,
-			socket
-		);
+		// if(socket.timeoutId)
+		// 	clearTimeout(socket.timeoutId);
+		// socket.timeoutId = setTimeout(
+		// 	socketErrorDetection,
+		// 	nodePtr.timeout*1000,
+		// 	socket
+		// );
 	});
 
 	pipe.response.emit("rvProxyPassPassPrepare", req);
@@ -418,16 +428,16 @@ proxy.prototype.connect = function() {
 	req.ask = true;
 
 	/* integrate async post manager here */
-	pipe.request.on('data', function(buffer) {
-		/* Also check slowloris or equivalent here */
-		if(req.connection.timeoutId)
-			clearTimeout(req.connection.timeoutId);
-		req.connection.timeoutId = setTimeout(
-			socketErrorDetection,
-			nodePtr.timeout*1000,
-			req.connection
-		);
-	});
+	// pipe.request.on('data', function(buffer) {
+	// 	/* Also check slowloris or equivalent here */
+	// 	if(req.connection.timeoutId)
+	// 		clearTimeout(req.connection.timeoutId);
+	// 	req.connection.timeoutId = setTimeout(
+	// 		socketErrorDetection,
+	// 		nodePtr.timeout*1000,
+	// 		req.connection
+	// 	);
+	// });
 	pipe.request.pipe(req);
 }
 
