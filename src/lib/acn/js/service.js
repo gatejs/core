@@ -71,6 +71,11 @@ function loadTCPReplier(gjs) {
 	
 	var iface = http.createServer();
 	
+	iface.on('error', function(e) {
+		gjs.lib.core.logger.error('Error on acn/js/service.js/loadTCPReplier http server : '+e);
+		console.error('Error on acn/js/service.js/loadTCPReplier http server :', e);
+	})
+	
 	iface.on('connection', function (socket) {
 		
 	});
@@ -457,5 +462,3 @@ function loadMulticastACN(gjs) {
 
 
 module.exports = acnService;
-
-
