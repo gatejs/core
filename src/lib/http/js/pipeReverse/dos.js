@@ -44,7 +44,7 @@ var dos = function(gjs) { }
 dos.request = function(pipe, options) {
 	var date = new Date;
 	var now = date.getTime();
-	var remoteIP = gjs.request.remoteAddress;
+	var remoteIP = pipe.request.remoteAddress;
 
 	/* select the zone */
 	var selectedZone = false;
