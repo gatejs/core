@@ -19,7 +19,7 @@ function loadWLZone(root, zone, addresses) {
 
 function selectZone(pipe, zone) {
 	var ret;
-	if(!dosTab.hasOwnProperty(zone)) 
+	if(!dosTab.hasOwnProperty(zone))
 		dosTab[zone] = {};
 	ret = dosTab[zone];
 	return(ret);
@@ -27,7 +27,7 @@ function selectZone(pipe, zone) {
 
 function selectIP(szone, ip, time) {
 	var ret;
-	if(!szone.hasOwnProperty(ip)) 
+	if(!szone.hasOwnProperty(ip))
 		ret = szone[ip] = {
 			_address: ip,
 			_banned: false,
@@ -44,32 +44,32 @@ var dos = function(gjs) { }
 dos.request = function(pipe, options) {
 	var date = new Date;
 	var now = date.getTime();
-	var remoteIP = pipe.request.connection.remoteAddress;
-	
+	var remoteIP = gjs.request.remoteAddress;
+
 	/* select the zone */
 	var selectedZone = false;
 	if(pipe.reverse == true)
 		var selectedZone = selectZone(pipe.root, pipe.site.name);
 	if(!selectedZone)
 		selectedZone = selectZone(pipe.root, 'global');
-	
+
 	if(!options)
 		options = {};
-	
+
 	if(!options.whiteList)
 		options.whiteList = [];
-	
+
 	if(pipe.reverse == true)
 		var selectedWLZone = loadWLZone(pipe.root, pipe.site.name, options.whiteList);
 	if(!selectedWLZone)
 		selectedWLZone = loadWLZone(pipe.root, 'global', options.whiteList);
-	
+
 	if(selectedWLZone.search(remoteIP))
 		return(false);
-	
+
 	/* log for the IP */
 	var selectedIP = selectIP(selectedZone, remoteIP, now);
-	
+
 	/* default options  */
 	if(!options.markPoints)
 		options.markPoints = 1000;
@@ -79,15 +79,15 @@ dos.request = function(pipe, options) {
 		options.banTime = 60;
 	if(!options.disableBlacklist)
 		options.disableBlacklist = false;
-	
+
 	/* increase IP access */
 	selectedIP._count++;
-	
+
 	var bannedPage = function(log) {
 		pipe.root.lib.http.error.renderArray({
-			pipe: pipe, 
-			code: 429, 
-			tpl: "4xx", 
+			pipe: pipe,
+			code: 429,
+			tpl: "4xx",
 			log: true,
 			title:  "Too Many Requests",
 			explain: "Too many requests received from your host "+
@@ -95,9 +95,9 @@ dos.request = function(pipe, options) {
 				".",
 		});
 	};
-	
+
 	selectedIP._last = now;
-	
+
 	/* check the req rate */
 	var diff = selectedIP._last-selectedIP._first;
 
@@ -112,19 +112,19 @@ dos.request = function(pipe, options) {
 					options.markPoints
 				);
 			}
-			
+
 			/* no worrie reset counter */
 			selectedIP._first = now;
 			selectedIP._count = 0;
 		}
-		
+
 		pipe.stop();
 		bannedPage(false);
 		return(true);
 	}
-	
+
 	if(diff > 1000) {
-		
+
 		if(selectedIP._count > options.rps) {
 			/* ban for 60 seconds */
 
@@ -135,14 +135,14 @@ dos.request = function(pipe, options) {
 				limit: options.rps,
 				ip: remoteIP
 			});
-			
+
 			if(options.disableBlacklist != true)
 				pipe.root.lib.core.blacklist.message(
 					remoteIP,
-					'HTTP Denial of service', 
+					'HTTP Denial of service',
 					options.markPoints
 				);
-			
+
 			selectedIP._stopTime = now;
 			selectedIP._banned = true;
 			selectedIP._banTime = options.banTime*1000;
@@ -151,14 +151,14 @@ dos.request = function(pipe, options) {
 			return(true);
 
 		}
-		
+
 		/* no worrie reset counter */
 		selectedIP._first = now;
 		selectedIP._count = 0;
 	}
-	
+
 	return(false);
-	
+
 }
 
 function bsBwsDosBackground(bs) {
@@ -178,9 +178,9 @@ function bsBwsDosBackground(bs) {
 					serverName: zoneName,
 					ip: ip._address
 				});
-				
+
 // 				bs.lib.bsCore.logger.siteInfo(
-// 					zoneName, 
+// 					zoneName,
 // 					"Release IP address "+ip._address+" from application layer ban"
 // 				);
 				delete zone[b];
@@ -199,12 +199,10 @@ dos.upgrade = function(gjs, options) {
 }
 
 dos.ctor = function(gjs) {
-	
+
 	/* start background process */
 	setInterval(bsBwsDosBackground, 10000, gjs);
 
 }
 
 module.exports = dos;
-
-
