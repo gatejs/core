@@ -411,7 +411,7 @@ proxy.prototype.connect = function() {
 			nodePtr.retry = 3;
 
 		socket.on('error', function(e) {
-			self.http.error(pipe, 'Server socket error (from '+pipe.request.connection.remoteAddress+') : '+e);
+			self.http.error(pipe, 'Server socket error (from '+pipe.request.remoteAddress+') : '+e);
 		});
 		
 		// if(socket.timeoutId)

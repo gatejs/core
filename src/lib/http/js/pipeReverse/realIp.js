@@ -27,7 +27,7 @@ headers.request = function(pipe, headerName) {
 	if(!headerName)
 		headerName = "X-Real-Ip";
 	
-	var ip = pipe.request.connection.remoteAddress;
+	var ip = pipe.request.remoteAddress;
 	
 	pipe.request.gjsSetHeader(headerName, ip);
 	
