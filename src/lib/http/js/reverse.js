@@ -408,6 +408,10 @@ reverse.loader = function(gjs) {
 		pipe.update(reverse.sites.opcodes, pipe.location.pipeline);
 
 		/* execute pipeline */
+		pipe.request.on('close', function() {
+			pipe.stop();
+		});
+
 		pipe.resume();
 		pipe.execute();
 	};
@@ -516,6 +520,10 @@ reverse.loader = function(gjs) {
 		pipe.update(reverse.sites.opcodes, pipe.location.pipeline);
 
 		/* execute pipeline */
+		pipe.request.on('close', function() {
+			pipe.stop();
+		});
+		
 		pipe.resume();
 		pipe.execute();
 	};
