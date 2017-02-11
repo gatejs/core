@@ -373,11 +373,11 @@ cache.request = function(pipe, opts) {
 
 				fs.rename(pipe.response.fileHash.tmpFile, pipe.response.fileHash.file, function (err) {
 					if (err) {
-						console.log("Rename file "+pipe.response.fileHash.tmpFile+" #"+err.code);
+						//console.log("Rename file "+pipe.response.fileHash.tmpFile+" #"+err.code);
 						try {
 							fs.unlinkSync(pipe.response.fileHash.tmpFile);
 						} catch(e) {
-							console.log("Can not delete file "+hash.file+" #"+err.code);
+							//console.log("Can not delete file "+hash.file+" #"+err.code);
 							return(false);
 						}
 					}
@@ -393,7 +393,7 @@ cache.request = function(pipe, opts) {
 				try {
 					fs.unlinkSync(pipe.response.fileHash.tmpFile);
 				} catch(e) {
-					console.log("Can not delete file "+hash.file+" #"+e.code);
+					//console.log("Can not delete file "+hash.file+" #"+e.code);
 					return(false);
 				}
 			}));
@@ -412,7 +412,7 @@ cache.request = function(pipe, opts) {
 
 			fs.writeFile(hash.file, fileHdr, function (err) {
 				if (err) {
-					console.log("Could not save "+hash.file+" with error code "+err.code);
+					//console.log("Could not save "+hash.file+" with error code "+err.code);
 					return;
 				}
 			});
