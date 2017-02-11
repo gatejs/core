@@ -79,7 +79,7 @@ function runSpawner(gjs) {
 }
 
 var gatejs = (function() {
-	this.version = "1.13";
+	this.version = "1.14";
 	this.config = new Object;
 	this.pipeline = new Object;
 
