@@ -191,20 +191,20 @@ proxy.prototype.connect = function() {
 		console.log('Catched error on flowSelect.request', e);
 		return;
 	}
-	
+
 	function onResponse(res) {
 		req.ask = false;
 
-		// if(req.connection.timeoutId) {
-		// 	clearTimeout(req.connection.timeoutId);
-		// 	req.connection.timeoutId = null;
+		// if(req.socket.timeoutId) {
+		// 	clearTimeout(req.socket.timeoutId);
+		// 	req.socket.timeoutId = null;
 		// }
 
 		if(pipe.upgrade)
 			return;
 
 		/* remove request timeout */
-		req.connection.connected = true;
+		req.socket.connected = true;
 		nodePtr._retry = 0;
 
 		/* abort connexion because someone is using it for a post response */
@@ -308,8 +308,8 @@ proxy.prototype.connect = function() {
 	if(pipe.upgrade) {
 		req.on('upgrade', function(res, socket, upgradeHead) {
 			/* remove request timeout */
-			req.connection.connected = true;
-			// clearTimeout(req.connection.timeoutId);
+			req.socket.connected = true;
+			// clearTimeout(req.socket.timeoutId);
 
 			pipe.response.emit("rvProxyPassPassRequest", pipe, req, res);
 			pipe.response.emit("response", res, "rvpass");
@@ -351,9 +351,9 @@ proxy.prototype.connect = function() {
 	req.on('error', function (error) {
 		pipe.response.emit("rvProxyPassSourceRequestError");
 
-		// if(req.connection.timeoutId) {
-		// 	clearTimeout(req.connection.timeoutId);
-		// 	req.connection.timeoutId = null;
+		// if(req.socket.timeoutId) {
+		// 	clearTimeout(req.socket.timeoutId);
+		// 	req.socket.timeoutId = null;
 		// }
 
 		if(pipe.response.headerSent == true) {
@@ -363,7 +363,7 @@ proxy.prototype.connect = function() {
 			self.http.error(pipe, "Proxy read error on "+
 				connector+" for "+
 				pipe.request.remoteAddress+
-				":"+pipe.request.connection.remotePort);
+				":"+pipe.request.socket.remotePort);
 
 			pipe.response.destroy();
 			pipe.stop();
@@ -392,7 +392,7 @@ proxy.prototype.connect = function() {
 		self.http.reverse.error(pipe, "Proxy pass timeout on "+
 			connector+" from "+
 			pipe.request.remoteAddress+
-			":"+pipe.request.connection.remotePort);
+			":"+pipe.request.socket.remotePort);
 		socket.destroy();
 		computeRetry();
 	}
@@ -413,7 +413,7 @@ proxy.prototype.connect = function() {
 		socket.on('error', function(e) {
 			self.http.error(pipe, 'Server socket error (from '+pipe.request.remoteAddress+') : '+e);
 		});
-		
+
 		// if(socket.timeoutId)
 		// 	clearTimeout(socket.timeoutId);
 		// socket.timeoutId = setTimeout(
@@ -430,12 +430,12 @@ proxy.prototype.connect = function() {
 	/* integrate async post manager here */
 	// pipe.request.on('data', function(buffer) {
 	// 	/* Also check slowloris or equivalent here */
-	// 	if(req.connection.timeoutId)
-	// 		clearTimeout(req.connection.timeoutId);
-	// 	req.connection.timeoutId = setTimeout(
+	// 	if(req.socket.timeoutId)
+	// 		clearTimeout(req.socket.timeoutId);
+	// 	req.socket.timeoutId = setTimeout(
 	// 		socketErrorDetection,
 	// 		nodePtr.timeout*1000,
-	// 		req.connection
+	// 		req.socket
 	// 	);
 	// });
 	pipe.request.pipe(req);

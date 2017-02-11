@@ -74,7 +74,7 @@ forward.logpipe = function(gjs, src) {
 		gjs.request.gjsWriteBytes += data.length;
 	});
 
-	/* on client close connection */
+	/* on client close socket */
 	gjs.request.on('close', function() {
 		forward.log(gjs, 499);
 	});
@@ -138,7 +138,7 @@ forward.loader = function(gjs) {
 // 	https.globalAgent.maxSockets = 1000;
 
 	var processRequest = function(server, request, response) {
-		request.remoteAddress = request.connection.remoteAddress;
+		request.remoteAddress = request.socket.remoteAddress;
 
 		request.on('error', function(e) {
 			console.log('e', e);
@@ -176,7 +176,7 @@ forward.loader = function(gjs) {
 			pipe.request.urlParse = url.parse(request.url, true);
 		} catch(e) {
 			gjs.lib.core.logger.error('URL Parse error on from '+request.remoteAddress);
-			request.connection.destroy();
+			request.socket.destroy();
 			return;
 		}
 
@@ -206,7 +206,7 @@ forward.loader = function(gjs) {
 	};
 
 	var processUpgrade = function(server, request, socket) {
-		request.remoteAddress = request.connection.remoteAddress;
+		request.remoteAddress = request.socket.remoteAddress;
 
 		request.on('error', function(e) {
 			console.log('e', e);
@@ -383,11 +383,11 @@ forward.loader = function(gjs) {
 		});
 
 		iface.on('request', function(request, response) {
-			request.connection.inUse = true;
+			request.socket.inUse = true;
 
 			response.on('finish', function() {
-				if(request.connection._handle)
-					request.connection.inUse = false;
+				if(request.socket._handle)
+					request.socket.inUse = false;
 			});
 //
 			processRequest(this, request, response);
@@ -395,11 +395,11 @@ forward.loader = function(gjs) {
 
 
 		iface.on('upgrade', function(request, socket, head) {
-			request.connection.inUse = true;
+			request.socket.inUse = true;
 
 			socket.on('close', function() {
-				if(request.connection._handle)
-					request.connection.inUse = false;
+				if(request.socket._handle)
+					request.socket.inUse = false;
 			});
 
 			processUpgrade(this, request, socket);

@@ -95,7 +95,7 @@ reverse.logpipe = function(gjs, src) {
 		gjs.request.gjsWriteBytes += data.length;
 	});
 
-	/* on client close connection */
+	/* on client close socket */
 	gjs.request.on('close', function() {
 		reverse.log(gjs, 499);
 	});
@@ -282,7 +282,7 @@ reverse.loader = function(gjs) {
 	}
 
 	var processRequest = function(server, request, response) {
-		request.remoteAddress = request.connection.remoteAddress;
+		request.remoteAddress = request.socket.remoteAddress;
 
 		response.on('error', function(e) { });
 
@@ -312,7 +312,7 @@ reverse.loader = function(gjs) {
 		} catch(e) {
 			gjs.lib.core.logger.error('URL Parse error on from '+request.remoteAddress);
 			reverse.events.emit("urlError", pipe);
-			request.connection.destroy();
+			request.socket.destroy();
 			return;
 		}
 
@@ -397,7 +397,7 @@ reverse.loader = function(gjs) {
 
 		gjs.lib.http.postMgr.init(pipe);
 
-		/* add connection keep alive */
+		/* add socket keep alive */
 		if(request.httpVersion == '1.1') {
 			pipe.response.on('response', function(res, from) {
 				res.gjsSetHeader('Connection', 'keep-alive');
@@ -413,7 +413,7 @@ reverse.loader = function(gjs) {
 	};
 
 	var processUpgrade = function(server, request, socket) {
-		request.remoteAddress = request.connection.remoteAddress;
+		request.remoteAddress = request.socket.remoteAddress;
 
 		socket.setTimeout(1000 * 60 * 300);
 
@@ -445,7 +445,7 @@ reverse.loader = function(gjs) {
 			pipe.request.urlParse = url.parse(request.url, true);
 		} catch(e) {
 			gjs.lib.core.logger.error('URL Parse error on from '+request.remoteAddress);
-			request.connection.destroy();
+			request.socket.destroy();
 			return;
 		}
 
@@ -530,11 +530,11 @@ reverse.loader = function(gjs) {
 		gjs.events.emit('rvInterfaceCreate', sc);
 
 		var iface = http.createServer(function(request, response) {
-			request.connection.inUse = true;
+			request.socket.inUse = true;
 
 			response.on('finish', function() {
-				if(request.connection._handle)
-					request.connection.inUse = false;
+				if(request.socket._handle)
+					request.socket.inUse = false;
 			});
 
 			processRequest(this, request, response);
@@ -552,7 +552,7 @@ reverse.loader = function(gjs) {
 			iface.agent = gjs.lib.http.agent.http;
 
 /*
-		iface.on('connection', (function(socket) {
+		iface.on('socket', (function(socket) {
 			gjs.lib.core.graceful.push(socket);
 			gjs.lib.core.stats.diffuse('httpWaiting', gjs.lib.core.stats.action.add, 1);
 
@@ -568,16 +568,16 @@ reverse.loader = function(gjs) {
 
 		iface.on('upgrade', function(request, socket, head) {
 			if(request.method != 'GET') {
-				gjs.lib.core.logger.error('Bad method while connection Upgrade from '+socket.remoteAddress);
+				gjs.lib.core.logger.error('Bad method while socket Upgrade from '+socket.remoteAddress);
 				socket.destroy();
 				return;
 			}
 
-			request.connection.inUse = true;
+			request.socket.inUse = true;
 
 			socket.on('close', function() {
-				if(request.connection._handle)
-					request.connection.inUse = false;
+				if(request.socket._handle)
+					request.socket.inUse = false;
 			});
 
 			processUpgrade(this, request, socket);
@@ -660,11 +660,11 @@ reverse.loader = function(gjs) {
 		gjs.events.emit('rvInterfaceCreate', sc);
 
 		var iface = int.createServer(sc, function(request, response) {
-			request.connection.inUse = true;
+			request.socket.inUse = true;
 
 			response.on('finish', function() {
-				if(request.connection._handle)
-					request.connection.inUse = false;
+				if(request.socket._handle)
+					request.socket.inUse = false;
 			});
 
 			processRequest(this, request, response);
@@ -689,23 +689,23 @@ reverse.loader = function(gjs) {
 		/* process upgrade request */
 		iface.on('upgrade', function(request, socket, head) {
 			if(request.method != 'GET') {
-				gjs.lib.core.logger.error('Bad method while connection Upgrade from '+socket.remoteAddress);
+				gjs.lib.core.logger.error('Bad method while socket Upgrade from '+socket.remoteAddress);
 				socket.destroy();
 				return;
 			}
 
-			request.connection.inUse = true;
+			request.socket.inUse = true;
 
 			socket.on('close', function() {
-				if(request.connection._handle)
-					request.connection.inUse = false;
+				if(request.socket._handle)
+					request.socket.inUse = false;
 			});
 
 			processUpgrade(this, request, socket);
 		});
 
 /*
-		iface.on('connection', (function(socket) {
+		iface.on('socket', (function(socket) {
 			gjs.lib.core.graceful.push(socket);
 
 			socket.setTimeout(300000);

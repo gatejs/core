@@ -115,8 +115,8 @@ proxyPass.request = function(pipe, opts) {
 			pipe.request.removeListener('close', reqAbort);
 
 			/* remove request timeout */
-			req.connection.connected = true;
-			clearTimeout(req.connection.timeoutId);
+			req.socket.connected = true;
+			clearTimeout(req.socket.timeoutId);
 
 // 			console.log(res.headers);
 			/* abort connexion because someone is using it for a post response*/
@@ -188,8 +188,8 @@ proxyPass.request = function(pipe, opts) {
 // 				pipe.request.selectedConfig.serverName[0],
 // 				"Proxy pass error on "+
 // 				pipe.response.connector+" from "+
-// 				pipe.request.connection.remoteAddress+
-// 				":"+pipe.request.connection.remotePort+
+// 				pipe.request.socket.remoteAddress+
+// 				":"+pipe.request.socket.remotePort+
 // 				" with error code #"+error.code
 // 			);
 			pipe.root.lib.http.error.renderArray({
