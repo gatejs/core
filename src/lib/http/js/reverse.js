@@ -523,7 +523,7 @@ reverse.loader = function(gjs) {
 		pipe.request.on('close', function() {
 			pipe.stop();
 		});
-		
+
 		pipe.resume();
 		pipe.execute();
 	};
@@ -758,7 +758,6 @@ reverse.loader = function(gjs) {
 				};
 			}
 			/* defaulting */
-			if(!o.address) o.address = '0.0.0.0';
 			if(!o.port)
 				o.port = o.ssl == true ? 443 : 80;
 			if(o.ssl == true)

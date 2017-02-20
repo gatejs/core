@@ -46,6 +46,9 @@ dos.request = function(pipe, options) {
 	var now = date.getTime();
 	var remoteIP = pipe.request.remoteAddress;
 
+	if(!remoteIP)
+		return(false);
+		
 	/* select the zone */
 	var selectedZone = false;
 	if(pipe.reverse == true)
@@ -83,12 +86,12 @@ dos.request = function(pipe, options) {
 	/* increase IP access */
 	selectedIP._count++;
 
-	var bannedPage = function(log) {
+	function bannedPage(log) {
 		pipe.root.lib.http.error.renderArray({
 			pipe: pipe,
 			code: 429,
 			tpl: "4xx",
-			log: true,
+			log: log,
 			title:  "Too Many Requests",
 			explain: "Too many requests received from your host "+
 				remoteIP+
