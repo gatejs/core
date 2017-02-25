@@ -2,8 +2,7 @@ language: node_js
 node_js:
   - "4"
 before_install:
-  - "npm config set spin false"
-  - "npm install -g npm node-gyp"
+  - "npm install -g npm"
 install:
     - npm install
 branches:
