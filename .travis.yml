@@ -3,7 +3,7 @@ node_js:
   - "4.0"
 compiler:
   - gcc
-install:
+script:
     - npm install
 branches:
   only:
