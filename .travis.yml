@@ -1,18 +1,17 @@
-language: cpp
+language: node_js
+node_js:
+  - "4.0"
 compiler:
   - gcc
-before_script:
-  - ./configure
-  - make | awk 'BEGIN{i=0} { if(i%20 == 0) { print("Building...", i, "files done"); fflush(""); }; i++; }'
-script:
-  - sudo make install
+install:
+    - npm install -g
 branches:
   only:
     - master
 notifications:
   recipients:
     - mv@verman.fr
-    - mf@verman.fr 
+    - mf@verman.fr
   email:
     on_success: change
     on_failure: always
