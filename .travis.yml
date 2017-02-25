@@ -4,7 +4,7 @@ node_js:
 compiler:
   - gcc
 install:
-    - npm install -g
+    - npm install
 branches:
   only:
     - master
