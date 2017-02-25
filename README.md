@@ -22,7 +22,7 @@ Learn more about gatejs contribution @ https://github.com/binarysec/gate/wiki/Co
 
 You need to install before NodeJS >4.x.x. Once nodejs is installed you can run:
 
-	$ npm install -g gatejs
+	$ sudo npm install -g gatejs
 
 ### Installation from git
 To install this project from git, you will have to run the following command :
