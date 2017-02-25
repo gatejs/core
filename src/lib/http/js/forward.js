@@ -138,7 +138,16 @@ forward.loader = function(gjs) {
 // 	https.globalAgent.maxSockets = 1000;
 
 	var processRequest = function(server, request, response) {
-		request.remoteAddress = request.socket.remoteAddress;
+		if(!request.socket || !request.socket.remoteAddress)  {
+			if(request.socket)
+				request.socket.destroy();
+
+			response.end();
+			console.log('User disconnect before IP address population');
+			return;
+		}
+
+		request.remoteAddress = request.socket.remoteAddress.slice(0);
 
 		request.on('error', function(e) {
 			console.log('e', e);

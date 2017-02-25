@@ -49,6 +49,15 @@ var eventEmitter = new events.EventEmitter();
 var child_process = require('child_process');
 var os = require('os');
 
+
+/* read package.json */
+try {
+	var pack = JSON.parse(fs.readFileSync(__dirname+'/../package.json').toString());
+} catch(e) {
+	console.log("Can not read package.json: "+e.message);
+	process.exit(-1);
+}
+
 function runDaemon(opt) {
 	if (process.env.__daemonized)
 		return(false);
@@ -79,7 +88,7 @@ function runSpawner(gjs) {
 }
 
 var gatejs = (function() {
-	this.version = "1.17";
+	this.version = pack.version;
 	this.config = new Object;
 	this.pipeline = new Object;
 
@@ -126,7 +135,7 @@ var gatejs = (function() {
 			'*  \\__, |\\__,_|\\__\\___(_)/ |___/'+"\n"+
 			'*  |___/               |__/     '+"\n"+
 			"* \n"+
-			"* gate.js (c) 2007-2016 v"+this.version+" on "+os.type()+'/'+os.arch()
+			"* gate.js (c) 2007-2017 v"+this.version+" on "+os.type()+'/'+os.arch()
 		);
 	}
 
@@ -196,8 +205,17 @@ var gatejs = (function() {
 //     mu.clearCache();
 //   }
 
-	/* load libraries */
 	this.lib = {};
+
+	/* load fixed lib */
+	this.lib.core = require('gate-core');
+	this.lib.ipaddr = require('node-ipaddr');
+	this.lib.mu2 = require('mu2');
+	this.lib.spdy = require('spdy');
+	this.lib.throttle = require('throttle');
+	this.lib.jen = require('node-jen');
+
+	/* load libraries */
 	function tryLoadLib(dir, file) {
 		var filename = __dirname+'/lib/'+dir+'/'+file;
 		try {

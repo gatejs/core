@@ -26,7 +26,7 @@ var fs = require("fs");
 var crypto = require("crypto");
 var tls = require("tls");
 var EventEmitter = require('events');
-var spdy = require("./node-spdy/lib/spdy.js");
+var spdy = require("spdy");
 
 var reverse = function() {
 };
