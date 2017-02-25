@@ -2,9 +2,8 @@ language: node_js
 node_js:
   - "4"
 before_install:
-  - apt-get install -y libuv1-dev
   - export PATH=./node_modules/.bin/:$PATH
-  - npm install node-gyp -g
+  - npm install -g node-gyp
   - npm install -g npm
 install:
     - npm install
