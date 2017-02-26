@@ -1,6 +1,6 @@
 {
   "name": "gatejs",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "New Generation of HTTP reverse and forward proxy",
   "author": "Michael Vergoz",
   "repository": {
