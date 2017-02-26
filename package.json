@@ -12,13 +12,11 @@
     "forward",
     "proxy"
   ],
-  "main": "./index.js",
-  "gypfile": true,
   "bugs": {
     "url": "https://github.com/binarysec/gate/issues"
   },
   "bin" : {
-    "gatejs" : "./src/lib/service.js"
+    "gatejs" : "./src/service.js"
   },
   "dependencies": {
     "gate-core": "^2.0.0",
