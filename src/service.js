@@ -1,3 +1,4 @@
+#!/usr/bin/nodejs
 /*
  * Copyright (c) 2010-2014 BinarySEC SAS
  * Service [http://www.binarysec.com]
