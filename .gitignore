@@ -1,2 +1,3 @@
-Makefile
-src/lib/*/build
+/*/**/Makefile
+/src/lib/*/build
+/node_modules

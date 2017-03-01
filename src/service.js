@@ -209,7 +209,6 @@ var gatejs = (function() {
 	this.lib = {};
 
 	/* load fixed lib */
-	this.lib.core = require('gate-core');
 	this.lib.ipaddr = require('node-ipaddr');
 	this.lib.mu2 = require('mu2');
 	this.lib.spdy = require('spdy');

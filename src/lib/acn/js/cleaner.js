@@ -20,6 +20,7 @@
 
 
 var cluster = require("cluster");
+var path = require('path');
 var fs = require('fs');
 
 var cleaner = function(gjs) {}
@@ -40,51 +41,66 @@ cleaner.loader = function(gjs) {
 	}
 
 	if(cluster.isMaster) {
-		var reference = 0;
+		var running = true;
+		var toProcess = [];
 
-		function processFile(args) {
-			var hdr = gjs.lib.acn.loadHeaderFile(args.file),
+		function processFile(file) {
+			var hdr = gjs.lib.acn.loadHeaderFile(file),
 			isF = gjs.lib.acn.isFresh(hdr);
 			if(isF == false) {
 				try {
-					fs.unlinkSync(args.file);
+					fs.unlinkSync(file);
 				} catch(e) { /* do nothing */ }
 			}
-			reference--;
 		}
 
 		function processDir(dir) {
-			try {
-
-				var d = fs.readdirSync(dir), a;
-				var inInterval = interval;
-				for(a in d) {
-					var file = dir+'/'+d[a];
-					var fss = fs.statSync(file);
-
-					if(fss.isFile()) {
-						reference++;
-						setTimeout(processFile, inInterval, {file: file, fss: fss});
-					}
-					else if(fss.isDirectory()) {
-						reference++;
-						setTimeout(processDir, inInterval, file);
-					}
-					inInterval += interval;
-
+			var waiting = 0;
+			
+			fs.readdir(dir, function(err, list) {
+				if(err)
+					return(checkNext());
+				for(var i = 0 ; i < list.length ; i++) {
+					var file = dir + path.sep + list[i];
+					waiting++;
+					fs.stat(file, onStats.bind(null, file));
 				}
-			} catch(e) { /* do nothing */ }
-			reference--;
+				
+				checkNext();
+			});
+			
+			function onStats(fpath, err, fss) {
+				waiting--;
+				if(err)
+					return(checkNext());
+				
+				if(fss.isFile())
+					processFile(fpath);
+				else if(fss.isDirectory())
+					toProcess.push(fpath);
+				
+				checkNext();
+			}
+			
+			function checkNext() {
+				if(waiting > 0)
+					return;
+				
+				if(toProcess.length > 0)
+					setTimeout(processDir, 1, toProcess.pop());
+				else
+					running = false;
+			}
 		}
 
 		function recycle() {
-			reference = 0;
+			running = true;
 			setInterval(function() {
-				if(reference == -1) {
+				if(running == false) {
 					clearInterval(this);
 					setTimeout(recycle, delay);
 				}
-			}, delay);
+			}, 10000);
 			processDir(gjs.lib.acn.cacheDir);
 		}
 
