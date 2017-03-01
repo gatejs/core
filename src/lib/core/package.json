@@ -1,0 +1,13 @@
+{
+  "name": "core",
+  "version": "2.0.2",
+  "private": true,
+  "author": "Michael Vergoz",
+  "description": "Gatejs Core Engine",
+  "main": "index.js",
+  "scripts": {
+    "install": "node-gyp rebuild"
+  },
+  "license": "GPLv3",
+  "gypfile": true
+}

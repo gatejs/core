@@ -1,0 +1,13 @@
+{
+  "name": "tproxy",
+  "version": "1.0.0",
+  "private": true,
+  "author": "Michael Vergoz",
+  "description": "Tproxy module to use kernel transparent proxying features (ip spoofing)",
+  "main": "index.js",
+  "scripts": {
+    "install": "node-gyp rebuild"
+  },
+  "license": "GPLv3",
+  "gypfile": true
+}
