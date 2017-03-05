@@ -53,10 +53,12 @@ cache.request = function(pipe, opts) {
 	var tryToStream = function(input) {
 
 		var inHash;
-		if(pipe.request.urlParseCacheStore)
+		if(pipe.site && pipe.site.name)
+			inHash = pipe.site.name+pipe.request.url+input;
+		else if(pipe.request.urlParseCacheStore)
 			inHash = url.format(pipe.request.urlParseCacheStore)+input;
 		else
-			inHash = pipe.request.headers.host+url.format(pipe.request.urlParse)+input;
+			base = pipe.request.headers.host+pipe.request.url+input;
 
 		if(!opts.dirDiviser)
 			opts.dirDiviser = 4;
@@ -294,10 +296,12 @@ cache.request = function(pipe, opts) {
 		input = response.headers['content-encoding'];
 
 		var base;
-		if(pipe.request.urlParseCacheStore)
+		if(pipe.site && pipe.site.name)
+			base = pipe.site.name+pipe.request.url+input;
+		else if(pipe.request.urlParseCacheStore)
 			base = url.format(pipe.request.urlParseCacheStore)+input;
 		else
-			base = pipe.request.headers.host+url.format(pipe.request.urlParse)+input;
+			base = pipe.request.headers.host+pipe.request.url+input;
 
 		var hash = pipe.root.lib.acn.generateInHash(opts.dirDiviser, base, cacheDir);
 
