@@ -43,7 +43,7 @@ acn.divideHash = function(d, hash, cacheDir) {
 		cacheDir = acn.cacheDir;
 	}
 
-	d = 8;
+	d = 2;
 	var dig = hash;
 	var div = (dig.length-1) / d + 1;
 	div = div|0;
@@ -117,7 +117,7 @@ acn.loadHeaderFile = function(file) {
 	return(false);
 }
 
-acn.isFresh = function(hdr, maxAgeDefined) {
+acn.isFresh = function(hdr, maxAgeDefined, forceMaxAge) {
 	if(!hdr)
 		return(false);
 	var ph = hdr.headers;
@@ -149,7 +149,6 @@ acn.isFresh = function(hdr, maxAgeDefined) {
 	var maxAge = maxAgeDefined;
 	if(Number.isInteger(maxAge) && maxAge <= 0)
 		maxAge = 0;
-
 	if(cc['max-age'] && parseInt(cc['max-age']) > 0)
 		maxAge = parseInt(cc['max-age']);
 	else if(cc['maxage'] && parseInt(cc['maxage']) > 0)
@@ -172,6 +171,9 @@ acn.isFresh = function(hdr, maxAgeDefined) {
 		if(now <= sExpires)
 			return(true);
 	}
+
+	if(forceMaxAge == true && maxAge > maxAgeDefined)
+		maxAge = maxAgeDefined;
 
 	/* using date and max age */
 	if(ph.Date && maxAge > 0) {
