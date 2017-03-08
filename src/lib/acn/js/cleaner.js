@@ -28,83 +28,177 @@ var cleaner = function(gjs) {}
 cleaner.loader = function(gjs) {
 	cleaner.gjs = gjs;
 
-	return;
-	
-	var delay = 43200000;
-	var interval = 250;
+	var stats = {};
 
-	if(gjs.serverConfig.acn) {
-		if(gjs.serverConfig.acn.cleanDelay)
-			delay = gjs.serverConfig.acn.cleanDelay*1000;
-		if(gjs.serverConfig.acn.cleanInterval)
-			interval = gjs.serverConfig.acn.cleanInterval;
+	function resetStats() {
+		stats = {
+			filesAnalyzed: 0,
+			filesRemoved: 0,
+			dirsAnalyzed: 0,
+			dirsRemoved: 0,
+			sizeAnalyzed: 0,
+			sizeRemoved: 0
+		};
 	}
 
-	if(cluster.isMaster) {
-		var running = true;
-		var toProcess = [];
+	function updateStats() {
+		gjs.lib.core.ipc.send('RFW', 'acnCleaner', stats);
 
-		function processFile(file) {
+		resetStats();
+		setTimeout(updateStats, cUpdateTimeout)
+	}
+
+//	if(gjs.serverConfig.acn) {
+//		if(gjs.serverConfig.acn.cleanDelay)
+//			delay = gjs.serverConfig.acn.cleanDelay*1000;
+//		if(gjs.serverConfig.acn.cleanInterval)
+//			interval = gjs.serverConfig.acn.cleanInterval;
+//	}
+
+	if(cluster.isMaster) {
+		var listToStat = [];
+		var listToProcess = [];
+		var listToRemove = [];
+		var listToDir = [];
+
+		var cSleepingState = 10000;
+		var cProcessingDay = 10;
+		var cProcessingNight = 0;
+		var cUpdateTimeout = 60000;
+
+		var currentProcessing = cProcessingDay;
+
+		/* * * * * * * * * * * * * * * * * * * * * * * * * *
+		 *
+		 * Select processing level
+		 * * * * * * * * * * * * * * * * * * * * * * * * * */
+		function processingLevel() {
+			var h = new Date().getHours();
+
+			if(h>=23 || h<=5) {
+				if(currentProcessing != cProcessingNight) {
+					console.log('Switch to night cache cleaning processing level');
+					currentProcessing = cProcessingNight;
+				}
+			}
+			else if(currentProcessing != cProcessingDay) {
+				console.log('Switch to day cache cleaning processing level');
+				currentProcessing = cProcessingDay;
+			}
+
+			setTimeout(processingLevel, 60000);
+		}
+		processingLevel();
+
+		// start stater
+		resetStats();
+		setTimeout(updateStats, cUpdateTimeout)
+
+		/* * * * * * * * * * * * * * * * * * * * * * * * * *
+		 *
+		 * Very async stat()
+		 * * * * * * * * * * * * * * * * * * * * * * * * * */
+		function popToStat() {
+			var el = listToStat.pop();
+			if(!el)
+				return(setTimeout(popToStat, cSleepingState));
+			//console.log('fs.stat(): '+el);
+			fs.stat(el, (err, fss) => {
+				if(err)
+					return(setTimeout(popToStat, currentProcessing));
+
+				if(fss.isFile())
+					listToProcess.push(el);
+				else if(fss.isDirectory())
+					listToDir.push(el);
+
+				stats.sizeAnalyzed += fss.size;
+				setTimeout(popToStat, currentProcessing)
+			});
+		}
+
+		setTimeout(popToStat, currentProcessing)
+
+		/* * * * * * * * * * * * * * * * * * * * * * * * * *
+		 *
+		 * Very async processor
+		 * * * * * * * * * * * * * * * * * * * * * * * * * */
+		function popToProcess() {
+			var file = listToProcess.pop();
+			if(!file)
+				return(setTimeout(popToProcess, cSleepingState));
+
+			//console.log('processing(): '+file);
+
+			stats.filesAnalyzed++;
+
 			var hdr = gjs.lib.acn.loadHeaderFile(file),
-			isF = gjs.lib.acn.isFresh(hdr);
+			isF = gjs.lib.acn.isFresh(hdr, 60*60*24, true);
 			if(isF == false) {
+				stats.filesRemoved++;
 				try {
+					//console.log(file);
 					fs.unlinkSync(file);
 				} catch(e) { /* do nothing */ }
 			}
+
+			setTimeout(popToProcess, currentProcessing)
 		}
 
-		function processDir(dir) {
-			var waiting = 0;
-			
+		setTimeout(popToProcess, currentProcessing);
+
+
+		/* * * * * * * * * * * * * * * * * * * * * * * * * *
+		 *
+		 * Very async readdir()
+		 * * * * * * * * * * * * * * * * * * * * * * * * * */
+		function popToDir() {
+			var dir = listToDir.pop();
+			if(!dir)
+				return(setTimeout(popToDir, cSleepingState));
+
+			stats.dirsAnalyzed++;
+			//console.log('fs.readdir(): '+dir);
 			fs.readdir(dir, function(err, list) {
 				if(err)
-					return(checkNext());
-				for(var i = 0 ; i < list.length ; i++) {
-					var file = dir + path.sep + list[i];
-					waiting++;
-					fs.stat(file, onStats.bind(null, file));
+					return(setTimeout(popToDir, currentProcessing));
+				for(var i = 0 ; i < list.length ; i++)
+					listToStat.push(dir + path.sep + list[i]);
+
+				// no files into dirs
+				if(list.length == 0) {
+					stats.dirsRemoved++;
+
+					// no need to control the end
+					fs.rmdir(dir, () => {});
 				}
-				
-				checkNext();
+
+				setTimeout(popToDir, currentProcessing)
 			});
-			
-			function onStats(fpath, err, fss) {
-				waiting--;
-				if(err)
-					return(checkNext());
-				
-				if(fss.isFile())
-					processFile(fpath);
-				else if(fss.isDirectory())
-					toProcess.push(fpath);
-				
-				checkNext();
-			}
-			
-			function checkNext() {
-				if(waiting > 0)
-					return;
-				
-				if(toProcess.length > 0)
-					setTimeout(processDir, 1, toProcess.pop());
-				else
-					running = false;
-			}
 		}
 
+		setTimeout(popToDir, currentProcessing)
+
+		/* * * * * * * * * * * * * * * * * * * * * * * * * *
+		 *
+		 * Check to reinit the process
+		 * * * * * * * * * * * * * * * * * * * * * * * * * */
 		function recycle() {
-			running = true;
-			setInterval(function() {
-				if(running == false) {
-					clearInterval(this);
-					setTimeout(recycle, delay);
-				}
-			}, 10000);
-			processDir(gjs.lib.acn.cacheDir);
+			//console.log(listToStat, listToProcess, listToRemove, listToDir)
+			if(
+				listToStat.length == 0 &&
+				listToProcess.length == 0 &&
+				listToRemove.length == 0 &&
+				listToDir.length == 0) {
+				listToStat.push(gjs.lib.acn.cacheDir);
+				setTimeout(recycle, cSleepingState)
+				return;
+			}
+
+			setTimeout(recycle, cSleepingState);
 		}
 
-		setTimeout(recycle, delay);
+		setTimeout(recycle, 60000);
 	}
 
 
