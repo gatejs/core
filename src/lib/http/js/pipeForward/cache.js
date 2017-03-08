@@ -41,6 +41,7 @@ cache.request = function(pipe, opts) {
 	/* no cache for range and get */
 	if(pipe.request.method != 'GET')
 		return(false);
+
 	if(pipe.request.headers.range || pipe.request.headers['content-range'])
 		return(false);
 
@@ -50,15 +51,25 @@ cache.request = function(pipe, opts) {
 		cacheDir += pipe.site.name;
 	}
 
-	var tryToStream = function(input) {
-
+	function hasher(input) {
 		var inHash;
 		if(pipe.site && pipe.site.name)
 			inHash = pipe.site.name+pipe.request.url+input;
 		else if(pipe.request.urlParseCacheStore)
 			inHash = url.format(pipe.request.urlParseCacheStore)+input;
 		else
-			base = pipe.request.headers.host+pipe.request.url+input;
+			inHash = pipe.request.headers.host+pipe.request.url+input;
+
+		if(pipe.request.headers.range)
+			inHash += 'R'+pipe.request.headers.range;
+		if(pipe.request.headers['content-range'])
+			inHash += 'CR'+pipe.request.headers['content-range'];
+
+		return(inHash)
+	}
+
+	var tryToStream = function(input) {
+		var inHash = hasher(input);
 
 		if(!opts.dirDiviser)
 			opts.dirDiviser = 4;
@@ -162,8 +173,11 @@ cache.request = function(pipe, opts) {
 			for(var n in pipe.response.headers)
 				nHeaders[pipe.response.orgHeaders[n]] = pipe.response.headers[n];
 			nHeaders['Server'] = 'gatejs';
+			var scode = 200;
+			if(headers.statusCode)
+				scode = headers.statusCode;
 
-			pipe.response.writeHead(200, nHeaders);
+			pipe.response.writeHead(scode, nHeaders);
 			var st = fs.createReadStream(hash.file, {
 				start: headers.headerSerialPos
 			});
@@ -295,14 +309,7 @@ cache.request = function(pipe, opts) {
 		if(response.headers['content-encoding'])
 		input = response.headers['content-encoding'];
 
-		var base;
-		if(pipe.site && pipe.site.name)
-			base = pipe.site.name+pipe.request.url+input;
-		else if(pipe.request.urlParseCacheStore)
-			base = url.format(pipe.request.urlParseCacheStore)+input;
-		else
-			base = pipe.request.headers.host+pipe.request.url+input;
-
+		var base = hasher(input);
 		var hash = pipe.root.lib.acn.generateInHash(opts.dirDiviser, base, cacheDir);
 
 		/* store header cache file */
@@ -357,7 +364,7 @@ cache.request = function(pipe, opts) {
 
 			/* check if we need to store the max age */
 			header.create = new Date();
-
+			header.statusCode = response.statusCode;
 			header.needDump = false;
 			var fileHdr = JSON.stringify(header)+"\n";
 
