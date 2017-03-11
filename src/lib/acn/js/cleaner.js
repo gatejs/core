@@ -18,10 +18,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-var cluster = require("cluster");
-var path = require('path');
-var fs = require('fs');
+const cluster = require("cluster");
+const path = require('path');
+const fs = require('fs');
+const diskusage = require('diskusage');
 
 var cleaner = function(gjs) {}
 
@@ -65,8 +65,29 @@ cleaner.loader = function(gjs) {
 		var cProcessingDay = 10;
 		var cProcessingNight = 0;
 		var cUpdateTimeout = 60000;
+		var cInitMaxAge = 60*60*24*7;
+		var cMaxAge = cInitMaxAge;
 
 		var currentProcessing = cProcessingDay;
+
+		/* * * * * * * * * * * * * * * * * * * * * * * * * *
+		 *
+		 * Adapte max age with disk space
+		 * * * * * * * * * * * * * * * * * * * * * * * * * */
+		function computeMaxAge() {
+			diskusage.check(gjs.lib.acn.cacheDir, function(err, info) {
+				if(!err) {
+					var cFreePer = 100*info.available/info.total;
+					cMaxAge = Math.round(cFreePer*cInitMaxAge/100);
+					if(cMaxAge <= 0)
+						cMaxAge = 1;
+					//console.log('Adaptative cache', cFreePer, cMaxAge);
+				}
+				setTimeout(computeMaxAge, 60000);
+			});
+		}
+		setTimeout(computeMaxAge, 1000);
+
 
 		/* * * * * * * * * * * * * * * * * * * * * * * * * *
 		 *
@@ -133,7 +154,7 @@ cleaner.loader = function(gjs) {
 			stats.filesAnalyzed++;
 
 			var hdr = gjs.lib.acn.loadHeaderFile(file),
-			isF = gjs.lib.acn.isFresh(hdr, 60*60*24, true);
+			isF = gjs.lib.acn.isFresh(hdr, cMaxAge, true);
 			if(isF == false) {
 				stats.filesRemoved++;
 				try {

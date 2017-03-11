@@ -24,6 +24,7 @@
     "spdy": "^3.0.0",
     "throttle": "^1.0.0",
     "node-schedule": "^1.1.1",
+    "diskusage": "^0.2.1",
     "mu2": "^0.5.21"
   },
   "scripts": {
