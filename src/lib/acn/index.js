@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2014 BinarySEC SAS
+ * Copyright (c) 2010-2017 BinarySEC SAS
  * Associative Cache Network [http://www.binarysec.com]
  *
  * This file is part of Gate.js.
