@@ -64,7 +64,7 @@ cleaner.loader = function(gjs) {
 		var cSleepingState = 10000;
 		var cProcessingDay = 10;
 		var cProcessingNight = 0;
-		var cUpdateTimeout = 60000;
+		var cUpdateTimeout = 10000;
 		var cInitMaxAge = 60*60*24*7;
 		var cMaxAge = cInitMaxAge;
 
@@ -223,7 +223,7 @@ cleaner.loader = function(gjs) {
 			setTimeout(recycle, cSleepingState);
 		}
 
-		setTimeout(recycle, 60000);
+		setTimeout(recycle, 5000);
 	}
 
 
