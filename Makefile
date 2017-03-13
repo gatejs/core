@@ -1,3 +1,3 @@
 all:
-	npm install --prefix ./src/lib/core
-	if test $$(uname -s) = "Linux"; then npm install --prefix ./src/lib/tproxy; fi
+	cd ./src/lib/core && node-gyp rebuild
+	if test $$(uname -s) = "Linux"; then cd ./src/lib/tproxy && node-gyp rebuild; fi
