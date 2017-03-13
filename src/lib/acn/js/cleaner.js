@@ -77,17 +77,17 @@ cleaner.loader = function(gjs) {
 		function computeMaxAge() {
 			diskusage.check(gjs.lib.acn.cacheDir, function(err, info) {
 				if(!err) {
-					var av = info.available;
-					if(info.total > info.available)
-						av = info.available/2;
-
-					var cFreePer = 100*av/info.total;
-					cMaxAge = Math.round(cFreePer*cInitMaxAge/100);
+					var cFreePer = 100*info.available/info.total;
+					var level = 100-cFreePer;
+					var curveAge = cInitMaxAge/Math.exp(level/50);
+					cMaxAge = Math.round(curveAge-(level*curveAge/100));
 					if(cMaxAge <= 0)
 						cMaxAge = 1;
-					console.log('Adaptative cache', cFreePer, cMaxAge);
+
+					// add expo curve
+					//console.log('Adaptative cache', level, cMaxAge);
 				}
-				setTimeout(computeMaxAge, 1000);
+				setTimeout(computeMaxAge, 60000);
 			});
 		}
 		setTimeout(computeMaxAge, 1000);
