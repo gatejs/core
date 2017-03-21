@@ -17,17 +17,40 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-var agent = function() { /* loader below */ };
 
-function processConfig(dst, src) {
-	if(src.max)
-		dst.maxSockets = src;
-	else
-		dst.maxSockets = 15;
-}
+var http = require('http');
+var https = require('https');
+var spdy = require('spdy');
+
+var agent = function() { /* loader below */ };
 
 agent.loader = function(gjs) {
 
+	function fixDefault(src) {
+		src.maxFreeSockets = 128;
+		src.keepAlive = true;
+		src.keepAliveMsecs = 30000;
+	}
+
+	function applyConfig(src, config) {
+		if(typeof config === 'number') {
+			if(config > 0)
+				src.maxFreeSockets = config;
+		}
+		else if(typeof config === 'object') {
+			if(config.hasOwnProperty("keepAlive"))
+				src.keepAlive = config.keepAlive;
+			if(config.keepAliveMsecs && config.keepAliveMsecs > 0)
+				src.keepAliveMsecs = config.keepAliveMsecs;
+		}
+	}
+
+	fixDefault(http.globalAgent);
+	fixDefault(https.globalAgent);
+	applyConfig(http.globalAgent, gjs.serverConfig.agent.http);
+	applyConfig(https.globalAgent, gjs.serverConfig.agent.https);
+
+/*
 	if(gjs.lib.tproxy.enabled == true) {
 		agent.http = new gjs.lib.tproxy.httpAgent;
 		agent.http.is = 'http';
@@ -45,25 +68,8 @@ agent.loader = function(gjs) {
 		agent.httpTproxy.tproxy();
 		agent.httpsTproxy.tproxy();
 	}
-
-	if(gjs.serverConfig.agent) {
-		if(gjs.serverConfig.agent.http)
-			processConfig(agent.http, gjs.serverConfig.agent.http);
-		if(gjs.serverConfig.agent.https)
-			processConfig(agent.https, gjs.serverConfig.agent.https);
-		if(gjs.serverConfig.agent.spdy)
-			processConfig(agent.spdy, gjs.serverConfig.agent.spdy);
-
-		if(gjs.serverConfig.agent.httpTproxy)
-			processConfig(agent.httpTproxy, gjs.serverConfig.agent.httpTproxy);
-		if(gjs.serverConfig.agent.https)
-			processConfig(agent.httpsTproxy, gjs.serverConfig.agent.httpsTproxy);
-		if(gjs.serverConfig.agent.spdyTproxy)
-			processConfig(agent.spdyTproxy, gjs.serverConfig.agent.spdyTproxy);
-	}
+*/
 
 }
-
-
 
 module.exports = agent;
