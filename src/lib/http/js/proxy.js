@@ -230,7 +230,8 @@ proxy.prototype.connect = function() {
 
 		/* check for client close */
 		pipe.request.on('close', function() {
-			req.destroy();
+			// close emit request
+			res.destroy();
 		});
 
 		/* check if there is bad chars in content header */
@@ -238,6 +239,11 @@ proxy.prototype.connect = function() {
 			pipe.response.writeHead(res.statusCode, nHeaders);
 			pipe.response.headerSent = true;
 		} catch(e) {
+			//console.log('proxy writeHead: '+e.message)
+
+			// close emit request
+			res.destroy();
+
 			pipe.root.lib.http.error.renderArray({
 				pipe: pipe,
 				code: 500,
@@ -371,7 +377,7 @@ proxy.prototype.connect = function() {
 			return;
 		}
 
-		if(error.code != 'ECONNRESET') {
+		//if(error.code != 'ECONNRESET') {
 			self.http.error.renderArray({
 				pipe: pipe,
 				code: 504,
@@ -384,7 +390,7 @@ proxy.prototype.connect = function() {
 			if(!nodePtr._retry)
 				nodePtr._retry = 0;
 			nodePtr._retry++;
-		}
+		//}
 	});
 
 	function socketErrorDetection(socket) {
