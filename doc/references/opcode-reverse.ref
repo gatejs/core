@@ -19,7 +19,7 @@ No options provided.
 
 example {{
 locations: [
-    { 
+    {
         name: 'status',
         regex: /^\/status/,
         pipeline: [
@@ -47,7 +47,7 @@ Injection is an opcode used to embed code on-the-fly into HTML pages.
 
 Once the DOM structure is identified the process will inject the HTML code (specified in the example below) in the body of the page.
 
-The process is fully async. 
+The process is fully async.
 
 }}
 
@@ -73,12 +73,53 @@ Set the real user IP address into the request header.
 
 **realIp** operand takes an optionnal argument used to set the headername.
 
-By default is has been set to **X-Real-Ip**  
+By default is has been set to **X-Real-Ip**
 
 }}
 
 example {{
 ['realIp', "X-Real-Ip"],
+}}
+
+}}
+
+opcode:reverse:forceDomain {{
+
+extends: http:reverse:opcodes
+scope: reverseSite:locations
+type: object-opt
+description: Force Main Domain
+
+mark {{
+Force main domain
+
+**forceDomain** operand takes an optionnal argument used to specify redirection Code.
+If second argument is set to **true** then the redirection will be permanent using HTTP code 301.
+
+}}
+
+example {{
+['forceDomain', true],
+}}
+
+}}
+
+opcode:reverse:forceHttps {{
+
+extends: http:reverse:opcodes
+scope: reverseSite:locations
+type: object-opt
+description: Force HTTPS
+
+mark {{
+Force HTTPS
+
+If second argument is set to **true** then the redirection will be permanent using HTTP code 301.
+
+}}
+
+example {{
+['forceHttps', true],
 }}
 
 }}
@@ -96,21 +137,21 @@ param-subDomain: Include subdomains, true or false (default true)
 param-preload: Activate preload, true or false (default true)
 
 mark {{
-HTTP Strict Transport Security (HSTS) is a web security policy mechanism which is necessary 
-to protect secure HTTPS websites against downgrade attacks, and which greatly simplifies 
-protection against cookie hijacking. It allows web servers to declare that web browsers 
-(or other complying user agents) should only interact with it using secure HTTPS connections, 
-and never via the insecure HTTP protocol. 
+HTTP Strict Transport Security (HSTS) is a web security policy mechanism which is necessary
+to protect secure HTTPS websites against downgrade attacks, and which greatly simplifies
+protection against cookie hijacking. It allows web servers to declare that web browsers
+(or other complying user agents) should only interact with it using secure HTTPS connections,
+and never via the insecure HTTP protocol.
 
 HSTS is an IETF standards track protocol and is specified in RFC 6797.
 
-The HSTS Policy is communicated by the server to the user agent via a HTTP response header 
-field named "Strict-Transport-Security". HSTS Policy specifies a period of time during which 
+The HSTS Policy is communicated by the server to the user agent via a HTTP response header
+field named "Strict-Transport-Security". HSTS Policy specifies a period of time during which
 the user agent shall access the server in a secure-only fashion.
 }}
 
 example {{
-['hsts', { 
+['hsts', {
 	age: 10512000,
 	subDomain: true,
 	preload: true,
@@ -134,31 +175,31 @@ param-backup: Backup pin for recovering (SHA256 hexadecimal format)
 param-report: HPKP report-uri
 
 mark {{
-The Public Key Pinning Extension for HTTP (HPKP) is a security feature that tells a 
-web client to associate a specific cryptographic public key with a certain web server 
+The Public Key Pinning Extension for HTTP (HPKP) is a security feature that tells a
+web client to associate a specific cryptographic public key with a certain web server
 to prevent MITM attacks with forged certificates.
 
-To ensure the authenticity of a server's public key used in TLS sessions, this public 
-key is wrapped into a X.509 certificate which is usually signed by a certificate authority (CA). 
-Web clients such as browsers trust a lot of these CAs, which can all create certificates for 
-arbitrary domain names. If an attacker is able to compromise a single CA, he can perform MITM 
-attacks on various TLS connections. HPKP can circumvent this threat for the HTTPS protocol by 
+To ensure the authenticity of a server's public key used in TLS sessions, this public
+key is wrapped into a X.509 certificate which is usually signed by a certificate authority (CA).
+Web clients such as browsers trust a lot of these CAs, which can all create certificates for
+arbitrary domain names. If an attacker is able to compromise a single CA, he can perform MITM
+attacks on various TLS connections. HPKP can circumvent this threat for the HTTPS protocol by
 telling the client which public key belongs to a certain web server.
 
-HPKP is a Trust on First Use (TOFU) technique. The first time a web server tells a client via 
-a special HTTP header which public keys belong to it, the client stores this information for 
-a given period of time. When the client visits the server again, it expects a certificate 
-containing a public key whose fingerprint is already known via HPKP. If the server delivers 
+HPKP is a Trust on First Use (TOFU) technique. The first time a web server tells a client via
+a special HTTP header which public keys belong to it, the client stores this information for
+a given period of time. When the client visits the server again, it expects a certificate
+containing a public key whose fingerprint is already known via HPKP. If the server delivers
 an unknown public key, the client should present a warning to the user.
 
 * http://tools.ietf.org/html/rfc7469
 * https://developer.mozilla.org/en-US/docs/Web/Security/Public_Key_Pinning
 
-Gate will automatically read the certificates fingerprints. 
+Gate will automatically read the certificates fingerprints.
 }}
 
 example {{
-['hpkp', { 
+['hpkp', {
 	age: 10512000,
 	subDomain: true,
 	backup: "AB4C433C491EF5C5EF686E838E323E6FA089610D822CCC958FB545483E49A08F",
@@ -167,4 +208,3 @@ example {{
 }}
 
 }}
-
