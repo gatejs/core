@@ -1,3 +1,2 @@
-#!/bin/sh
+require(__dirname+'/../src/service.js');
 
-%PREFIX_SHARE%/gatejs/node/bin/node %PREFIX_SHARE%/gatejs/service.js --config=%PREFIX_CONF%/gatejs/config.js "$@"
