@@ -34,6 +34,23 @@ To install this project from git, you will have to run the following command :
 If you downloaded the zip from github, you will have to fetch the submodules
 yourself.
 
+### Running gatejs
+You can use the forever process manager to run and control gatejs.
+
+```bash
+mkdir /var/log/gatejs
+forever -a -o /var/log/gatejs/forever.log -e /var/log/gatejs/forever-error.log start --uid gatejs --max_old_space_size=150 /usr/bin/gatejs --config=/etc/gatejs/config.js
+```
+
+You can also run the command at the reboot time using **cron**!
+
+Add the following lines when editing crontab (crontab -e):
+```
+@reboot forever -a -o /var/log/gatejs/forever.log -e /var/log/gatejs/forever-error.log start --uid gatejs --max_old_space_size=150 /usr/bin/gatejs --config=/etc/gatejs/config.js
+```
+
+**--max_old_space_size=150** allows to control the V8 garbage collector which is set to 150MB.
+
 ### Debian packages
 ```bash
 apt-get install gcc make g++ python
