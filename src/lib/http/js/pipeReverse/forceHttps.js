@@ -33,8 +33,9 @@ satForceHttps.request = function(pipe, permanent) {
 		permanent = 301;
 
 	if(pipe.server.config.ssl !== true) {
-		var m = pipe.request.method.toLowerCase();
-		if(m == "get" || m == "post") {
+		// disabled for the moment
+		//var m = pipe.request.method.toLowerCase();
+		//if(m == "get" || m == "post") {
 			var hdr = {
 				Server: 'gatejs',
 				Location: 'https://'+pipe.request.headers.host+pipe.request.url
@@ -43,7 +44,7 @@ satForceHttps.request = function(pipe, permanent) {
 			pipe.response.end();
 			pipe.stop();
 			return;
-		}
+		//}
 	}
 };
 
