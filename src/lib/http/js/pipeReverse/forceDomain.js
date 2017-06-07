@@ -44,8 +44,8 @@ satForceDomain.request = function(pipe, options) {
 		return;
 
 	var m = pipe.request.method.toLowerCase();
-	var d = pipe.request.headers.host.toLowerCase();
-	if(m == "get" && d != domain) {
+	var d = pipe.request.headers.host;
+	if(d && m == "get" && d.toLowerCase() != domain) {
 		var http = "http";
 		if(pipe.server.config.ssl == true)
 			http = "https";
