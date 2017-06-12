@@ -47,8 +47,13 @@ agent.loader = function(gjs) {
 
 	fixDefault(http.globalAgent);
 	fixDefault(https.globalAgent);
-	applyConfig(http.globalAgent, gjs.serverConfig.agent.http);
-	applyConfig(https.globalAgent, gjs.serverConfig.agent.https);
+
+	if(gjs.serverConfig.agent) {
+		if(gjs.serverConfig.agent.http)
+			applyConfig(http.globalAgent, gjs.serverConfig.agent.http);
+		if(gjs.serverConfig.agent.https)
+			applyConfig(https.globalAgent, gjs.serverConfig.agent.https);
+	}
 
 /*
 	if(gjs.lib.tproxy.enabled == true) {
