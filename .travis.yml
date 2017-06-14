@@ -26,6 +26,13 @@ notifications:
       - "%{repository}/%{branch} (%{commit} - %{author}): %{message}"
 env:
   - LANG="en_US.UTF-8"
+  - CXX=g++-4.8
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-4.8
 os:
   - linux
   - osx
