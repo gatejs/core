@@ -116,7 +116,7 @@ logger.spawnMaster = function(gjs) {
 	/*
 	 * Receiving log messages
 	 */
-	if(gjs.serverConfig.nologs) {
+	if(gjs.serverConfig.nologs != true) {
 		gjs.lib.core.ipc.on('log', function(sgjs, data) {
 			processLine(data.msg);
 		});
