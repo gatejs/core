@@ -72,25 +72,19 @@ littleFs.process = function(pipe) {
 			return(false);
 
 		/* check extension */
-		var ext = filename.substr(filename.lastIndexOf(".")+1);
-
-		/* check mime */
-		if(!littleFs.litteFsMimes[ext])
-			return(false);
+		var mime = littleFs.getMime(filename);
 		
-		var fileDateC = new Date(sS.ctime);
-		var fileDateM = new Date(sS.ctime);
+		var fileDateM = sS.ctime.toGMTString();
 		
 		var noBody = false;
 		var inputDate = false;
 		if(pipe.request.headers["if-modified-since"])
-			inputDate = new Date(pipe.request.headers["if-modified-since"]);
+			inputDate = new Date(pipe.request.headers["if-modified-since"]).toGMTString();
 		
-		if(inputDate && inputDate.getTime() == fileDateM.getTime()) {
+		if(inputDate === fileDateM) {
 			response.writeHead(304, {
-				'Content-Type': littleFs.litteFsMimes[ext],
+				'Content-Type': mime,
 				'Content-Length': sS.size,
-				'Date': fileDateC,
 				'Last-Modified': fileDateM,
 				'Cache-Control': "public, max-age=604800",
 				'server': 'gatejs'
@@ -106,9 +100,8 @@ littleFs.process = function(pipe) {
 		}
 			
 		response.writeHead(200, {
-			'Content-Type': littleFs.litteFsMimes[ext],
+			'Content-Type': mime,
 			'Content-Length': sS.size,
-			'Date': fileDateC,
 			'Last-Modified': fileDateM,
 			'Cache-Control': "public, max-age=604800",
 			'server': 'gatejs'
@@ -167,4 +160,3 @@ littleFs.loader = function(gjs) {
 }
 
 module.exports = littleFs;
-
