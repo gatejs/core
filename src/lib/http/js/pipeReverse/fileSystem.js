@@ -25,10 +25,12 @@ const fs = require('fs');
 var fileSystem = function(gjs) { }
 
 fileSystem.request = function(pipe, destDir, opts) {
-	pipe.stop();
 	var url = path.posix.resolve('/', pipe.request.url);
+	if(!url.match(pipe.location.regex))
+		return;
 	var fpath = url.replace(pipe.location.regex, destDir);
 	
+	pipe.stop();
 	if(!opts)
 		opts = {};
 	if(!opts.maxAge)
