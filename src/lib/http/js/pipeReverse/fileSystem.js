@@ -55,10 +55,10 @@ fileSystem.request = function(pipe, destDir, opts) {
 			return;
 		}
 		
+		var littleFs = pipe.root.lib.http.littleFs;
 		var mime = littleFs.getMime(fpath) || 'application/octet-stream';
 		var fileDateM = stat.mtime.toGMTString();
 		var inputDate = false;
-		var littleFs = pipe.root.lib.http.littleFs;
 		if(pipe.request.headers["if-modified-since"])
 			inputDate = new Date(pipe.request.headers["if-modified-since"]).toGMTString();
 		
