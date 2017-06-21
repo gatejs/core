@@ -26,7 +26,8 @@ var fileSystem = function(gjs) { }
 
 fileSystem.request = function(pipe, destDir, opts) {
 	var url = path.posix.resolve('/', pipe.request.url);
-	if(!url.match(pipe.location.regex))
+	var match = url.match(pipe.location.regex);
+	if(!match || match.index != 0)
 		return;
 	var fpath = url.replace(pipe.location.regex, destDir);
 	
