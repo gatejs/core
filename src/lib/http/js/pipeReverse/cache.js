@@ -236,8 +236,8 @@ cache.request = function(pipe, opts) {
 		if(h.pragma == 'no-cache' || h['cache-control'] == 'max-age=0')
 			canRestoreCache = false;
 		else {
-			delete pipe.request.gjsRemoveHeader('cache-control');
-			delete pipe.request.gjsRemoveHeader('pragma');
+			pipe.request.gjsRemoveHeader('cache-control');
+			pipe.request.gjsRemoveHeader('pragma');
 		}
 	}
 

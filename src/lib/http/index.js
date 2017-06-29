@@ -42,6 +42,10 @@ function setHeader(name, value) {
 }
 
 function removeHeader(name) {
+	if(!this.orgHeaders)
+		this.orgHeaders = {};
+	if(!this.headers)
+		this.headers = {};
 	var k = name.toLowerCase();
 	delete this.headers[k];
 	delete this.orgHeaders[k];
