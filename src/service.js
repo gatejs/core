@@ -1,4 +1,4 @@
-#!/usr/bin/nodejs
+#!/usr/bin/env node 
 /*
  * Copyright (c) 2010-2014 BinarySEC SAS
  * Service [http://www.binarysec.com]
