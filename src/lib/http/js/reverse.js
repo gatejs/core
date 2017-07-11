@@ -418,7 +418,7 @@ reverse.loader = function(gjs) {
 
 		/* execute pipeline */
 		pipe.request.on('close', function() {
-			pipe.stop();
+			pipe.destroy();
 		});
 
 		pipe.resume();
@@ -530,7 +530,7 @@ reverse.loader = function(gjs) {
 
 		/* execute pipeline */
 		pipe.request.on('close', function() {
-			pipe.stop();
+			pipe.destroy();
 		});
 
 		pipe.resume();

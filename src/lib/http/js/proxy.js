@@ -191,8 +191,19 @@ proxy.prototype.connect = function() {
 		console.log('Catched error on flowSelect.request', e);
 		return;
 	}
+	
+	var clientPrematureClose = false;
+	
+	pipe.request.on('close', function(err) {
+		clientPrematureClose = true;
+	});
 
 	function onResponse(res) {
+		if(clientPrematureClose) {
+			res.destroy();
+			return;
+		}
+		
 		req.ask = false;
 
 		// if(req.socket.timeoutId) {

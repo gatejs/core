@@ -101,8 +101,16 @@ function pipelineObject(opcodes, line, errorFunc) {
 		/* continue to execute pipeline */
 		this.pipeStatus = pipeline.status.execute;
 	}
+	
+	this.destroy = function() {
+		this.pipeDestroyed = true;
+		this.pipeStatus = pipeline.status.stop;
+	}
 
 	this.execute = function() {
+		if(this.pipeDestroyed)
+			return;
+		
 		if(this.pipe) {
 			for(; this.pipeIdx < this.pipe.length;) {
 				var func = this.pipe[this.pipeIdx];
@@ -113,6 +121,8 @@ function pipelineObject(opcodes, line, errorFunc) {
 				this.pipeIdx++;
 				if(cb)
 				cb.apply(null, arg);
+				if(this.pipeDestroyed)
+					return(true);
 				if(this.pipeStatus == pipeline.status.stop)
 					return(true);
 				else if(this.pipeStatus == pipeline.status.waiting)
