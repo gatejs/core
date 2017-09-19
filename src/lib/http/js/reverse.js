@@ -392,7 +392,7 @@ reverse.loader = function(gjs) {
 			});
 			return;
 		}
-		if(!pipe.location.pipeline instanceof Array) {
+		if(!(pipe.location.pipeline instanceof Array)) {
 			gjs.lib.http.error.renderArray({
 				pipe: pipe,
 				code: 500,
@@ -514,7 +514,7 @@ reverse.loader = function(gjs) {
 			});
 			return;
 		}
-		if(!pipe.location.pipeline instanceof Array) {
+		if(!(pipe.location.pipeline instanceof Array)) {
 			gjs.lib.http.error.renderArray({
 				pipe: pipe,
 				code: 500,
