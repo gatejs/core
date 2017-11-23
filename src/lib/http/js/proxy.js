@@ -423,7 +423,9 @@ proxy.prototype.connect = function() {
 
 		if(!nodePtr.timeout)
 			nodePtr.timeout = 3;
-
+		
+		pipe.request.setTimeout(nodePtr.timeout * 1000);
+		
 		if(!nodePtr.retry)
 			nodePtr.retry = 3;
 
