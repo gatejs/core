@@ -18,6 +18,10 @@
   "bin" : {
     "gatejs" : "./src/service.js"
   },
+  "engineStrict" : true,
+  "engines": {
+	  "node" : "<6.15"
+  },
   "dependencies": {
     "node-ipaddr": "^1.0.0",
     "node-jen": "^1.0.4",
