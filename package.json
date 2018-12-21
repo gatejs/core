@@ -15,21 +15,21 @@
   "bugs": {
     "url": "https://github.com/binarysec/gate/issues"
   },
-  "bin" : {
-    "gatejs" : "./src/service.js"
+  "bin": {
+    "gatejs": "./src/service.js"
   },
-  "engineStrict" : true,
+  "engineStrict": true,
   "engines": {
-	  "node" : "<6.15"
+    "node": "<6.15"
   },
   "dependencies": {
+    "diskusage": "^0.2.1",
+    "mu2": "^0.5.21",
     "node-ipaddr": "^1.0.0",
     "node-jen": "^1.0.4",
-    "spdy": "^3.0.0",
-    "throttle": "^1.0.0",
     "node-schedule": "^1.1.1",
-    "diskusage": "^0.2.1",
-    "mu2": "^0.5.21"
+    "spdy": "^3.4.7",
+    "throttle": "^1.0.0"
   },
   "scripts": {
     "postinstall": "make"
