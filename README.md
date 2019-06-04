@@ -1,10 +1,9 @@
 gate
 ====
-### Website: www.gatejs.org
 GateJS is a javascript based reverse &amp; forward proxy with high
 performance &amp; capability.
 
-For more informations about gatejs & configuration please visit the wiki at https://github.com/binarysec/gate/wiki
+For more informations about gatejs & configuration please visit the wiki at https://github.com/gatejs/core/wiki
 
 **note**: gatejs team is looking for someone to maintain debian packages, contact us at info [at] binarysec [dot] com
 
@@ -27,7 +26,7 @@ You need to install before NodeJS >4.x.x. Once nodejs is installed you can run:
 ### Installation from git
 To install this project from git, you will have to run the following command :
 
-	$ git clone https://github.com/binarysec/gate.git gate
+	$ git clone https://github.com/gatejs/core.git gate
 	$ cd gate
 	$ npm install
 
@@ -86,9 +85,9 @@ var serverConfig = function(bs) { return({
 module.exports = serverConfig;
 ```
 
-[travis-build-img]: https://secure.travis-ci.org/binarysec/gate.png
-[travis-build-url]: http://travis-ci.org/binarysec/gate
-[gt-issues]: https://img.shields.io/github/issues/binarysec/gate.svg
-[gt-forks]: https://img.shields.io/github/forks/binarysec/gate.svg
-[gt-stars]: https://img.shields.io/github/stars/binarysec/gate.svg
+[travis-build-img]: https://secure.travis-ci.org/gatejs/core.png
+[travis-build-url]: http://travis-ci.org/gatejs/core
+[gt-issues]: https://img.shields.io/github/issues/gatejs/core.svg
+[gt-forks]: https://img.shields.io/github/forks/gatejs/core.svg
+[gt-stars]: https://img.shields.io/github/stars/gatejs/core.svg
 [gt-licence]: https://img.shields.io/badge/license-GPLv3-blue.svg

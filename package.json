@@ -1,11 +1,11 @@
 {
   "name": "gatejs",
-  "version": "2.0.13",
+  "version": "2.0.14",
   "description": "New Generation of HTTP reverse and forward proxy",
   "author": "Michael Vergoz",
   "repository": {
     "type": "git",
-    "url": "https://github.com/binarysec/gate.git"
+    "url": "https://github.com/gatejs/core.git"
   },
   "keywords": [
     "reverse",
@@ -13,7 +13,7 @@
     "proxy"
   ],
   "bugs": {
-    "url": "https://github.com/binarysec/gate/issues"
+    "url": "https://github.com/gatejs/core/issues"
   },
   "bin": {
     "gatejs": "./src/service.js"
