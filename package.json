@@ -1,0 +1,36 @@
+{
+  "name": "gatejs",
+  "version": "3.0.0",
+  "description": "New Generation of HTTP reverse and forward proxy",
+  "author": "Michael Vergoz",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gatejs/core.git"
+  },
+  "keywords": [
+    "reverse",
+    "forward",
+    "proxy"
+  ],
+  "bugs": {
+    "url": "https://github.com/gatejs/core/issues"
+  },
+  "bin": {
+    "gatejs": "./bin/gatejs.js"
+  },
+  "engineStrict": true,
+  "engines": {
+    "node": ">=6.17"
+  },
+  "dependencies": {
+    "node-ipaddr": "^1.0.0",
+    "node-jen": "^1.0.4",
+    "throttle": "^1.0.0"
+  },
+  "scripts": {
+    "postinstall": "make"
+  },
+  "homepage": "https://www.gatejs.org",
+  "license": "GPLv3",
+  "gypfile": true
+}
