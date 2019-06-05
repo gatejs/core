@@ -1,0 +1,32 @@
+language: node_js
+node_js:
+  - "4"
+  - "5"
+  - "6"
+before_install:
+  - export PATH=./node_modules/.bin/:$PATH
+  - npm install -g node-gyp
+  - npm install -g npm
+install:
+    - npm install
+branches:
+  only:
+    - master
+notifications:
+  recipients:
+    - m.vergoz@vergoz.ch
+  email:
+    on_success: change
+    on_failure: always
+  irc:
+    channels:
+      - "chat.freenode.net#gatejs"
+    template:
+      - "%{repository}/%{branch} (%{commit} - %{author}): %{message}"
+env:
+  - LANG="en_US.UTF-8"
+os:
+  - linux
+  - osx
+sudo: required
+dist: xenial
