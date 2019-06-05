@@ -23,9 +23,14 @@
     "node": ">=6.17"
   },
   "dependencies": {
-    "node-ipaddr": "^1.0.0",
-    "node-jen": "^1.0.4",
-    "throttle": "^1.0.0"
+    "fast-tcp": "^3.3.2",
+    "is-running": "^2.1.0",
+    "node-dijkstra": "^2.5.0",
+    "node-ipaddr": "^1.1.2",
+    "node-jen": "^1.1.0",
+    "subcommander": "^1.0.0",
+    "throttle": "^1.0.3",
+    "through2": "^3.0.1"
   },
   "scripts": {
     "postinstall": "make"
