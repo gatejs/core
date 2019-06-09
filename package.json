@@ -23,7 +23,7 @@
     "node": ">=6.17"
   },
   "dependencies": {
-    "fast-tcp": "file:lib/fast-tcp",
+    "fast-tcp": "git+https://github.com/mykiimike/fast-tcp.git",
     "is-running": "^2.1.0",
     "log": "file:plugins/log",
     "node-dijkstra": "^2.5.0",
