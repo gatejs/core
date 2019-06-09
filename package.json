@@ -23,8 +23,9 @@
     "node": ">=6.17"
   },
   "dependencies": {
-    "fast-tcp": "^3.3.2",
+    "fast-tcp": "file:lib/fast-tcp",
     "is-running": "^2.1.0",
+    "log": "file:plugins/log",
     "node-dijkstra": "^2.5.0",
     "node-ipaddr": "^1.1.2",
     "node-jen": "^1.1.0",
