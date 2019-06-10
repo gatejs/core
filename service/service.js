@@ -12,6 +12,7 @@ const gatejsUplink = require("./uplink");
 const gatejsNodelink = require("./nodelink");
 const gatejsNode = require("./node");
 const gatejsRouter = require("./router");
+const gatejsBackbone = require("./backbone");
 
 const Server = require('fast-tcp').Server;
 
@@ -26,6 +27,7 @@ class gatejsInterface {
 
 		// spawn default local server
 		this.server = new Server({kernel: this.kernel});
+		this.server.interface = this;
 
 		// listening
 		if(this.options.port) {
@@ -40,6 +42,8 @@ class gatejsInterface {
 				if(cb) cb();
 			})
 		}
+
+
 	}
 }
 
@@ -66,7 +70,9 @@ class gatejsService extends gatejs.kernel {
 			} catch(e) {}
 
 			// create a fast-tcp router
+			this.backbone = new gatejsBackbone(this);
 			this.router = new gatejsRouter(this);
+
 
 			const sync = [
 				// bind interface
@@ -79,17 +85,14 @@ class gatejsService extends gatejs.kernel {
 						self.node
 					];
 
-					// follow cluster configuration
-					for(var a in this.config.cluster) {
-						var cluster = this.config.cluster[a];
-						if(cluster.host === this.config.hostname) {
-							cluster.port = cluster.port || 65001;
-							toBind.push(new gatejsInterface(self, cluster));
-						}
-						else {
-							cluster.port = cluster.port || 65001;
-							//toBind.push(new gatejsUplink(cluster));
-						}
+					// bind interfaces
+					for(var a in this.config.interfaces) {
+						toBind.push(new gatejsInterface(self, this.config.interfaces[a]));
+					}
+
+					// bind uplinks
+					for(var a in this.config.uplinks) {
+						toBind.push(new gatejsUplink(self, this.config.uplinks[a]));
 					}
 
 					// do bind
@@ -109,8 +112,9 @@ class gatejsService extends gatejs.kernel {
 								lib.log.system(area, "Binding Server interface at "+address);
 								self.router.addServer(cluster.server, self.config.hostname+"/node")
 							}
-							else if(cluster instanceof gatejsNodelink) {
-								lib.log.system(area, "Binding Node link interface at "+address);
+							else if(cluster instanceof gatejsUplink) {
+								lib.log.system(area, "Binding uplink link interface at "+address);
+								self.router.addServer(cluster.relay, self.config.hostname+"/uplink")
 							}
 							// next binding
 							process.nextTick(doBind, cb)

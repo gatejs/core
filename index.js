@@ -1,21 +1,3 @@
-/*
-const Graph = require('node-dijkstra')
-
-const route = new Graph()
-
-route.addNode('host1', { host2:10, host3:1 })
-
-route.addNode('host2', { host4:1, host1:1 })
-route.addNode('host3', { host4:1, host1:1 })
-
-route.addNode('host4', { host2:1, host3:1, host5: 1 })
-
-route.addNode('host5', { host4:1 })
-
-
-console.log(route.path('host1', 'host4', {trim: true}))
-console.log(route.path('host4', 'host1', {trim: true}))
-*/
 const area = "core:kernel";
 
 const fs = require('fs');

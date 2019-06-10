@@ -75,6 +75,7 @@ class gatejsNodelink extends gatejsNode {
 			const hmac = crypto.createHmac('sha256', self.kernel.config.sharedKey);
 			hmac.update(seed);
 			socket.emit("hmac", hmac.digest('hex'))
+			socket.emit("host", self.kernel.config.hostname)
 			socket.emit("type", "nodelink")
 		})
 

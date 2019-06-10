@@ -20,7 +20,15 @@ class gatejsRouter extends Router {
 
 		const self = this;
 
+		// catch backbone tree changes
+		kernel.backbone.on('path', (address, route, socket) => {
+			console.log("path", address, route)
+		})
+
+
 		this.on('connection', function (socket) {
+
+			socket.interface = socket._server.interface;
 			self.preAuthCommands(socket);
 			/*
 			socket.on('room-watch', function () {
@@ -53,6 +61,37 @@ class gatejsRouter extends Router {
 	}
 
 	uplinkCommands(socket) {
+		console.log("Allocating address for uplink "+socket.id);
+		const self = this;
+
+		// prepare socket
+		socket.type = "uplink"
+		socket.context = {};
+
+		// send all physical nodes
+		for(var a in this.phyNodes) {
+			const p =  this.phyNodes[a];
+			socket.emit('node/add', {
+				id: p.id,
+				cost: p.cost
+			})
+		}
+
+		// send all rooms available
+		console.log('uplinkCommands '+socket.hostname)
+
+/*
+		socket.on('end', () => {
+			// remove backbone node
+			self.kernel.backbone.deleteNode(
+				socket.hostname
+			);
+		});
+*/
+
+		// send seed to client
+		// second argument is the address
+		socket.emit('play', socket.id)
 
 	}
 
@@ -115,6 +154,7 @@ class gatejsRouter extends Router {
 		// when socket ends remove reference dependancy
 		socket.on('end', () => {
 
+			// free context
 			for(var address in socket.context) {
 				const sLevel = socket.context[address];
 				if(!sLevel) continue;
@@ -130,6 +170,15 @@ class gatejsRouter extends Router {
 				// real delete
 				if(gLevel.ref <= 0) delete self.context[address];
 			}
+
+/*
+			// remove backbone node
+			self.kernel.backbone.deleteNode(
+				socket.hostname,
+				socket.id
+			);
+			*/
+
 		});
 
 		// give all registered context
@@ -143,7 +192,6 @@ class gatejsRouter extends Router {
 
 		// send seed to client
 		// second argument is the address
-		socket.type = "nodelink"
 		socket.emit('play', socket.id)
 
 		// Send current physical nodes
@@ -151,6 +199,16 @@ class gatejsRouter extends Router {
 			socket.emit('node/add', this.phyNodes[a].id)
 		}
 		this.phyNodes[socket.id] = socket;
+
+/*
+		// add backbone node
+		this.kernel.backbone.addNode(
+			socket.hostname,
+			socket.id,
+			socket.cost
+		);
+*/
+
 	}
 
 	//
@@ -159,10 +217,21 @@ class gatejsRouter extends Router {
 	authCommands(socket) {
 		const self = this;
 
-		socket.on('type', function cmdType(type) {
-			if(type=="nodelink") socket.removeListener('type', cmdType)
-			self.nodeCommands(socket);
+		socket.on('host', function cmdHost(hostname) {
+			socket.removeListener('hots', cmdHost)
+			socket.hostname = hostname;
+			socket.cost = 1;
+			console.log('Remote hostname '+socket.hostname+" cost="+socket.cost)
 		});
+
+		socket.on('type', function cmdType(type) {
+			socket.removeListener('type', cmdType)
+			if(type=="nodelink") self.nodeCommands(socket);
+			else if(type=="uplink") self.uplinkCommands(socket);
+		});
+
+		// send hostname
+		socket.emit('host', self.kernel.config.hostname)
 	}
 
 	//
