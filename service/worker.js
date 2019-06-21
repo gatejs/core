@@ -23,11 +23,24 @@ class gatejsWorker extends gatejs.kernel {
 			this.node = new gatejsNodelink(this, {
 				address: socketFile
 			});
+
+			var init = false;
+
 			this.node.start(() => {
+				self.node.on("room/register", (data) => {
+					self.emit(data.room, data)
+				})
+
+				self.node.on("room/unregister", (data) => {
+					self.emit(data.room, data)
+				})
+
 				this.node.on('play', () => {
 					// worker is ready
 					self.emit("worker/ready")
 					self.emit("ready")
+
+					if(init === true) return;
 
 					// this a little moment berfore to fully complet worker init
 					process.on('message', (message) => {
@@ -51,6 +64,7 @@ class gatejsWorker extends gatejs.kernel {
 						lib.log.system(area, "Worker process spawned #"+process.pid+": "+message.name);
 					})
 					process.send({cmd: 'ready'});
+					init = true;
 				})
 			})
 		})

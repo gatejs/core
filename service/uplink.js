@@ -39,6 +39,7 @@ class gatejsUplink {
 	}
 
 	_bindEvents(socket) {
+		const self = this;
 		socket.on('error', (err) => {
 			debug(process.pid+" Uplink error "+self.options.address+": "+err.message)
 		})

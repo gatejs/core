@@ -78,7 +78,6 @@ class gatejsService extends gatejs.kernel {
 
 					const toBind = [
 						new gatejsInterface(self, {address: socketFile}),
-						self.node
 					];
 
 					// bind interfaces
@@ -118,6 +117,21 @@ class gatejsService extends gatejs.kernel {
 					}
 
 					doBind(next)
+				},
+
+				// start node interconnector
+				(next) => {
+					self.node.start(() => {
+						this.node.on("room/register", (data) => {
+							self.emit(data.room, data)
+						})
+
+						this.node.on("room/unregister", (data) => {
+							self.emit(data.room, data)
+						})
+
+						next()
+					})
 				},
 
 				// load workers

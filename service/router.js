@@ -18,18 +18,11 @@ class gatejsRouter extends Router {
 
 		const self = this;
 
-
-		this.on('connection', function (socket) {
+		// downlink
+		this.on('downlink/add', function (socket) {
 			socket.interface = socket._server.interface;
 			self.nodeCommands(socket);
-			/*
-			socket.on('room-watch', function () {
-				for(var a in server.rooms) {
-					var p = server.rooms[a];
-					socket.emit('room-new', {name: a, local: true})
-				}
-			});
-			*/
+
 			socket.on('end', function () {
 				if(socket.type == "nodelink" && socket.id) {
 					// send brodcast
@@ -62,93 +55,32 @@ class gatejsRouter extends Router {
 
 		// prepare socket
 		socket.type = "nodelink"
-		socket.context = {};
 
-		// when new enroled worker register
-		socket.on('worker/context/activate', (data) => {
-			data.room = "context/";
-			data.room += data.scope === "machine" ? "machine/"+data.host : "cluster";
-			data.address = data.room+"/"+data.pool;
-
-			// global level
-			if(!self.context[data.address])
-				self.context[data.address] = Object.assign({ref: 0}, data);
-			self.context[data.address].ref++;
-
-			// socket level
-			if(!socket.context[data.address])
-				socket.context[data.address] = Object.assign({ref: 0}, data);
-			socket.context[data.address].ref++;
-
-			self.emit("kernel/context/state", self.context[data.address], {rooms: [data.room]})
-		});
-
-		// forward context deactivation
-		socket.on('worker/context/deactivate', (data) => {
-			data.room = "context/";
-			data.room += data.scope === "machine" ? "machine/"+data.host : "cluster";
-			data.address = data.room+"/"+data.pool;
-
-			// decrease contextes socket level
-			const sLevel = socket.context[data.address];
-			if(sLevel) {
-				if(sLevel.ref > 0) sLevel.ref--;
-			}
-
-			// decrease contextes global level
-			const gLevel = self.context[data.address];
-			if(gLevel) {
-				if(gLevel.ref > 0) gLevel.ref--;
-			}
-
-			// brodcast information
-			if(gLevel) self.emit("kernel/context/state", gLevel, {rooms: [data.room]})
-
-			// real delete
-			if(sLevel && sLevel.ref == 0) delete socket.context[data.address];
-			if(gLevel && gLevel.ref == 0) delete self.context[data.address];
-		});
 
 		// when socket ends remove reference dependancy
 		socket.on('end', () => {
 
-			// free context
-			for(var address in socket.context) {
-				const sLevel = socket.context[address];
-				if(!sLevel) continue;
-				const gLevel = self.context[address];
-				if(!gLevel) continue;
 
-				// substract
-				gLevel.ref -= sLevel.ref;
-
-				// brodcast information
-				self.emit("kernel/context/state", gLevel, {rooms: [gLevel.room]})
-
-				// real delete
-				if(gLevel.ref <= 0) delete self.context[address];
-			}
 
 		});
 
-		// give all registered context
-		socket.on('worker/context/sync', () => {
-			// Send all contexts
-			for(var address in self.context) {
-				const gLevel = self.context[address];
-				self.emit("kernel/context/state", gLevel, {sockets: [socket.id]})
-			}
-		});
-
-		// send seed to client
-		// second argument is the address
-		socket.emit('play', socket.id)
+		// send the current room status
+		for(var room in self.rooms) {
+			// compute all counter
+			var counter = 0;
+			for(var a in this.rooms[room]) counter += this.rooms[room][a];
+			socket.emit("room/register", {room: room, ref: counter});
+		}
 
 		// Send current physical nodes
 		for(var a in this.phyNodes) {
 			socket.emit('node/add', this.phyNodes[a].id)
 		}
 		this.phyNodes[socket.id] = socket;
+
+		// send seed to client
+		// second argument is the address
+		socket.emit('play', socket.id)
 
 /*
 		// add backbone node
