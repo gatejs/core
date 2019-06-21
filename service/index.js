@@ -1,7 +1,7 @@
 const debug = require('debug')('gatejs:core:service');
 const gatejs = require("../index");
-const Server = require('fast-tcp').Server;
-const Socket = require('fast-tcp').Socket;
+const Server = require('@gatejs/cluster').Server;
+const Socket = require('@gatejs/cluster').Socket;
 const fs = require("fs");
 const cluster = require("cluster");
 

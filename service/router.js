@@ -6,13 +6,11 @@ const crypto = require("crypto");
 
 const jen = require("node-jen")();
 
-const gatejsNode = require("./node");
-
-const Router = require('fast-tcp').Router;
+const Router = require('@gatejs/cluster').Router;
 
 class gatejsRouter extends Router {
-	constructor(kernel) {
-		super();
+	constructor(kernel, hostname) {
+		super(hostname);
 
 		this.kernel = kernel;
 		this.phyNodes = {}
@@ -20,16 +18,10 @@ class gatejsRouter extends Router {
 
 		const self = this;
 
-		// catch backbone tree changes
-		kernel.backbone.on('path', (address, route, socket) => {
-			console.log("path", address, route)
-		})
-
 
 		this.on('connection', function (socket) {
-
 			socket.interface = socket._server.interface;
-			self.preAuthCommands(socket);
+			self.nodeCommands(socket);
 			/*
 			socket.on('room-watch', function () {
 				for(var a in server.rooms) {
@@ -60,40 +52,6 @@ class gatejsRouter extends Router {
 		})
 	}
 
-	uplinkCommands(socket) {
-		console.log("Allocating address for uplink "+socket.id);
-		const self = this;
-
-		// prepare socket
-		socket.type = "uplink"
-		socket.context = {};
-
-		// send all physical nodes
-		for(var a in this.phyNodes) {
-			const p =  this.phyNodes[a];
-			socket.emit('node/add', {
-				id: p.id,
-				cost: p.cost
-			})
-		}
-
-		// send all rooms available
-		console.log('uplinkCommands '+socket.hostname)
-
-/*
-		socket.on('end', () => {
-			// remove backbone node
-			self.kernel.backbone.deleteNode(
-				socket.hostname
-			);
-		});
-*/
-
-		// send seed to client
-		// second argument is the address
-		socket.emit('play', socket.id)
-
-	}
 
 	//
 	//
@@ -171,14 +129,6 @@ class gatejsRouter extends Router {
 				if(gLevel.ref <= 0) delete self.context[address];
 			}
 
-/*
-			// remove backbone node
-			self.kernel.backbone.deleteNode(
-				socket.hostname,
-				socket.id
-			);
-			*/
-
 		});
 
 		// give all registered context
@@ -209,67 +159,6 @@ class gatejsRouter extends Router {
 		);
 */
 
-	}
-
-	//
-	//
-	// Pre auth commands
-	authCommands(socket) {
-		const self = this;
-
-		socket.on('host', function cmdHost(hostname) {
-			socket.removeListener('hots', cmdHost)
-			socket.hostname = hostname;
-			socket.cost = 1;
-			console.log('Remote hostname '+socket.hostname+" cost="+socket.cost)
-		});
-
-		socket.on('type', function cmdType(type) {
-			socket.removeListener('type', cmdType)
-			if(type=="nodelink") self.nodeCommands(socket);
-			else if(type=="uplink") self.uplinkCommands(socket);
-		});
-
-		// send hostname
-		socket.emit('host', self.kernel.config.hostname)
-	}
-
-	//
-	//
-	// Pre auth commands
-	preAuthCommands(socket) {
-		const self = this;
-
-		// get hmac authentitifcation
-		socket.on('hmac', function cmdHash(hash) {
-			if(hash !== socket.hmac) {
-				debug("Connection authentification FAILED using "+hash);
-				socket.destroy();
-				return;
-			}
-
-			debug("Connection authentification SUCCESS using "+hash);
-
-			socket.auth = true;
-
-			// remove hmac
-			socket.removeListener('hmac', cmdHash);
-
-			self.authCommands(socket);
-		})
-
-		// generate a seed
-		socket.seed = jen.password(32,32);
-
-		// compute hmac in advance
-		const hmac = crypto.createHmac('sha256', self.kernel.config.sharedKey);
-		hmac.update(socket.seed);
-		socket.hmac = hmac.digest('hex')
-
-		debug("New connection ID "+socket.id+" with seed "+socket.seed);
-
-		// send seed to client
-		socket.emit('seed', socket.seed)
 	}
 
 }

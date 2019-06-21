@@ -23,10 +23,15 @@ class gatejsBackbone extends EventEmitter {
 
 	registerSocket(dst, socket) {
 		this.sockets[dst] = socket;
+
+		console.log("Register socket");
 	}
 
 	unregisterSocket(dst) {
 		delete this.sockets[dst];
+
+		console.log("Unregister socket");
+
 	}
 
 	addNode(from, address, cost) {

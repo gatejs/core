@@ -2,7 +2,7 @@ const area = 'core:worker';
 
 const debug = require('debug')('gatejs:core:worker');
 const gatejs = require("../index");
-const Socket = require('fast-tcp').Socket;
+const Socket = require('@gatejs/cluster').Socket;
 const fs = require("fs");
 
 const gatejsNodelink = require("./nodelink");
@@ -20,7 +20,9 @@ class gatejsWorker extends gatejs.kernel {
 			const socketFile = this.config.runDir+'/cluster.sock';
 
 			// prepare all interface to bind
-			this.node = new gatejsNodelink(this, {address: socketFile});
+			this.node = new gatejsNodelink(this, {
+				address: socketFile
+			});
 			this.node.start(() => {
 				this.node.on('play', () => {
 					// worker is ready

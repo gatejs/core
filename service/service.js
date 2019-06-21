@@ -10,11 +10,9 @@ const jen = require("node-jen")();
 
 const gatejsUplink = require("./uplink");
 const gatejsNodelink = require("./nodelink");
-const gatejsNode = require("./node");
 const gatejsRouter = require("./router");
-const gatejsBackbone = require("./backbone");
 
-const Server = require('fast-tcp').Server;
+const Server = require('@gatejs/cluster').Server;
 
 class gatejsInterface {
 	constructor(kernel, options) {
@@ -26,7 +24,7 @@ class gatejsInterface {
 		const self = this;
 
 		// spawn default local server
-		this.server = new Server({kernel: this.kernel});
+		this.server = new Server({kernel: this.kernel, psk: this.kernel.config.sharedKey});
 		this.server.interface = this;
 
 		// listening
@@ -69,10 +67,8 @@ class gatejsService extends gatejs.kernel {
 				fs.unlinkSync(socketFile);
 			} catch(e) {}
 
-			// create a fast-tcp router
-			this.backbone = new gatejsBackbone(this);
-			this.router = new gatejsRouter(this);
-
+			// create a @gatejs/cluster router
+			this.router = new gatejsRouter(this, self.config.hostname);
 
 			const sync = [
 				// bind interface
@@ -110,11 +106,11 @@ class gatejsService extends gatejs.kernel {
 							// add server interface
 							if(cluster instanceof gatejsInterface) {
 								lib.log.system(area, "Binding Server interface at "+address);
-								self.router.addServer(cluster.server, self.config.hostname+"/node")
+								self.router.addServer(cluster.server, "node")
 							}
 							else if(cluster instanceof gatejsUplink) {
 								lib.log.system(area, "Binding uplink link interface at "+address);
-								self.router.addServer(cluster.relay, self.config.hostname+"/uplink")
+								self.router.addUplink(cluster.socket, "uplink")
 							}
 							// next binding
 							process.nextTick(doBind, cb)
@@ -203,6 +199,7 @@ class gatejsService extends gatejs.kernel {
 
 					next();
 				},
+
 			]
 
 			lib.log.system(area, "Running Gatejs Cluster version "+lib.kernel.version)
