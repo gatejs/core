@@ -27,7 +27,7 @@ class gatejsLogger {
 			self.system("Log rotation completed");
 		}
 
-		kernel.node.on('log/rotate', doReload);
+		kernel.node.on('log/reload', doReload);
 		process.on('SIGUSR2', doReload);
 
 		// receive log packets

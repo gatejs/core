@@ -11,7 +11,7 @@ function fixZero(d) {
 	if(d < 10) return("0"+d)
 	return(""+d);
 }
-//context/machine/host1/log
+
 class gatejsLogger {
 	constructor(kernel) {
 		const self = this;
@@ -56,7 +56,6 @@ class gatejsLogger {
 				// log is ready
 				self.ready = true;
 			}
-
 		}
 
 		kernel.lib.context.on(this.rooms[0], activer)
