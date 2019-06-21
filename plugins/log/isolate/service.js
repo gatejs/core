@@ -19,8 +19,6 @@ class gatejsLogger {
 		this.kernel = kernel;
 		this.rooms = ["log", this.kernel.config.hostname+"/log"];
 
-		kernel.node.join(this.rooms[1])
-
 		// place log rotation
 		function doReload() {
 			for(var a in self.onlineFiles) {
@@ -37,7 +35,7 @@ class gatejsLogger {
 			self.receiver(data);
 		})
 
-		kernel.lib.context.activate("log");
+		kernel.lib.context.activate(this.rooms[1]);
 
 		cb();
 	}

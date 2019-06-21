@@ -12,13 +12,6 @@ module.exports = (kernel, cb) => {
 	})
 
 
-	kernel.registerWorker({
-		scope: "machine",
-		pool: "test",
-		name: "Local Test program",
-		file: __dirname+"/isolate/test.js"
-	})
-
 
 	kernel.registerLibrary("log", new logger(kernel))
 

@@ -22,13 +22,26 @@ class gatejsLogger {
 		this.ready = false;
 		this.buffer = [];
 
-		kernel.lib.context.on("log", (reference) => {
-			if(reference <= 0) {
-				self.ready = false;
-				return;
+		this.states = {}
+
+		function activer(data) {
+			if(!self.states[data.room]) self.states[data.room] = data;
+
+			var state = self.states[data.room];
+			if(data.ref <= 0) state.ready = false;
+			else state.ready = true;
+
+			// find a leat one room ready
+			var leastReady = false;
+			for(var a in self.states) {
+				var p = self.states[a];
+				if(p.ready === true) {
+					leastReady = true;
+					break;
+				}
 			}
 
-			if(self.ready === false) {
+			if(self.ready === false && leastReady === true) {
 				debug('library is ready with '+self.buffer.length+" logs pending")
 
 				// send pending logs
@@ -43,7 +56,11 @@ class gatejsLogger {
 				// log is ready
 				self.ready = true;
 			}
-		})
+
+		}
+
+		kernel.lib.context.on(this.rooms[0], activer)
+		kernel.lib.context.on(this.rooms[1], activer)
 	}
 
 	send(packet) {
