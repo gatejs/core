@@ -213,7 +213,6 @@ class gatejsService extends gatejs.kernel {
 
 					next();
 				},
-
 			]
 
 			lib.log.system(area, "Running Gatejs Cluster version "+lib.kernel.version)
@@ -228,7 +227,6 @@ class gatejsService extends gatejs.kernel {
 
 	registerWorker(options) {
 		if(!this.workers) this.workers = {}
-		options.scope = options.scope || "machine";
 		options.core = options.core || 1;
 		options.ready = 0;
 		this.workers[options.name] = options;
